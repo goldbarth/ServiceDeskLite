@@ -3,4 +3,7 @@
     <Project Path="src/ServiceDeskLite.Domain/ServiceDeskLite.Domain.csproj" />
     <Project Path="src/ServiceDeskLite.Web/ServiceDeskLite.Web.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ServiceDeskLite.Tests.Domain/ServiceDeskLite.Tests.Domain.csproj" />
+  </Folder>
 </Solution>
