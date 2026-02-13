@@ -6,7 +6,7 @@ public static class Guard
     {
         if (!string.IsNullOrWhiteSpace(value)) return;
         throw new DomainException(new DomainError(
-            "guard.not_empty",
+            "domain.not_empty",
             $"{paramName} must not be empty."));
     }
 
@@ -14,7 +14,7 @@ public static class Guard
     {
         if (value.Length <= maxLength) return;
         throw new DomainException(new DomainError(
-            "guard.max_length",
+            "domain.max_length",
             $"{paramName} must not exceed {maxLength} characters."));
     }
 
