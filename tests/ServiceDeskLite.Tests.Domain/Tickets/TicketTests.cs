@@ -26,7 +26,7 @@ public sealed class TicketTests
     {
         var ticket = CreateTicket();
         var ex = Assert.Throws<DomainException>(() => ticket.ChangeStatus(TicketStatus.Closed));
-        ex.Error.Code.Should().Be("domain.invalid_transition");
+        ex.Error.Code.Should().Be("domain.ticket.status.invalid_transition");
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public sealed class TicketTests
                 priority: TicketPriority.Low,
                 createdAt: DateTimeOffset.UtcNow));
         
-        ex.Error.Code.Should().Be("domain.empty_title");
+        ex.Error.Code.Should().Be("domain.not_empty");
     }
 
     [Fact]
