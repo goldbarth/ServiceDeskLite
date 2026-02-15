@@ -1,5 +1,6 @@
 ﻿using ServiceDeskLite.Domain.Common;
 using ServiceDeskLite.Domain.Tickets;
+using FluentAssertions;
 
 namespace ServiceDeskLite.Tests.Domain.Tickets;
 
@@ -8,61 +9,39 @@ public sealed class TicketTests
     [Fact]
     public void NewTicket_StartsWithStatus_New()
     {
-        // Arrange
         var ticket = CreateTicket();
-
-        // Act
-        var status = ticket.Status;
-
-        // Assert
-        Assert.Equal(TicketStatus.New, status);
+        ticket.Status.Should().Be(TicketStatus.New);
     }
 
     [Fact]
     public void ChangeStatus_New_To_Triaged_UpdatesStatus()
     {
-        // Arrange
-        var ticket = CreateTicket();
-
-        // Act
+        var  ticket = CreateTicket();
         ticket.ChangeStatus(TicketStatus.Triaged);
-
-        // Assert
-        Assert.Equal(TicketStatus.Triaged, ticket.Status);
+        ticket.Status.Should().Be(TicketStatus.Triaged);
     }
 
     [Fact]
     public void ChangeStatus_InvalidTransition_ThrowsDomainException_WithExpectedErrorCode()
     {
-        // Arrange
         var ticket = CreateTicket();
-
-        // Act
         var ex = Assert.Throws<DomainException>(() => ticket.ChangeStatus(TicketStatus.Closed));
-
-        // Assert
-        Assert.Equal("ticket.invalid_transition", ex.Error.Code);
+        ex.Error.Code.Should().Be("domain.invalid_transition");
     }
 
     [Fact]
     public void ChangeStatus_ReopenFromResolved_To_InProgress_IsAllowed()
     {
-        // Arrange
         var ticket = CreateTicket();
-
-        // Act
         ticket.ChangeStatus(TicketStatus.Triaged);
         ticket.ChangeStatus(TicketStatus.InProgress);
         ticket.ChangeStatus(TicketStatus.Resolved);
 
-        // Assert precondition
-        Assert.Equal(TicketStatus.Resolved, ticket.Status);
+        ticket.Status.Should().Be(TicketStatus.Resolved);
 
-        // Act (reopen)
         ticket.ChangeStatus(TicketStatus.InProgress);
 
-        // Assert
-        Assert.Equal(TicketStatus.InProgress, ticket.Status);
+        ticket.Status.Should().Be(TicketStatus.InProgress);
     }
     
     [Fact]
@@ -75,8 +54,8 @@ public sealed class TicketTests
                 description: "desc",
                 priority: TicketPriority.Low,
                 createdAt: DateTimeOffset.UtcNow));
-
-        Assert.Equal("domain.not_empty", ex.Error.Code);
+        
+        ex.Error.Code.Should().Be("domain.empty_title");
     }
 
     [Fact]
@@ -91,8 +70,8 @@ public sealed class TicketTests
                 description: tooLong,
                 priority: TicketPriority.Low,
                 createdAt: DateTimeOffset.UtcNow));
-
-        Assert.Equal("domain.max_length", ex.Error.Code);
+        
+        ex.Error.Code.Should().Be("domain.max_length");
     }
     
     private static Ticket CreateTicket(

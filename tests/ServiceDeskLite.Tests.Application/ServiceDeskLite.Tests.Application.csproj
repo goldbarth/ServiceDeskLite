@@ -21,7 +21,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\ServiceDeskLite.Application\ServiceDeskLite.Application.csproj" />
-      <ProjectReference Include="..\..\src\ServiceDeskLite.Domain\ServiceDeskLite.Domain.csproj" />
     </ItemGroup>
 
 </Project>
