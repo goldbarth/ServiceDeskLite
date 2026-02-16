@@ -113,6 +113,7 @@
       "servicedesklite.application": {
         "type": "Project",
         "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.3, )",
           "ServiceDeskLite.Domain": "[1.0.0, )"
         }
       },

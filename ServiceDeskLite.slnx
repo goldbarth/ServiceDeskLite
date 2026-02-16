@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/ServiceDeskLite.Api/ServiceDeskLite.Api.csproj" />
     <Project Path="src/ServiceDeskLite.Application/ServiceDeskLite.Application.csproj" />
     <Project Path="src/ServiceDeskLite.Domain/ServiceDeskLite.Domain.csproj" />
     <Project Path="src/ServiceDeskLite.Infrastructure.InMemory/ServiceDeskLite.Infrastructure.InMemory.csproj" />
@@ -9,6 +10,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/ServiceDeskLite.Tests.Application/ServiceDeskLite.Tests.Application.csproj" />
     <Project Path="tests/ServiceDeskLite.Tests.Domain/ServiceDeskLite.Tests.Domain.csproj" />
+    <Project Path="tests/ServiceDeskLite.Tests.EndToEnd/ServiceDeskLite.Tests.EndToEnd.csproj" />
     <Project Path="tests/ServiceDeskLite.Tests.Infrastructure.InMemory/ServiceDeskLite.Tests.Infrastructure.InMemory.csproj" />
   </Folder>
 </Solution>
