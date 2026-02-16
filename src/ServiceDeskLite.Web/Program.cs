@@ -1,3 +1,5 @@
+using ServiceDeskLite.Infrastructure.InMemory.DependencyInjection;
+using ServiceDeskLite.Infrastructure.Persistence.DependencyInjection;
 using ServiceDeskLite.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -5,6 +7,22 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+var provider = builder.Configuration["Persistence:Provider"] ?? "Sqlite";
+
+switch (provider)
+{
+    case "InMemory":
+        builder.Services.AddInfrastructureInMemory();
+        break;
+
+    case "Sqlite":
+        builder.Services.AddInfrastructure(builder.Configuration);
+        break;
+
+    default:
+        throw new InvalidOperationException($"Unknown persistence provider: '{provider}'.");
+}
 
 var app = builder.Build();
 

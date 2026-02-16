@@ -2,10 +2,13 @@
   <Folder Name="/src/">
     <Project Path="src/ServiceDeskLite.Application/ServiceDeskLite.Application.csproj" />
     <Project Path="src/ServiceDeskLite.Domain/ServiceDeskLite.Domain.csproj" />
+    <Project Path="src/ServiceDeskLite.Infrastructure.InMemory/ServiceDeskLite.Infrastructure.InMemory.csproj" />
+    <Project Path="src/ServiceDeskLite.Infrastructure/ServiceDeskLite.Infrastructure.csproj" />
     <Project Path="src/ServiceDeskLite.Web/ServiceDeskLite.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ServiceDeskLite.Tests.Application/ServiceDeskLite.Tests.Application.csproj" />
     <Project Path="tests/ServiceDeskLite.Tests.Domain/ServiceDeskLite.Tests.Domain.csproj" />
+    <Project Path="tests/ServiceDeskLite.Tests.Infrastructure.InMemory/ServiceDeskLite.Tests.Infrastructure.InMemory.csproj" />
   </Folder>
 </Solution>

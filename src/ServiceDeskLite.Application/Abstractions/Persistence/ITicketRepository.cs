@@ -8,8 +8,10 @@ public interface ITicketRepository
     Task AddAsync(Ticket ticket,  CancellationToken ct = default);
     
     Task<Ticket?> GetByIdAsync(TicketId id, CancellationToken ct = default);
+
+    Task<bool> ExistsAsync(TicketId id, CancellationToken ct = default);
     
-    Task<PagedResult<TicketListItemDto>> SearchAsync(
+    Task<PagedResult<Ticket>> SearchAsync(
         TicketSearchCriteria criteria,
         Paging paging,
         SortSpec sort,

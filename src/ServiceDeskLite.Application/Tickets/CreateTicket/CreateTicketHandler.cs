@@ -56,5 +56,9 @@ public sealed class CreateTicketHandler
         {
             return  Result<CreateTicketResult>.Failure(DomainExceptionMapper.ToApplicationError(ex));
         }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return Result<CreateTicketResult>.Failure(PersistenceExceptionMapper.ToApplicationError(ex));
+        }
     }
 }

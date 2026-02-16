@@ -4,8 +4,8 @@ namespace ServiceDeskLite.Application.Tickets.Shared;
 
 public sealed record TicketSearchCriteria(
     string? Text = null,
-    TicketStatus? Status = null,
-    TicketPriority? Priority = null,
+    IReadOnlyCollection<TicketStatus>? Statuses = null,
+    IReadOnlyCollection<TicketPriority>? Priorities = null,
     DateTimeOffset? CreatedFrom = null,
     DateTimeOffset? CreatedTo = null,
     DateTimeOffset? DueFrom = null,
