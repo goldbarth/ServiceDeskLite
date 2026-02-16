@@ -52,7 +52,10 @@ public class SearchTicketsHandlerTests
         public Task<Ticket?> GetByIdAsync(TicketId id, CancellationToken ct = default)
             => Task.FromResult<Ticket?>(null);
 
-        public Task<PagedResult<TicketListItemDto>> SearchAsync(
+        public Task<bool> ExistsAsync(TicketId id, CancellationToken ct)
+            => Task.FromResult(false);
+
+        public Task<PagedResult<Ticket>> SearchAsync(
             TicketSearchCriteria criteria, 
             Paging paging, 
             SortSpec sort, 
@@ -61,7 +64,7 @@ public class SearchTicketsHandlerTests
             LastPaging = paging;
             LastSort = sort;
 
-            return Task.FromResult(new PagedResult<TicketListItemDto>(
+            return Task.FromResult(new PagedResult<Ticket>(
                 Items: [],
                 TotalCount: 0,
                 Paging: paging));

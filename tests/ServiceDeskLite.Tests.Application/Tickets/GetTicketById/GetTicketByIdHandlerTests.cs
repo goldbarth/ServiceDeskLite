@@ -56,12 +56,15 @@ public class GetTicketByIdHandlerTests
         public Task<Ticket?> GetByIdAsync(TicketId id, CancellationToken ct = default)
             => Task.FromResult(_ticket is not null && _ticket.Id.Equals(id) ? _ticket : null);
 
-        public Task<PagedResult<TicketListItemDto>> SearchAsync(
+        public Task<bool> ExistsAsync(TicketId id, CancellationToken ct)
+            => Task.FromResult(false);
+
+        public Task<PagedResult<Ticket>> SearchAsync(
             TicketSearchCriteria criteria,
             Paging paging,
             SortSpec sort,
             CancellationToken ct = default)
-            => Task.FromResult(new PagedResult<TicketListItemDto>(
+            => Task.FromResult(new PagedResult<Ticket>(
                 Items: [],
                 TotalCount: 0,
                 Paging: paging));
