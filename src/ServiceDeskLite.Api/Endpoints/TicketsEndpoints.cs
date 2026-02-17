@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
 using ServiceDeskLite.Api.Contracts.Tickets;
+using ServiceDeskLite.Api.Http.ProblemDetails;
 using ServiceDeskLite.Api.Mapping;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
@@ -45,8 +46,10 @@ public static class TicketsEndpoints
     }
 
     private static async Task<IResult> CreateTicketAsync(
+        HttpContext ctx,
         [FromBody] CreateTicketRequest request,
         CreateTicketHandler handler,
+        ResultToProblemDetailsMapper mapper,
         CancellationToken ct)
     {
         var cmd = new CreateTicketCommand(
@@ -55,32 +58,36 @@ public static class TicketsEndpoints
             Priority: request.Priority,
             CreatedAt: DateTimeOffset.UtcNow,
             DueAt: request.DueAt);
-        
+
         var result = await handler.HandleAsync(cmd, ct);
 
-        return result.ToHttpResult(success =>
+        return result.ToHttpResult(ctx, mapper, success =>
         {
             var id = success.Id.Value;
             var body = new CreateTicketResponse(id);
-
             return Results.Created($"/api/v1/tickets/{id}", body);
         });
     }
+
     
     private static async Task<IResult> GetTicketByIdAsync(
+        HttpContext ctx,
         Guid id,
         GetTicketByIdHandler handler,
+        ResultToProblemDetailsMapper mapper,
         CancellationToken ct)
     {
         var query = new GetTicketByIdQuery(new TicketId(id));
         var result = await handler.HandleAsync(query, ct);
-        
-        return result.ToHttpResult(dto => Results.Ok(dto.ToResponse()));
+
+        return result.ToHttpResult(ctx, mapper, dto => Results.Ok(dto.ToResponse()));
     }
 
     private static async Task<IResult> SearchTicketsAsync(
+        HttpContext ctx,
         [AsParameters] SearchTicketsRequest request,
         SearchTicketsHandler handler,
+        ResultToProblemDetailsMapper mapper,
         CancellationToken ct)
     {
         Paging? paging = null;
@@ -94,25 +101,26 @@ public static class TicketsEndpoints
                 Direction: request.Direction ?? SortSpec.Default.Direction);
 
         var query = new SearchTicketsQuery(
-            Criteria: null,  // v1 minimal; später ggf. Filter-DTO → TicketSearchCriteria
+            Criteria: null, // v1 minimal; later, if necessary, filter DTO → TicketSearchCriteria
             Paging: paging,
             Sort: sort);
 
         var result = await handler.HandleAsync(query, ct);
-        return result.ToHttpResult(success =>
+
+        return result.ToHttpResult(ctx, mapper, success =>
         {
             var page = success.Page;
 
             var items = page.Items
                 .Select(t => t.ToListItemResponse())
                 .ToList();
-            
+
             var response = new PagedResponse<TicketListItemResponse>(
                 Items: items,
                 Page: page.Paging.Page,
                 PageSize: page.Paging.PageSize,
                 TotalCount: page.TotalCount);
-            
+
             return Results.Ok(response);
         });
     }

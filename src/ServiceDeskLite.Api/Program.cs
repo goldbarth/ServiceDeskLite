@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+
 using ServiceDeskLite.Api.Composition;
 using ServiceDeskLite.Api.Endpoints;
 using ServiceDeskLite.Application.DependencyInjection;
@@ -12,6 +13,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 builder.Services
     .AddApiDocumentation()                          // OpenAPI
+    .AddApiErrorHandling()                          // ErrorHandling + ProblemDetails + Mapper
     .AddApplication()                               // Application Layer
     .AddApiInfrastructure(builder.Configuration);   // Infrastructure Provider Switch
 
@@ -21,6 +23,7 @@ var app = builder.Build();
 
 app.UseApiDocumentation();
 
+app.UseApiErrorHandling();
 app.UseHttpsRedirection();
 
 // ─────────── Endpoints ────────────
