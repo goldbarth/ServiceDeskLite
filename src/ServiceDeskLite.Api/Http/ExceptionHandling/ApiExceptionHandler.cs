@@ -65,6 +65,7 @@ public sealed class ApiExceptionHandler : IExceptionHandler
         => error.Type switch
         {
             ErrorType.Validation => (StatusCodes.Status400BadRequest, ApiProblemDetailsConventions.Titles.Validation),
+            ErrorType.DomainViolation => (StatusCodes.Status400BadRequest, ApiProblemDetailsConventions.Titles.Validation),
             ErrorType.NotFound => (StatusCodes.Status404NotFound, ApiProblemDetailsConventions.Titles.NotFound),
             ErrorType.Conflict => (StatusCodes.Status409Conflict, ApiProblemDetailsConventions.Titles.Conflict),
             _ => (StatusCodes.Status500InternalServerError, ApiProblemDetailsConventions.Titles.Unexpected),

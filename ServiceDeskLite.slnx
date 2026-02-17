@@ -8,6 +8,7 @@
     <Project Path="src/ServiceDeskLite.Web/ServiceDeskLite.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/ServiceDeskLite.Tests.Api/ServiceDeskLite.Tests.Api.csproj" />
     <Project Path="tests/ServiceDeskLite.Tests.Application/ServiceDeskLite.Tests.Application.csproj" />
     <Project Path="tests/ServiceDeskLite.Tests.Domain/ServiceDeskLite.Tests.Domain.csproj" />
     <Project Path="tests/ServiceDeskLite.Tests.EndToEnd/ServiceDeskLite.Tests.EndToEnd.csproj" />
