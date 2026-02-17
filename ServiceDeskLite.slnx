@@ -14,5 +14,6 @@
     <Project Path="tests/ServiceDeskLite.Tests.Domain/ServiceDeskLite.Tests.Domain.csproj" />
     <Project Path="tests/ServiceDeskLite.Tests.EndToEnd/ServiceDeskLite.Tests.EndToEnd.csproj" />
     <Project Path="tests/ServiceDeskLite.Tests.Infrastructure.InMemory/ServiceDeskLite.Tests.Infrastructure.InMemory.csproj" />
+    <Project Path="tests/ServiceDeskLite.Tests.Web/ServiceDeskLite.Tests.Web.csproj" />
   </Folder>
 </Solution>

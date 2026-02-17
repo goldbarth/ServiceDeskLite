@@ -18,6 +18,15 @@ Log.Logger = new LoggerConfiguration()
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseSerilog((ctx, services, cfg) =>
+{
+    cfg
+        .Enrich.FromLogContext()
+        .Enrich.WithMachineName()
+        .Enrich.WithThreadId()
+        .WriteTo.Console();
+});
+
 // ──────────── Services ────────────
 
 builder.Services.ConfigureHttpJsonOptions(options =>
