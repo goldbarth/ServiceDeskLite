@@ -1,0 +1,29 @@
+﻿@page "/Tickets"
+@using ServiceDeskLite.Contracts.V1.Common
+@using ServiceDeskLite.Contracts.V1.Tickets
+@using ServiceDeskLite.Web.Api.V1
+<h3>Tickets</h3>
+
+@code {
+    private TicketsPageState.TicketsState? _state;
+    private ITicketsApiClient _client;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        _state = new TicketsPageState.LoadingState();
+
+        var result = await _client.SearchAsync(new SearchTicketsRequest
+        {
+            Page = 1,
+            PageSize = 25,
+            Sort = TicketSortField.CreatedAt,
+            Direction = SortDirection.Desc
+        });
+
+        _state = result.IsSuccess
+            ? result.Value!.Items.Count == 0
+                ? new TicketsPageState.EmptyState()
+                : new TicketsPageState.LoadedState(result.Value!)
+            : new TicketsPageState.ErrorState(result.Error!);
+    }
+}

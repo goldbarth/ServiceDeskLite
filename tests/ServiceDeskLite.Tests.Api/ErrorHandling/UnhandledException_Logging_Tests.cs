@@ -41,10 +41,20 @@ public sealed class UnhandledException_Logging_Tests
         var response = await client.GetAsync("/_test/throw");
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
 
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (baseFactory.Sink.Events.Any(e =>
+                    e.Level == LogEventLevel.Error &&
+                    e.RenderMessage().Contains("Unhandled exception.")))
+                break;
+
+            await Task.Delay(50);
+        }
+
         baseFactory.Sink.Events.Should()
             .Contain(e =>
                 e.Level == LogEventLevel.Error &&
-                e.RenderMessage()
-                    .Contains("Unhandled exception."));
+                e.RenderMessage().Contains("Unhandled exception."));
     }
 }

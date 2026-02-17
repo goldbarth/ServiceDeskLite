@@ -29,6 +29,15 @@ builder.Services
     .AddApplication()                               // Application Layer
     .AddApiInfrastructure(builder.Configuration);   // Infrastructure Provider Switch
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("WebDev",
+        p => p
+            .WithOrigins("https://localhost:7023")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 var app = builder.Build();
 
 // ─────────── Middleware ───────────
@@ -39,6 +48,8 @@ app.UseApiDocumentation();
 
 app.UseApiErrorHandling();
 app.UseHttpsRedirection();
+
+app.UseCors("WebDev");
 
 // ─────────── Endpoints ────────────
 
