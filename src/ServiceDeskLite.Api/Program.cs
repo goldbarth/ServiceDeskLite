@@ -1,8 +1,20 @@
 using System.Text.Json.Serialization;
+using Serilog;
 
 using ServiceDeskLite.Api.Composition;
 using ServiceDeskLite.Api.Endpoints;
 using ServiceDeskLite.Application.DependencyInjection;
+
+// ──────────── Logging ────────────
+
+Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
+    .Enrich.WithMachineName()
+    .Enrich.WithThreadId()
+    .WriteTo.Console()
+    .CreateLogger();
+
+// ──────────── Builder ────────────
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +33,8 @@ var app = builder.Build();
 
 // ─────────── Middleware ───────────
 
+app.UseSerilogRequestLogging();
+
 app.UseApiDocumentation();
 
 app.UseApiErrorHandling();
@@ -35,3 +49,6 @@ api.MapGroup("/tickets")
     .MapTicketsEndpoints();
 
 app.Run();
+
+
+public partial class Program { }
