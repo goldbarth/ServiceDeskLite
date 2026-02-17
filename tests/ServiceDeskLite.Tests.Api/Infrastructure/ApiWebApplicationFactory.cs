@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Logging;
+
 using Serilog;
 
 namespace ServiceDeskLite.Tests.Api.Infrastructure;
@@ -8,19 +10,25 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>
 {
     public InMemorySink Sink { get; } = new();
 
-    protected override IHost CreateHost(IHostBuilder builder)
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Production");
-        
-        // Override Serilog for the test host + add capture sink
-        builder.UseSerilog((ctx, services, cfg) =>
+
+        builder.ConfigureLogging(logging =>
         {
-            cfg
-                .Enrich.FromLogContext()
-                .WriteTo.Console()
-                .WriteTo.Sink(Sink);
+            logging.ClearProviders();
         });
-        
-        return base.CreateHost(builder);
+
+        builder.ConfigureServices(services =>
+        {
+            services.AddSerilog(cfg =>
+            {
+                cfg
+                    .MinimumLevel.Debug()
+                    .Enrich.FromLogContext()
+                    .WriteTo.Console()
+                    .WriteTo.Sink(Sink);
+            });
+        });
     }
 }
