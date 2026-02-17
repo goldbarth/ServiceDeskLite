@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 
 using Serilog;
 
@@ -13,15 +14,15 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Production");
 
-        builder.ConfigureServices(services =>
+        builder.ConfigureTestServices(services =>
         {
-            services.AddSerilog(cfg =>
-            {
-                cfg
-                    .MinimumLevel.Debug()
-                    .Enrich.FromLogContext()
-                    .WriteTo.Sink(Sink);
-            });
+            var logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .Enrich.FromLogContext()
+                .WriteTo.Sink(Sink)
+                .CreateLogger();
+
+            services.AddSerilog(logger, dispose: true);
         });
     }
 }
