@@ -1,0 +1,19 @@
+@ServiceDeskLite.Api_HostAddress = http://localhost:5181
+
+### Create Ticket
+POST http://localhost:5181/api/v1/tickets
+Content-Type: application/json
+
+{
+    "title": "API smoke test",
+    "description": "Created via http file",
+    "priority": "High",
+    "dueAt": null
+}
+
+### Get unknown ticket -> should be 404
+GET http://localhost:5181/api/v1/tickets/00000000-0000-0000-0000-000000000001
+
+### Search invalid paging -> should be 400
+GET http://localhost:5181/api/v1/tickets?page=0&pageSize=25
+
