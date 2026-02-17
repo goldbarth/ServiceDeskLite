@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\ServiceDeskLite.Application\ServiceDeskLite.Application.csproj" />
+        <ProjectReference Include="..\ServiceDeskLite.Contracts\ServiceDeskLite.Contracts.csproj" />
         <ProjectReference Include="..\ServiceDeskLite.Domain\ServiceDeskLite.Domain.csproj" />
         <ProjectReference Include="..\ServiceDeskLite.Infrastructure\ServiceDeskLite.Infrastructure.csproj" />
         <ProjectReference Include="..\ServiceDeskLite.Infrastructure.InMemory\ServiceDeskLite.Infrastructure.InMemory.csproj" />
@@ -23,6 +24,10 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ServiceDeskLite.Application\ServiceDeskLite.Application.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Contracts\Tickets\" />
     </ItemGroup>
 
 </Project>

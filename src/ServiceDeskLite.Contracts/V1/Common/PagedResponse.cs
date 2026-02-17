@@ -1,4 +1,4 @@
-﻿namespace ServiceDeskLite.Api.Contracts.Tickets;
+﻿namespace ServiceDeskLite.Contracts.V1.Common;
 
 public sealed record PagedResponse<T>(
     IReadOnlyList<T> Items,

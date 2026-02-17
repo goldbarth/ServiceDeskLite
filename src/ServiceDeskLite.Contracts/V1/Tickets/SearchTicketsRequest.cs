@@ -1,6 +1,6 @@
-﻿using ServiceDeskLite.Application.Tickets.Shared;
+﻿using ServiceDeskLite.Contracts.V1.Common;
 
-namespace ServiceDeskLite.Api.Contracts.Tickets;
+namespace ServiceDeskLite.Contracts.V1.Tickets;
 
 public sealed record SearchTicketsRequest(
     int Page = 1,

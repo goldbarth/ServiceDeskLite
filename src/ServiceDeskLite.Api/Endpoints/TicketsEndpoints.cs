@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-using ServiceDeskLite.Api.Contracts.Tickets;
 using ServiceDeskLite.Api.Http.ProblemDetails;
 using ServiceDeskLite.Api.Mapping;
+using ServiceDeskLite.Api.Mapping.Tickets;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
 using ServiceDeskLite.Application.Tickets.SearchTickets;
-using ServiceDeskLite.Application.Tickets.Shared;
+using ServiceDeskLite.Contracts.V1.Common;
+using ServiceDeskLite.Contracts.V1.Tickets;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Api.Endpoints;
@@ -55,7 +56,7 @@ public static class TicketsEndpoints
         var cmd = new CreateTicketCommand(
             Title: request.Title,
             Description: request.Description,
-            Priority: request.Priority,
+            Priority: request.Priority.ToDomain(),
             CreatedAt: DateTimeOffset.UtcNow,
             DueAt: request.DueAt);
 
@@ -90,38 +91,14 @@ public static class TicketsEndpoints
         ResultToProblemDetailsMapper mapper,
         CancellationToken ct)
     {
-        Paging? paging = null;
-        if (request.Page != Paging.Default.Page || request.PageSize != Paging.Default.PageSize)
-            paging = new Paging(request.Page, request.PageSize);
-
-        SortSpec? sort = null;
-        if (request.Sort is not null || request.Direction is not null)
-            sort = new SortSpec(
-                Field: request.Sort ?? SortSpec.Default.Field,
-                Direction: request.Direction ?? SortSpec.Default.Direction);
-
         var query = new SearchTicketsQuery(
-            Criteria: null, // v1 minimal; later, if necessary, filter DTO → TicketSearchCriteria
-            Paging: paging,
-            Sort: sort);
+            Criteria: null,
+            Paging: request.ToPaging(),
+            Sort: request.ToSort());
 
         var result = await handler.HandleAsync(query, ct);
 
         return result.ToHttpResult(ctx, mapper, success =>
-        {
-            var page = success.Page;
-
-            var items = page.Items
-                .Select(t => t.ToListItemResponse())
-                .ToList();
-
-            var response = new PagedResponse<TicketListItemResponse>(
-                Items: items,
-                Page: page.Paging.Page,
-                PageSize: page.Paging.PageSize,
-                TotalCount: page.TotalCount);
-
-            return Results.Ok(response);
-        });
+            Results.Ok(success.Page.ToPagedResponse()));
     }
 }

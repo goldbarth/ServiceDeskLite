@@ -1,11 +1,11 @@
-﻿namespace ServiceDeskLite.Api.Contracts.Tickets;
+﻿namespace ServiceDeskLite.Contracts.V1.Tickets;
 
-public sealed record TicketResponse(
+public sealed record TicketListItemResponse(
     Guid Id,
     string Title,
-    string Description,
     string Priority,
     string Status,
     DateTimeOffset CreatedAt,
     DateTimeOffset? DueAt
     );
+

@@ -1,8 +1,8 @@
-﻿using ServiceDeskLite.Api.Contracts.Tickets;
-using ServiceDeskLite.Application.Tickets.GetTicketById;
+﻿using ServiceDeskLite.Application.Tickets.GetTicketById;
+using ServiceDeskLite.Contracts.V1.Tickets;
 using ServiceDeskLite.Domain.Tickets;
 
-namespace ServiceDeskLite.Api.Mapping;
+namespace ServiceDeskLite.Api.Mapping.Tickets;
 
 public static class TicketsMapping
 {

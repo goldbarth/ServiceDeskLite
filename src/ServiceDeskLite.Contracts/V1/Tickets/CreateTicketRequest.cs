@@ -1,6 +1,4 @@
-﻿using ServiceDeskLite.Domain.Tickets;
-
-namespace ServiceDeskLite.Api.Contracts.Tickets;
+﻿namespace ServiceDeskLite.Contracts.V1.Tickets;
 
 public sealed record CreateTicketRequest(
     string Title,

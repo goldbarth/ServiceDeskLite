@@ -1,5 +1,6 @@
 ﻿using ServiceDeskLite.Api.Http.Observability;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Contracts.V1.Common;
 
 namespace ServiceDeskLite.Api.Http.ProblemDetails;
 
@@ -20,14 +21,14 @@ public sealed class ApiProblemDetailsFactory
             Instance = ctx.Request.Path,
             Extensions =
             {
-                [ApiProblemDetailsConventions.ExtensionKeys.Code] = error.Code,
-                [ApiProblemDetailsConventions.ExtensionKeys.ErrorType] = error.Type.ToString(),
-                [ApiProblemDetailsConventions.ExtensionKeys.TraceId] = Correlation.GetTraceId(ctx)
+                [ContractsProblemDetailsConventions.ExtensionKeys.Code] = error.Code,
+                [ContractsProblemDetailsConventions.ExtensionKeys.ErrorType] = error.Type.ToString(),
+                [ContractsProblemDetailsConventions.ExtensionKeys.TraceId] = Correlation.GetTraceId(ctx)
             }
         };
 
         if (error.Meta is not null && error.Meta.Count > 0)
-            pd.Extensions[ApiProblemDetailsConventions.ExtensionKeys.Meta] = error.Meta;
+            pd.Extensions[ContractsProblemDetailsConventions.ExtensionKeys.Meta] = error.Meta;
 
         return pd;
     }

@@ -646,6 +646,7 @@
           "Serilog.Enrichers.Thread": "[4.0.0, )",
           "Serilog.Sinks.Console": "[6.1.1, )",
           "ServiceDeskLite.Application": "[1.0.0, )",
+          "ServiceDeskLite.Contracts": "[1.0.0, )",
           "ServiceDeskLite.Domain": "[1.0.0, )",
           "ServiceDeskLite.Infrastructure": "[1.0.0, )",
           "ServiceDeskLite.Infrastructure.InMemory": "[1.0.0, )"
@@ -656,6 +657,12 @@
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.3, )",
           "ServiceDeskLite.Domain": "[1.0.0, )"
+        }
+      },
+      "servicedesklite.contracts": {
+        "type": "Project",
+        "dependencies": {
+          "ServiceDeskLite.Application": "[1.0.0, )"
         }
       },
       "servicedesklite.domain": {
