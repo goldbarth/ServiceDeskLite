@@ -118,7 +118,7 @@ public sealed class DuplicateDetectionTests
         {
             var searchHandler = scope.ServiceProvider.GetRequiredService<SearchTicketsHandler>();
             var result = await searchHandler.HandleAsync(
-                new SearchTicketsQuery(new TicketSearchCriteria(), new Paging()));
+                new SearchTicketsQuery(new TicketSearchCriteria(), Paging.Default));
 
             result.IsSuccess.Should().BeTrue();
             result.Value!.Page.TotalCount.Should().Be(1,

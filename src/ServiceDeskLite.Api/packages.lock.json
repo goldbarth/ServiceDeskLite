@@ -209,10 +209,7 @@
         }
       },
       "servicedesklite.contracts": {
-        "type": "Project",
-        "dependencies": {
-          "ServiceDeskLite.Application": "[1.0.0, )"
-        }
+        "type": "Project"
       },
       "servicedesklite.domain": {
         "type": "Project"

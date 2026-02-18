@@ -37,7 +37,7 @@ public sealed class DeterministicPagingSortingTests
         {
             var searchHandler = scope.ServiceProvider.GetRequiredService<SearchTicketsHandler>();
             var result = await searchHandler.HandleAsync(
-                new SearchTicketsQuery(new TicketSearchCriteria(), new Paging()));
+                new SearchTicketsQuery(new TicketSearchCriteria(), Paging.Default));
 
             result.IsSuccess.Should().BeTrue();
             var items = result.Value!.Page.Items;

@@ -10,12 +10,12 @@ namespace ServiceDeskLite.Tests.Application.Tickets.SearchTickets;
 public class SearchTicketsHandlerTests
 {
     [Fact]
-    public async Task Defaults_are_applied_when_paging_and_sort_are_null()
+    public async Task Default_sort_is_applied_when_sort_is_null()
     {
         var repo = new FakeTicketRepository();
         var handler = new SearchTicketsHandler(repo);
 
-        var query = new SearchTicketsQuery(Criteria: new TicketSearchCriteria(Text: "abc"), new Paging());
+        var query = new SearchTicketsQuery(Criteria: new TicketSearchCriteria(Text: "abc"), Paging.Default);
         var result = await handler.HandleAsync(query);
         
         result.IsSuccess.Should().BeTrue();
