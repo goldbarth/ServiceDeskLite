@@ -5,19 +5,19 @@
 <h3>Tickets</h3>
 
 @code {
+    [Inject] public required ITicketsApiClient Client { get; set; }
     private TicketsPageState.TicketsState? _state;
-    private ITicketsApiClient _client;
     
     protected override async Task OnInitializedAsync()
     {
         _state = new TicketsPageState.LoadingState();
 
-        var result = await _client.SearchAsync(new SearchTicketsRequest
+        var result = await Client.SearchAsync(new SearchTicketsRequest
         {
             Page = 1,
             PageSize = 25,
-            Sort = TicketSortField.CreatedAt,
-            Direction = SortDirection.Desc
+            SortField = TicketSortField.CreatedAt,
+            SortDirection = SortDirection.Desc
         });
 
         _state = result.IsSuccess
