@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
 using ServiceDeskLite.Api.Http.ProblemDetails;
-using ServiceDeskLite.Api.Mapping;
 using ServiceDeskLite.Api.Mapping.Tickets;
+using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
 using ServiceDeskLite.Application.Tickets.SearchTickets;
+using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Contracts.V1.Common;
 using ServiceDeskLite.Contracts.V1.Tickets;
 using ServiceDeskLite.Domain.Tickets;
@@ -91,8 +92,14 @@ public static class TicketsEndpoints
         ResultToProblemDetailsMapper mapper,
         CancellationToken ct)
     {
+        if (request.Page < PagingPolicy.MinPage)
+            return Results.BadRequest($"page must be >= {PagingPolicy.MinPage}");
+
+        if (request.PageSize is < PagingPolicy.MinPageSize or > PagingPolicy.MaxPageSize)
+            return Results.BadRequest($"pageSize must be between {PagingPolicy.MinPageSize} and {PagingPolicy.MaxPageSize}");
+        
         var query = new SearchTicketsQuery(
-            Criteria: null,
+            Criteria: TicketSearchCriteria.Empty,
             Paging: request.ToPaging(),
             Sort: request.ToSort());
 

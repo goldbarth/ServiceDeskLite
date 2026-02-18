@@ -7,13 +7,8 @@ namespace ServiceDeskLite.Api.Mapping.Tickets;
 
 internal static class SearchTicketsMapping
 {
-    public static Paging? ToPaging(this SearchTicketsRequest request)
-    {
-        if (request.Page == Paging.Default.Page && request.PageSize == Paging.Default.PageSize)
-            return null;
-
-        return new Paging(request.Page, request.PageSize);
-    }
+    public static Paging ToPaging(this SearchTicketsRequest request)
+        => new(request.Page, request.PageSize);
 
     public static SortSpec? ToSort(this SearchTicketsRequest request)
     {
