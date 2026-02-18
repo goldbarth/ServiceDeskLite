@@ -36,8 +36,8 @@ public sealed class TicketsApiClient : ITicketsApiClient
             {
                 ["page"] = request.Page.ToString(),
                 ["pageSize"] = request.PageSize.ToString(),
-                ["sortField"] = request.Sort.ToString(),
-                ["sortDirection"] = request.Direction.ToString()
+                ["sortField"] = request.SortField.ToString(),
+                ["sortDirection"] = request.SortDirection.ToString()
             });
 
         var httpRequest = new HttpRequestMessage(HttpMethod.Get, url);

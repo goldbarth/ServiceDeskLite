@@ -12,12 +12,12 @@ internal static class SearchTicketsMapping
 
     public static SortSpec? ToSort(this SearchTicketsRequest request)
     {
-        if (request.Sort is null && request.Direction is null)
+        if (request.SortField is null && request.SortDirection is null)
             return null;
 
         return new SortSpec(
-            Field: request.Sort?.ToApplication() ?? SortSpec.Default.Field,
-            Direction: request.Direction?.ToApplication() ?? SortSpec.Default.Direction);
+            Field: request.SortField?.ToApplication() ?? SortSpec.Default.Field,
+            Direction: request.SortDirection?.ToApplication() ?? SortSpec.Default.Direction);
     }
 
     public static PagedResponse<TicketListItemResponse> ToPagedResponse(this PagedResult<Ticket> page)
