@@ -92,11 +92,16 @@ public static class TicketsEndpoints
         ResultToProblemDetailsMapper mapper,
         CancellationToken ct)
     {
+        var errors = new Dictionary<string, string[]>();
+
         if (request.Page < PagingPolicy.MinPage)
-            return Results.BadRequest($"page must be >= {PagingPolicy.MinPage}");
+            errors["page"] = [$"must be >= {PagingPolicy.MinPage}"];
 
         if (request.PageSize is < PagingPolicy.MinPageSize or > PagingPolicy.MaxPageSize)
-            return Results.BadRequest($"pageSize must be between {PagingPolicy.MinPageSize} and {PagingPolicy.MaxPageSize}");
+            errors["pageSize"] = [$"must be between {PagingPolicy.MinPageSize} and {PagingPolicy.MaxPageSize}"];
+
+        if (errors.Count > 0)
+            return Results.ValidationProblem(errors);
         
         var query = new SearchTicketsQuery(
             Criteria: TicketSearchCriteria.Empty,
