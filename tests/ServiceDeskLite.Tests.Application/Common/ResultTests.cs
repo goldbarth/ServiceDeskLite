@@ -1,7 +1,8 @@
-﻿using ServiceDeskLite.Application.Common;
-using FluentAssertions;
+﻿using FluentAssertions;
 
-namespace ServiceDeskLite.Tests.Application;
+using ServiceDeskLite.Application.Common;
+
+namespace ServiceDeskLite.Tests.Application.Common;
 
 public class ResultTests
 {
