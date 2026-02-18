@@ -5,9 +5,5 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\ServiceDeskLite.Application\ServiceDeskLite.Application.csproj" />
-    </ItemGroup>
-
+    
 </Project>
