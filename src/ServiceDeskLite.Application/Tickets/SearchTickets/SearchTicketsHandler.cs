@@ -24,7 +24,7 @@ public class SearchTicketsHandler
 
         // Defensive defaults
         var criteria = query.Criteria ?? new TicketSearchCriteria();
-        var paging = query.Paging ?? Paging.Default;
+        var paging = query.Paging;
         var sort =  query.Sort ?? SortSpec.Default;
         
         // Transport-Validation

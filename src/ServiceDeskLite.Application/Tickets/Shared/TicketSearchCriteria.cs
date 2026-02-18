@@ -9,4 +9,7 @@ public sealed record TicketSearchCriteria(
     DateTimeOffset? CreatedFrom = null,
     DateTimeOffset? CreatedTo = null,
     DateTimeOffset? DueFrom = null,
-    DateTimeOffset? DueTo = null);
+    DateTimeOffset? DueTo = null)
+{
+    public static readonly TicketSearchCriteria Empty = new();
+}

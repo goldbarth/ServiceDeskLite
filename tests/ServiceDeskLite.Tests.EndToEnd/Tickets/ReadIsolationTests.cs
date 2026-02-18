@@ -32,7 +32,7 @@ public sealed class ReadIsolationTests
             // (important for InMemory staging isolation)
             var searchHandler = scope.ServiceProvider.GetRequiredService<SearchTicketsHandler>();
             var result = await searchHandler.HandleAsync(
-                new SearchTicketsQuery(new TicketSearchCriteria()));
+                new SearchTicketsQuery(new TicketSearchCriteria(), new Paging()));
 
             result.IsSuccess.Should().BeTrue();
             result.Value!.Page.TotalCount.Should().Be(0,
@@ -64,7 +64,7 @@ public sealed class ReadIsolationTests
         {
             var searchHandler = scope.ServiceProvider.GetRequiredService<SearchTicketsHandler>();
             var result = await searchHandler.HandleAsync(
-                new SearchTicketsQuery(new TicketSearchCriteria()));
+                new SearchTicketsQuery(new TicketSearchCriteria(),  new Paging()));
 
             result.IsSuccess.Should().BeTrue();
             result.Value!.Page.TotalCount.Should().Be(1);

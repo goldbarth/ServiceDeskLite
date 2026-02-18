@@ -15,7 +15,7 @@ public class SearchTicketsHandlerTests
         var repo = new FakeTicketRepository();
         var handler = new SearchTicketsHandler(repo);
 
-        var query = new SearchTicketsQuery(Criteria: new TicketSearchCriteria(Text: "abc"));
+        var query = new SearchTicketsQuery(Criteria: new TicketSearchCriteria(Text: "abc"), new Paging());
         var result = await handler.HandleAsync(query);
         
         result.IsSuccess.Should().BeTrue();
