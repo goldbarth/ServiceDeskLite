@@ -2,7 +2,7 @@
 using ServiceDeskLite.Contracts.V1.Tickets;
 using ServiceDeskLite.Web.Api.V1;
 
-namespace ServiceDeskLite.Web.Pages.Tickets;
+namespace ServiceDeskLite.Web.Features.Tickets.Pages;
 
 public sealed class TicketsPageState
 {

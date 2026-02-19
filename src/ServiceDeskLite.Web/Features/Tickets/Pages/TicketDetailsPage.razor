@@ -1,0 +1,61 @@
+﻿@page "/tickets/{Id:guid}"
+@using MudBlazor
+
+<PageTitle>Ticket Details</PageTitle>
+
+@if (_isLoading)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else if (_error is not null)
+{
+    <AppErrorPanel Error="_error" />
+}
+else if (_ticket is null)
+{
+    <MudText>Ticket nicht gefunden.</MudText>
+}
+else
+{
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h5">@_ticket.Title</MudText>
+
+        <MudText>Status: @_ticket.Status</MudText>
+        <MudText>Priority: @_ticket.Priority</MudText>
+        <MudText>Created: @_ticket.CreatedAt.ToString("u")</MudText>
+        <MudText>
+            Due:
+            @(_ticket.DueAt is null ? "-" : _ticket.DueAt.Value.ToString("u"))
+        </MudText>
+    </MudPaper>
+}
+
+@code {
+    [Inject] ITicketsApiClient TicketsApi { get; set; } = default!;
+    
+    [Parameter] public Guid Id { get; set; }
+
+    private bool _isLoading;
+    private ApiError? _error;
+    private TicketResponse? _ticket;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _isLoading = true;
+        _error = null;
+        _ticket = null;
+
+        var result = await TicketsApi.GetByIdAsync(Id);
+
+        if (result.IsSuccess)
+        {
+            _ticket = result.Value;
+        }
+        else
+        {
+            _error = result.Error;
+        }
+
+        _isLoading = false;
+    }
+}

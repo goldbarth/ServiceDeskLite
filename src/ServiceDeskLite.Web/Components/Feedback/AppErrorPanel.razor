@@ -1,0 +1,80 @@
+﻿@using MudBlazor
+@using ServiceDeskLite.Web.Api.V1
+
+<MudPaper Class="pa-4" Elevation="1">
+    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+        <MudText Typo="Typo.h6">@_title</MudText>
+        <MudText Typo="Typo.body2">@_message</MudText>
+
+        @if (!string.IsNullOrWhiteSpace(_code) ||
+             !string.IsNullOrWhiteSpace(_errorType) ||
+             !string.IsNullOrWhiteSpace(_traceId))
+        {
+            <MudDivider Class="my-2" />
+            @if (!string.IsNullOrWhiteSpace(_code))
+            {
+                <MudText Typo="Typo.caption">Code: @_code</MudText>
+            }
+            @if (!string.IsNullOrWhiteSpace(_errorType))
+            {
+                <MudText Typo="Typo.caption">ErrorType: @_errorType</MudText>
+            }
+            @if (!string.IsNullOrWhiteSpace(_traceId))
+            {
+                <MudText Typo="Typo.caption">TraceId: @_traceId</MudText>
+            }
+        }
+
+        @if (_meta is not null && _meta.Count > 0)
+        {
+            <MudExpansionPanels Class="mt-2">
+                <MudExpansionPanel Text="Details (Meta)">
+                    <MudList T="string" Dense="true">
+                        @foreach (var kv in _meta)
+                        {
+                            <MudListItem T="string">@kv.Key: @FormatMetaValue(kv.Value)</MudListItem>
+                        }
+                    </MudList>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        }
+    </MudAlert>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public object Error { get; set; } = default!;
+
+    private string _title = "Fehler";
+    private string _message = "Ein unerwarteter Fehler ist aufgetreten.";
+    private string? _code;
+    private string? _errorType;
+    private string? _traceId;
+    private Dictionary<string, object>? _meta;
+
+    protected override void OnParametersSet()
+    {
+        if (Error is ApiError api)
+        {
+            _title = api.Title ?? "API Error";
+            _message = api.Detail ?? "Request failed.";
+            _code = api.Code;
+            _errorType = api.ErrorType;
+            _traceId = api.TraceId;
+            _meta = api.Meta;
+            return;
+        }
+
+        if (Error is Exception ex)
+        {
+            _title = "Unerwarteter Fehler";
+            _message = ex.Message;
+            _code = null;
+            _errorType = null;
+            _traceId = null;
+            _meta = null;
+        }
+    }
+
+    private static string FormatMetaValue(object? value)
+        => value is null ? "(null)" : value.ToString() ?? "(null)";
+}

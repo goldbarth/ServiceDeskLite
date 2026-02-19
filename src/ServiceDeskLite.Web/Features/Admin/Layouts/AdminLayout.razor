@@ -1,0 +1,14 @@
+﻿@using MudBlazor
+@layout MainLayout
+@inherits LayoutComponentBase
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+
+    <MudTabs Rounded="true" Class="mb-4">
+        <MudTabPanel Text="Users" Href="/admin/users" />
+        <MudTabPanel Text="Settings" Href="/admin/settings" />
+    </MudTabs>
+
+    @Body
+
+</MudContainer>

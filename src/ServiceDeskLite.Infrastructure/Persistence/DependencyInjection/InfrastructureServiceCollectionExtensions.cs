@@ -14,7 +14,7 @@ public static class InfrastructureServiceCollectionExtensions
     {
         services.AddDbContext<ServiceDeskLiteDbContext>(opt =>
             opt.UseSqlite(configuration.GetConnectionString("ServiceDeskLite")));
-
+        
         services.AddScoped<ITicketRepository, EfTicketRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         

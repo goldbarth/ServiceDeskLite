@@ -1,0 +1,152 @@
+﻿@page "/"
+@page "/tickets"
+@implements IDisposable
+
+@using MudBlazor
+
+@inject ITicketsApiClient TicketsApi
+
+<PageTitle>Tickets</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-2">Tickets</MudText>
+
+<Loadable T="PagedResponse<TicketListItemResponse>"
+          IsLoading="_isLoading"
+          Value="_paged"
+          IsEmpty="_paged is not null && _paged.Items.Count == 0"
+          Error="ErrorForLoadable">
+    <Loading>
+        <MudSkeleton Height="32px" Width="220px" Class="mb-3" />
+        <MudSkeleton Height="240px" />
+    </Loading>
+
+    <Empty>
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6">Keine Tickets</MudText>
+            <MudText Typo="Typo.body2">Es wurden keine Einträge gefunden.</MudText>
+        </MudPaper>
+    </Empty>
+
+    <ErrorContent Context="err">
+        <AppErrorPanel Error="err" />
+    </ErrorContent>
+
+    <Content Context="data">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <MudText Typo="Typo.caption">
+                @data.TotalCount Gesamt
+            </MudText>
+
+            <div class="d-flex align-items-center gap-2">
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                               Disabled="_isLoading"
+                               OnClick="ReloadAsync"
+                               Title="Reload" />
+
+                <MudSelect T="int"
+                           Dense="true"
+                           Label="Page size"
+                           Value="_pageSize"
+                           ValueChanged="OnPageSizeChangedAsync"
+                           Disabled="_isLoading"
+                           AnchorOrigin="Origin.BottomCenter">
+                    <MudSelectItem Value="10">10</MudSelectItem>
+                    <MudSelectItem Value="25">25</MudSelectItem>
+                    <MudSelectItem Value="50">50</MudSelectItem>
+                    <MudSelectItem Value="100">100</MudSelectItem>
+                </MudSelect>
+            </div>
+        </div>
+
+        <MudPaper Elevation="1" Class="pa-2">
+            <MudTable Items="data.Items"
+                      Dense="true"
+                      Hover="true"
+                      RowClick="OnRowClick">
+                <HeaderContent>
+                    <MudTh>Id</MudTh>
+                    <MudTh>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" Disabled="_isLoading"
+                                   OnClick="() => SortByAsync(TicketSortField.Title)">
+                            Titel
+                            @if (_sortField == TicketSortField.Title)
+                            {
+                                <MudIcon Icon="@SortIcon(TicketSortField.Title)" Class="ms-1" />
+                            }
+                        </MudButton>
+                    </MudTh>
+                    <MudTh>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" Disabled="_isLoading"
+                                   OnClick="() => SortByAsync(TicketSortField.Status)">
+                            Status
+                            @if (_sortField == TicketSortField.Status)
+                            {
+                                <MudIcon Icon="@SortIcon(TicketSortField.Status)" Class="ms-1" />
+                            }
+                        </MudButton>
+                    </MudTh>
+                    <MudTh>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" Disabled="_isLoading"
+                                   OnClick="() => SortByAsync(TicketSortField.Priority)">
+                            Priority
+                            @if (_sortField == TicketSortField.Priority)
+                            {
+                                <MudIcon Icon="@SortIcon(TicketSortField.Priority)" Class="ms-1" />
+                            }
+                        </MudButton>
+                    </MudTh>
+                    <MudTh>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" Disabled="_isLoading"
+                                   OnClick="() => SortByAsync(TicketSortField.DueAt)">
+                            DueAt
+                            @if (_sortField == TicketSortField.DueAt)
+                            {
+                                <MudIcon Icon="@SortIcon(TicketSortField.DueAt)" Class="ms-1" />
+                            }
+                        </MudButton>
+                    </MudTh>
+                    <MudTh>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" Disabled="_isLoading"
+                                   OnClick="() => SortByAsync(TicketSortField.CreatedAt)">
+                            CreatedAt
+                            @if (_sortField == TicketSortField.CreatedAt)
+                            {
+                                <MudIcon Icon="@SortIcon(TicketSortField.CreatedAt)" Class="ms-1" />
+                            }
+                        </MudButton>
+                    </MudTh>
+                </HeaderContent>
+
+                <RowTemplate>
+                    <MudTd DataLabel="Id">@context.Id</MudTd>
+                    <MudTd DataLabel="Titel">@context.Title</MudTd>
+                    <MudTd DataLabel="Status">@context.Status</MudTd>
+                    <MudTd DataLabel="Priority">@context.Priority</MudTd>
+                    <MudTd DataLabel="DueAt">
+                        @(context.DueAt is null ? "-" : context.DueAt.Value.ToString("u"))
+                    </MudTd>
+
+                    <MudTd DataLabel="CreatedAt">@context.CreatedAt.ToString("u")</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+
+        <div class="d-flex align-items-center justify-content-between mt-3">
+            <MudText Typo="Typo.caption">
+                Seite @_page von @data.TotalPages — @data.TotalCount Gesamt (je @_pageSize)
+            </MudText>
+
+            <MudPagination Page="_page"
+                           PageChanged="OnPageChangedAsync"
+                           Count="@Math.Max(1, data.TotalPages)"
+                           Disabled="_isLoading"/>
+        </div>
+    </Content>
+</Loadable>
+
+@if (_unexpectedError is not null)
+{
+    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-3">
+        Unerwarteter Fehler: @_unexpectedError.Message
+    </MudAlert>
+}

@@ -5,6 +5,7 @@ using Serilog;
 using ServiceDeskLite.Api.Composition;
 using ServiceDeskLite.Api.Endpoints;
 using ServiceDeskLite.Application.DependencyInjection;
+using ServiceDeskLite.Application.Tickets.Seeding;
 using ServiceDeskLite.Infrastructure.Persistence;
 
 // ──────────── Logging ────────────
@@ -49,6 +50,9 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
 // ──────────── Database Migration ────────────
@@ -69,6 +73,16 @@ app.UseApiDocumentation();
 
 app.UseApiErrorHandling();
 app.UseHttpsRedirection();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+    
+    using var scope = app.Services.CreateScope();
+    var seeder = scope.ServiceProvider.GetRequiredService<ITicketSeeder>();
+    await seeder.SeedAsync();
+}
 
 app.UseCors("WebDev");
 

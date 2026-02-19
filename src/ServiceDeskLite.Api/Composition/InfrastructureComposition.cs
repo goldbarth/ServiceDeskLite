@@ -1,5 +1,7 @@
+using ServiceDeskLite.Application.Tickets.Seeding;
 using ServiceDeskLite.Infrastructure.InMemory.DependencyInjection;
 using ServiceDeskLite.Infrastructure.Persistence.DependencyInjection;
+using ServiceDeskLite.Infrastructure.Persistence.Seeding;
 
 namespace ServiceDeskLite.Api.Composition;
 
@@ -14,6 +16,7 @@ public static class InfrastructureComposition
         {
             case "InMemory":
                 services.AddInfrastructureInMemory();
+                services.AddScoped<ITicketSeeder, TicketSeeder>();
                 break;
 
             case "Sqlite":

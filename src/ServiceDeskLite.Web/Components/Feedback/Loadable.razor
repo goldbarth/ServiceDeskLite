@@ -1,0 +1,30 @@
+﻿@typeparam T
+
+@if (IsLoading)
+{
+    @Loading
+}
+else if (Error is not null)
+{
+    @ErrorContent(Error)
+}
+else if (IsEmpty)
+{
+    @Empty
+}
+else if (Value is not null)
+{
+    @Content(Value)
+}
+
+@code {
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public bool IsEmpty { get; set; }
+    [Parameter] public T? Value { get; set; }
+    [Parameter] public object? Error { get; set; }
+
+    [Parameter, EditorRequired] public RenderFragment Loading { get; set; } = default!;
+    [Parameter, EditorRequired] public RenderFragment Empty { get; set; } = default!;
+    [Parameter, EditorRequired] public RenderFragment<object> ErrorContent { get; set; } = default!;
+    [Parameter, EditorRequired] public RenderFragment<T> Content { get; set; } = default!;
+}

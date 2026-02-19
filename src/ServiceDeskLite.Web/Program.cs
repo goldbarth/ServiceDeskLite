@@ -1,3 +1,4 @@
+using MudBlazor.Services;
 using ServiceDeskLite.Web.Components;
 using ServiceDeskLite.Web.Composition;
 
@@ -7,6 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddMudServices(config =>
+{
+    config.SnackbarConfiguration.PositionClass = MudBlazor.Defaults.Classes.Position.BottomRight;
+    config.SnackbarConfiguration.PreventDuplicates = true;
+    config.SnackbarConfiguration.NewestOnTop = true;
+});
 
 builder.Services
     .AddTicketsApiClient(builder.Configuration);

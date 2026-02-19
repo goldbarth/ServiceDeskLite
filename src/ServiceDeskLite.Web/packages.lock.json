@@ -8,7 +8,22 @@
         "resolved": "10.0.2",
         "contentHash": "fMAqrUm+aspxRAsCJ6Hlgs96XSHwNIr9HBNt7wyBAzQkPlfE7w+0C4NzDoJnso5YZyDI0VcRtEXxG9odt3KiZA=="
       },
+      "MudBlazor": {
+        "type": "Direct",
+        "requested": "[8.15.0, )",
+        "resolved": "8.15.0",
+        "contentHash": "iOJEnQ6tYGQPfPJaUazyC8H6pcczgaMX7vhUzrJPpB0WqEXNozwMfSzoOe2/JZmVWJcUfYZgKBeBU2Z27XY7Sw=="
+      },
+      "servicedesklite.application": {
+        "type": "Project",
+        "dependencies": {
+          "ServiceDeskLite.Domain": "[1.0.0, )"
+        }
+      },
       "servicedesklite.contracts": {
+        "type": "Project"
+      },
+      "servicedesklite.domain": {
         "type": "Project"
       }
     }
