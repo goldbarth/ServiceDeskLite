@@ -9,8 +9,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services
-    .AddTicketsApiClient(builder.Configuration)
-    .AddWebInfrastructure(builder.Configuration);
+    .AddTicketsApiClient(builder.Configuration);
 
 var app = builder.Build();
 

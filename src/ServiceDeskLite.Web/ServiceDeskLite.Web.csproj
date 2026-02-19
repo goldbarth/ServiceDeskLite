@@ -9,8 +9,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\ServiceDeskLite.Contracts\ServiceDeskLite.Contracts.csproj" />
-        <ProjectReference Include="..\ServiceDeskLite.Infrastructure\ServiceDeskLite.Infrastructure.csproj" />
-        <ProjectReference Include="..\ServiceDeskLite.Infrastructure.InMemory\ServiceDeskLite.Infrastructure.InMemory.csproj" />
     </ItemGroup>
 
 </Project>
