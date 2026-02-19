@@ -1,9 +1,11 @@
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 using ServiceDeskLite.Api.Composition;
 using ServiceDeskLite.Api.Endpoints;
 using ServiceDeskLite.Application.DependencyInjection;
+using ServiceDeskLite.Infrastructure.Persistence;
 
 // ──────────── Logging ────────────
 
@@ -48,6 +50,16 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// ──────────── Database Migration ────────────
+
+if (app.Configuration["Persistence:Provider"] == "Sqlite")
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider
+        .GetRequiredService<ServiceDeskLiteDbContext>()
+        .Database.MigrateAsync();
+}
 
 // ─────────── Middleware ───────────
 
