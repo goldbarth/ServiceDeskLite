@@ -1,6 +1,6 @@
 ﻿using ServiceDeskLite.Application.Tickets.GetTicketById;
+using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Contracts.V1.Tickets;
-using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Api.Mapping.Tickets;
 
@@ -17,13 +17,13 @@ public static class TicketsMapping
             DueAt: dto.DueAt
         );
 
-    public static TicketListItemResponse ToListItemResponse(this Ticket ticket)
+    public static TicketListItemResponse ToListItemResponse(this TicketListItemDto dto)
         => new(
-            Id: ticket.Id.Value,
-            Title: ticket.Title,
-            Priority: ticket.Priority.ToString(),
-            Status: ticket.Status.ToString(),
-            CreatedAt: ticket.CreatedAt,
-            DueAt: ticket.DueAt
+            Id: dto.Id.Value,
+            Title: dto.Title,
+            Priority: dto.Priority.ToString(),
+            Status: dto.Status.ToString(),
+            CreatedAt: dto.CreatedAt,
+            DueAt: dto.DueAt
         );
 }

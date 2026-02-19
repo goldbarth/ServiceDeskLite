@@ -1,7 +1,6 @@
 ﻿using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Contracts.V1.Common;
 using ServiceDeskLite.Contracts.V1.Tickets;
-using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Api.Mapping.Tickets;
 
@@ -20,10 +19,10 @@ internal static class SearchTicketsMapping
             Direction: request.SortDirection?.ToApplication() ?? SortSpec.Default.Direction);
     }
 
-    public static PagedResponse<TicketListItemResponse> ToPagedResponse(this PagedResult<Ticket> page)
+    public static PagedResponse<TicketListItemResponse> ToPagedResponse(this PagedResult<TicketListItemDto> page)
     {
         var items = page.Items
-            .Select(t => t.ToListItemResponse())
+            .Select(dto => dto.ToListItemResponse())
             .ToList();
 
         return new PagedResponse<TicketListItemResponse>(
