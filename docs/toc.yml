@@ -1,0 +1,20 @@
+﻿- name: Home
+  href: index.md
+
+- name: Architecture
+  href: architecture/toc.yml
+
+- name: Structure
+  href: structure/toc.yml
+
+- name: API
+  href: api/toc.yml
+
+- name: Testing
+  href: testing/toc.yml
+
+- name: Operations
+  href: operations/toc.yml
+
+- name: ADR
+  href: adr/toc.yml

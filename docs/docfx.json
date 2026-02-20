@@ -1,0 +1,15 @@
+﻿{
+    "build": {
+        "content": [
+            { "files": [ "**/*.md", "**/toc.yml" ], "src": "." }
+        ],
+        "resource": [
+            { "files": [ "**/*.png", "**/*.jpg", "**/*.svg", "**/*.gif" ], "src": "." }
+        ],
+        "dest": "_site",
+        "globalMetadata": {
+            "_appTitle": "ServiceDeskLite Documentation",
+            "_enableSearch": true
+        }
+    }
+}

@@ -17,4 +17,7 @@
     <Project Path="tests/ServiceDeskLite.Tests.Integration/ServiceDeskLite.Tests.Integration.csproj" />
     <Project Path="tests/ServiceDeskLite.Tests.Web/ServiceDeskLite.Tests.Web.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/ServiceDeskLite.DocsGen/ServiceDeskLite.DocsGen.csproj" />
+  </Folder>
 </Solution>
