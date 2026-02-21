@@ -1,4 +1,4 @@
-﻿## Domain Layer (`ServiceDeskLite.Domain`)
+## Domain Layer (`ServiceDeskLite.Domain`)
 
 ### `Ticket` Aggregate Root
 
@@ -42,6 +42,70 @@ public enum TicketStatus  { New, Triaged, InProgress, Waiting, Resolved, Closed 
 public enum TicketPriority { Low, Medium, High, Critical }
 ```
 
+### Domain Model
+
+```mermaid
+classDiagram
+    class Ticket {
+        +TicketId Id
+        +string Title
+        +string Description
+        +TicketPriority Priority
+        +TicketStatus Status
+        +DateTimeOffset CreatedAt
+        +DateTimeOffset? DueAt
+        +Ticket(id, title, description, priority, createdAt, dueAt?)
+        +ChangeStatus(newStatus) void
+    }
+    class TicketId {
+        <<record struct>>
+        +Guid Value
+        +New()$ TicketId
+    }
+    class TicketStatus {
+        <<enumeration>>
+        New
+        Triaged
+        InProgress
+        Waiting
+        Resolved
+        Closed
+    }
+    class TicketPriority {
+        <<enumeration>>
+        Low
+        Medium
+        High
+        Critical
+    }
+    class TicketWorkflow {
+        <<static>>
+        +CanTransition(from, to)$ bool
+        +EnsureCanTransition(from, to)$ void
+    }
+    class Guard {
+        <<static>>
+        +NotNullOrWhiteSpace(value, paramName)$ void
+        +MaxLength(value, maxLength, paramName)$ void
+        +NotNull~T~(value, paramName)$ void
+    }
+    class DomainException {
+        +DomainError Error
+    }
+    class DomainError {
+        <<record>>
+        +string Code
+        +string Message
+    }
+
+    Ticket "1" --> "1" TicketId : identified by
+    Ticket --> TicketStatus : has
+    Ticket --> TicketPriority : has
+    Ticket ..> TicketWorkflow : delegates ChangeStatus to
+    Ticket ..> Guard : validated by
+    DomainException --> DomainError : carries
+```
+
 ### `TicketWorkflow` – Status Transition Rules
 
 ```csharp
@@ -64,16 +128,28 @@ public static void EnsureCanTransition(TicketStatus from, TicketStatus to)
 // Throws DomainException with code "domain.ticket.status.invalid_transition"
 ```
 
-### Visual workflow:
+### Status Transition Diagram
 
-```
-New → Triaged → InProgress ⇄ Waiting
-                    ↓              ↓
-                Resolved ←────────┘
-                    ↓
-                 Closed
-                    ↑ (Reopen: Resolved → InProgress)
+```mermaid
+stateDiagram-v2
+    [*] --> New : created
 
+    New --> Triaged : triage
+
+    Triaged --> InProgress : start work
+    Triaged --> Waiting : defer
+    Triaged --> Resolved : quick-resolve
+
+    InProgress --> Waiting : block
+    InProgress --> Resolved : complete
+
+    Waiting --> InProgress : unblock
+    Waiting --> Resolved : resolve
+
+    Resolved --> Closed : close
+    Resolved --> InProgress : reopen
+
+    Closed --> [*]
 ```
 
 ### `Guard` – Invariant Enforcement

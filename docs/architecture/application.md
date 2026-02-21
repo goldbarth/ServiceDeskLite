@@ -1,4 +1,4 @@
-﻿## Application Layer (`ServiceDeskLite.Application`)
+## Application Layer (`ServiceDeskLite.Application`)
 
 #### Result Pattern
 
@@ -62,15 +62,66 @@ public sealed record ApplicationError(
 }
 ```
 
+#### Result & Error Type Model
+
+```mermaid
+classDiagram
+    class Result {
+        +bool IsSuccess
+        +bool IsFailure
+        +ApplicationError? Error
+        +Success()$ Result
+        +Failure(error)$ Result
+        +Validation(code, msg)$ Result
+        +NotFound(code, msg)$ Result
+        +DomainViolation(code, msg)$ Result
+    }
+    class ResultT["Result~T~"] {
+        +bool IsSuccess
+        +bool IsFailure
+        +T? Value
+        +ApplicationError? Error
+        +Success(value)$ ResultT
+        +Failure(error)$ ResultT
+        +Validation(code, msg)$ ResultT
+        +NotFound(code, msg)$ ResultT
+        +DomainViolation(code, msg)$ ResultT
+    }
+    class ApplicationError {
+        <<record>>
+        +string Code
+        +string Message
+        +ErrorType Type
+        +IReadOnlyDictionary? Meta
+        +Validation(code, msg)$ ApplicationError
+        +NotFound(code, msg)$ ApplicationError
+        +Conflict(code, msg)$ ApplicationError
+        +DomainViolation(code, msg)$ ApplicationError
+        +Unexpected(code, msg)$ ApplicationError
+    }
+    class ErrorType {
+        <<enumeration>>
+        Validation
+        DomainViolation
+        NotFound
+        Conflict
+        Unexpected
+    }
+
+    Result --> ApplicationError : carries on failure
+    ResultT --> ApplicationError : carries on failure
+    ApplicationError --> ErrorType : typed as
+```
+
 #### `ErrorType` → HTTP Status Mapping
 
-| ErrorType         | 	HTTP  Status |
-|-------------------|---------------|
-| `Validation`      | 400           |
-| `DomainViolation` | 	400          |
-| `NotFound`        | 404           |
-| `Conflict`	       | 409           |
-| `Unexpected`      | 500           |
+| ErrorType         | HTTP Status |
+|-------------------|-------------|
+| `Validation`      | 400         |
+| `DomainViolation` | 400         |
+| `NotFound`        | 404         |
+| `Conflict`        | 409         |
+| `Unexpected`      | 500         |
 
 #### Use Case Handlers
 
@@ -85,6 +136,20 @@ Each use case lives in its own folder under `Application/Tickets/<UseCase>/`. St
 ```csharp
 public async Task<Result<TOutput>> HandleAsync(TInput? input, CancellationToken ct = default)
 // Null input → return Result<T>.Validation(...), never throw
+```
+
+All handlers follow the same guard-then-act pattern. `CreateTicket` is the canonical example:
+
+```mermaid
+flowchart TD
+    Start([HandleAsync\nCreateTicketCommand?]) --> NullCheck{command\nis null?}
+    NullCheck -- yes --> ValFail(["Result.Validation\n'command.required'"])
+    NullCheck -- no --> Construct["new Ticket()\nGuard validates all inputs"]
+    Construct -- DomainException --> DomainFail(["Result.DomainViolation\ne.g. 'title.required'"])
+    Construct -- ok --> ExistsCheck{ExistsAsync\nticket id}
+    ExistsCheck -- true --> ConflictFail(["Result.Conflict\n'ticket.duplicate'"])
+    ExistsCheck -- false --> Persist["AddAsync\n+ SaveChangesAsync"]
+    Persist --> Success(["Result.Success\nCreateTicketResult(id)"])
 ```
 
 #### `CreateTicket`

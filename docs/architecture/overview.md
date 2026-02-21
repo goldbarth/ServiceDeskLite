@@ -1,7 +1,25 @@
-﻿# Architecture Overview
+# Architecture Overview
 
 ServiceDeskLite is structured as a strict layered system with inward-only dependencies.
 The goal is a portfolio-grade reference for Clean Architecture with explicit domain rules and an explicit error strategy.
+
+---
+
+## System Context
+
+```mermaid
+graph LR
+    User(["Browser / User"])
+    Web["ServiceDeskLite.Web\n(Blazor Server)"]
+    Api["ServiceDeskLite.API\n(Minimal API)"]
+    SQLite[("SQLite\nservicedesklite.db")]
+    InMem[("In-Process Memory\n(dev / test)")]
+
+    User -->|HTTPS| Web
+    Web -->|REST / JSON| Api
+    Api -->|EF Core| SQLite
+    Api -. InMemory .-> InMem
+```
 
 ---
 
@@ -30,14 +48,38 @@ The goal is a portfolio-grade reference for Clean Architecture with explicit dom
 
 ## Dependency Rules
 
-Dependencies must point strictly inward:
+Dependencies must point strictly **inward**. No layer may reference anything from a layer that is outer to it.
 
-- Web → Contracts
-- Api → Application, Contracts, Domain, Infrastructure, Infrastructure.InMemory
-- Application → Domain
-- Infrastructure → Application, Domain
-- Infrastructure.InMemory → Application, Domain
-- Domain → (no external dependencies)
+```mermaid
+graph TB
+    subgraph Hosts["Hosts (Outer Boundary)"]
+        Web["Web\n(Blazor Server)"]
+        Api["API\n(Minimal API)"]
+    end
+    subgraph InfraLayer["Infrastructure (Adapters)"]
+        Infra["Infrastructure\n(EF Core / SQLite)"]
+        InfraIM["Infrastructure.InMemory"]
+    end
+    subgraph AppLayer["Application (Use Cases & Ports)"]
+        App["Application"]
+        Contracts["Contracts\n(V1 DTOs)"]
+    end
+    subgraph DomainLayer["Domain (Core)"]
+        Domain["Domain\n(Aggregates, Rules)"]
+    end
+
+    Web --> Contracts
+    Api --> App
+    Api --> Contracts
+    Api --> Domain
+    Api --> Infra
+    Api --> InfraIM
+    App --> Domain
+    Infra --> App
+    Infra --> Domain
+    InfraIM --> App
+    InfraIM --> Domain
+```
 
 Violations are blocking issues.
 

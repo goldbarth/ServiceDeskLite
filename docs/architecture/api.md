@@ -1,4 +1,4 @@
-﻿## API Layer (`ServiceDeskLite.Api`)
+## API Layer (`ServiceDeskLite.Api`)
 
 #### Middleware Pipeline Order (`Program.cs`)
 
@@ -18,17 +18,55 @@
 9.  Endpoint mapping
 ```
 
+```mermaid
+flowchart LR
+    Req([Incoming\nRequest])
+    Req --> SL["Serilog\nRequest Logging"]
+    SL --> OA["UseApiDocumentation\n(OpenAPI)"]
+    OA --> EH["UseApiErrorHandling\n(ExceptionHandler)"]
+    EH --> HTTPS[UseHttpsRedirection]
+    HTTPS --> CORS["UseCors\n(WebDev policy)"]
+    CORS --> EP[Endpoint\nRouting]
+    EP --> Res([Response])
+```
+
 #### Endpoints (`TicketsEndpoints.cs`)
 
 Base route group: `/api/v1/tickets`
 
-| HTTP	 | Route                     | Handle              | Returns                                         |
-|-------|---------------------------|---------------------|-------------------------------------------------|
-| POST	 | /api/v1/tickets           | 	CreateTicketAsync	 | 201 Created + CreateTicketResponse              |
-| GET	  | /api/v1/tickets/{id:guid} | 	GetTicketByIdAsync | 	200 OK + TicketResponse                        |
-| GET	  | /api/v1/tickets           | 	SearchTicketsAsync | 	200 OK + PagedResponse<TicketListItemResponse> |
+| HTTP | Route                     | Handler             | Returns                                          |
+|------|---------------------------|---------------------|--------------------------------------------------|
+| POST | /api/v1/tickets           | CreateTicketAsync   | 201 Created + CreateTicketResponse               |
+| GET  | /api/v1/tickets/{id:guid} | GetTicketByIdAsync  | 200 OK + TicketResponse                          |
+| GET  | /api/v1/tickets           | SearchTicketsAsync  | 200 OK + PagedResponse\<TicketListItemResponse\> |
 
 All errors return RFC 9457 ProblemDetails via `ResultToProblemDetailsMapper`.
+
+#### Request Lifecycle
+
+The following sequence covers the `POST /api/v1/tickets` happy path. All other endpoints follow the same structure.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant EP as API Endpoint
+    participant H as CreateTicketHandler
+    participant Repo as ITicketRepository
+    participant UoW as IUnitOfWork
+
+    C->>+EP: POST /api/v1/tickets\n{ title, description, priority, dueAt }
+    EP->>EP: bind CreateTicketRequest
+    EP->>EP: map → CreateTicketCommand
+    EP->>+H: HandleAsync(command)
+    H->>H: null check, new Ticket() + Guard
+    H->>Repo: ExistsAsync(id)
+    Repo-->>H: false
+    H->>Repo: AddAsync(ticket)
+    H->>UoW: SaveChangesAsync()
+    H-->>-EP: Result.Success(CreateTicketResult)
+    EP->>EP: map → CreateTicketResponse
+    EP-->>-C: 201 Created\nLocation: /api/v1/tickets/{id}
+```
 
 #### Correlation
 
@@ -68,7 +106,17 @@ Fluent bridge: `result.ToHttpResult(ctx, mapper, value => Results.Ok(value.ToRes
 - `ExceptionClassification.IsClientBadRequest(ex)` → `BadHttpRequestException, FormatException, InvalidOperationException` → 400
 - `ExceptionClassification.IsCancellation(ex, ctx)` → request cancelled → no response
 - All other exceptions → 500 Unexpected
-  Logging: 5xx → ERROR, 409 → WARNING, 400 → WARNING, others → INFO.
+
+Logging: 5xx → ERROR, 409 → WARNING, 400 → WARNING, others → INFO.
+
+```mermaid
+flowchart TD
+    EX([Unhandled Exception]) --> Cancel{IsCancellation?\nOperationCanceled\n+ request aborted}
+    Cancel -- yes --> NC([No response\nrequest aborted])
+    Cancel -- no --> Client{IsClientBadRequest?\nBadHttpRequestException\nFormatException\nInvalidOperationException}
+    Client -- yes --> R400(["400 Bad Request\nProblemDetails\n(WARNING logged)"])
+    Client -- no --> R500(["500 Internal Server Error\nProblemDetails\n(ERROR logged)"])
+```
 
 #### Enum Mapping (`Api/Mapping/Tickets/TicketEnumMapping.cs`)
 
@@ -107,53 +155,4 @@ public static PagedResponse<TicketListItemResponse>
     "Logging": { "LogLevel": { "Default": "Information", "Microsoft.AspNetCore": "Warning" } },
     "Persistence": { "Provider": "InMemory" }
 }
-```
-
-## Infrastructure – SQLite (`ServiceDeskLite.Infrastructure`)
-
-#### `ServiceDeskLiteDbContext`
-
-```csharp
-public class ServiceDeskLiteDbContext(DbContextOptions options) : DbContext(options)
-{
-    public DbSet<Ticket> Tickets => Set<Ticket>();
-    // Fluent config via IEntityTypeConfiguration<T> assemblies
-}
-```
-
-#### EF Core Fluent Configuration (`TicketConfiguration`)
-
-```csharp
-builder.ToTable("Tickets");
-builder.HasKey(t => t.Id);
-builder.Property(t => t.Id)
-    .HasConversion(new TicketIdConverter()).ValueGeneratedNever();
-builder.Property(t => t.Title).IsRequired().HasMaxLength(200);
-builder.Property(t => t.Description).IsRequired().HasMaxLength(2000);
-builder.Property(t => t.Priority).IsRequired();
-builder.Property(t => t.Status).IsRequired();
-builder.Property(t => t.CreatedAt)
-    .HasConversion(new DateTimeOffsetToBinaryConverter()).IsRequired();
-builder.Property(t => t.DueAt).IsRequired(false);
-builder.HasIndex(t => t.CreatedAt);
-builder.HasIndex(t => t.Status);
-```
-
-Value converter: `TicketId` ↔ `Guid` via `TicketIdConverter`.
-#### Migrations
-
-Currently, one migration: `20260219091433_InitialCreate` (Initial schema).
-Migrations are auto-applied on startup when `Provider = Sqlite`.
-
-#### EfTicketRepository
-- `AddAsync` → `_dbContext.Tickets.AddAsync`
-- `GetByIdAsync` → `FirstOrDefaultAsync(t => t.Id == id)`
-- `ExistsAsync` → `AnyAsync(t => t.Id == id)`
-- `SearchAsync` → LINQ with filters, sort, paging; tie-breaker: `.ThenBy(t => t.Id)`
--
-#### `EfUnitOfWork`
-
-```csharp
-public Task SaveChangesAsync(CancellationToken ct = default)
-    => _dbContext.SaveChangesAsync(ct);
 ```

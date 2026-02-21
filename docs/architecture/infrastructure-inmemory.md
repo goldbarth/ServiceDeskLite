@@ -1,52 +1,3 @@
-﻿## Infrastructure – SQLite (`ServiceDeskLite.Infrastructure`)
-
-#### `ServiceDeskLiteDbContext`
-
-```csharp
-public class ServiceDeskLiteDbContext(DbContextOptions options) : DbContext(options)
-{
-    public DbSet<Ticket> Tickets => Set<Ticket>();
-    // Fluent config via IEntityTypeConfiguration<T> assemblies
-}
-```
-
-#### EF Core Fluent Configuration (`TicketConfiguration`)
-
-```csharp
-builder.ToTable("Tickets");
-builder.HasKey(t => t.Id);
-builder.Property(t => t.Id)
-    .HasConversion(new TicketIdConverter()).ValueGeneratedNever();
-builder.Property(t => t.Title).IsRequired().HasMaxLength(200);
-builder.Property(t => t.Description).IsRequired().HasMaxLength(2000);
-builder.Property(t => t.Priority).IsRequired();
-builder.Property(t => t.Status).IsRequired();
-builder.Property(t => t.CreatedAt)
-    .HasConversion(new DateTimeOffsetToBinaryConverter()).IsRequired();
-builder.Property(t => t.DueAt).IsRequired(false);
-builder.HasIndex(t => t.CreatedAt);
-builder.HasIndex(t => t.Status);
-```
-
-Value converter: `TicketId` ↔ `Guid` via `TicketIdConverter`.
-#### Migrations
-
-Currently, one migration: `20260219091433_InitialCreate` (Initial schema).
-Migrations are auto-applied on startup when `Provider = Sqlite`.
-
-#### EfTicketRepository
-- `AddAsync` → `_dbContext.Tickets.AddAsync`
-- `GetByIdAsync` → `FirstOrDefaultAsync(t => t.Id == id)`
-- `ExistsAsync` → `AnyAsync(t => t.Id == id)`
-- `SearchAsync` → LINQ with filters, sort, paging; tie-breaker: `.ThenBy(t => t.Id)`
--
-#### `EfUnitOfWork`
-
-```csharp
-public Task SaveChangesAsync(CancellationToken ct = default)
-    => _dbContext.SaveChangesAsync(ct);
-```
---- 
 ## Infrastructure – InMemory (`ServiceDeskLite.Infrastructure.InMemory`)
 
 #### `InMemoryStore` – Singleton
@@ -86,13 +37,77 @@ internal sealed class InMemoryUnitOfWork : IUnitOfWork
 - `GetByIdAsync` / `ExistsAsync` → synchronous lookup on `InMemoryStore`
 - `SearchAsync` → LINQ in-memory with same filter/sort logic; tie-breaker: `.ThenBy(t => t.Id.Value)`
 
+#### Component Relationships
+
+```mermaid
+classDiagram
+    class InMemoryStore {
+        <<Singleton>>
+        -ConcurrentDictionary~TicketId,Ticket~ _tickets
+        +TryGetTicket(id, out ticket) bool
+        +ContainsTicket(id) bool
+        +SnapshotTickets() IReadOnlyCollection~Ticket~
+        +ApplyAdds(adds) void
+    }
+    class InMemoryUnitOfWork {
+        <<Scoped>>
+        -InMemoryStore _store
+        +List~object~ PendingAdds
+        +SaveChangesAsync(ct) Task
+    }
+    class InMemoryTicketRepository {
+        <<Scoped>>
+        -InMemoryStore _store
+        -InMemoryUnitOfWork _unitOfWork
+        +AddAsync(ticket, ct)
+        +GetByIdAsync(id, ct)
+        +ExistsAsync(id, ct)
+        +SearchAsync(criteria, paging, sort, ct)
+    }
+    class ITicketRepository {
+        <<interface>>
+    }
+    class IUnitOfWork {
+        <<interface>>
+    }
+
+    InMemoryTicketRepository ..|> ITicketRepository : implements
+    InMemoryUnitOfWork ..|> IUnitOfWork : implements
+    InMemoryTicketRepository --> InMemoryStore : reads from
+    InMemoryTicketRepository --> InMemoryUnitOfWork : buffers adds in
+    InMemoryUnitOfWork --> InMemoryStore : commits to
+```
+
+#### Unit of Work Commit Boundary
+
+The two-phase write (buffer → commit) prevents partially visible state within a request scope.
+
+```mermaid
+sequenceDiagram
+    participant H as Handler
+    participant Repo as InMemoryTicketRepository
+    participant UoW as InMemoryUnitOfWork (Scoped)
+    participant Store as InMemoryStore (Singleton)
+
+    H->>Repo: AddAsync(ticket)
+    Repo->>UoW: PendingAdds.Add(ticket)
+    Note over UoW: ticket buffered – not yet visible
+
+    H->>UoW: SaveChangesAsync()
+    UoW->>Store: ApplyAdds([ticket])
+    Note over Store: ConcurrentDictionary.TryAdd\nthrows on duplicate key
+    Store-->>UoW: ok
+    UoW->>UoW: PendingAdds.Clear()
+    UoW-->>H: completed
+```
+
 #### DI Lifetime Summary
 
-| Type                       | 	Lifetime | 	Reason                        |
+| Type                       | Lifetime  | Reason                         |
 |----------------------------|-----------|--------------------------------|
-| `InMemoryStore`            | Singleton | 	Shared in-process state       |
-| `InMemoryUnitOfWork`       | 	Scoped   | 	Per-request change set        |
-| `InMemoryTicketRepository` | 	Scoped   | 	References scoped UoW         |
-| `EfTicketRepository`       | 	Scoped   | 	DbContext is Scoped           |
-| `EfUnitOfWork`             | 	Scoped   | 	DbContext is Scoped           |
-| `Use-case handlers         | 	Scoped   | 	Reference Scoped repositories |
+| `InMemoryStore`            | Singleton | Shared in-process state        |
+| `InMemoryUnitOfWork`       | Scoped    | Per-request change set         |
+| `InMemoryTicketRepository` | Scoped    | References scoped UoW          |
+| `EfTicketRepository`       | Scoped    | DbContext is Scoped            |
+| `EfUnitOfWork`             | Scoped    | DbContext is Scoped            |
+| Use-case handlers          | Scoped    | Reference Scoped repositories  |

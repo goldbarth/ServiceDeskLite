@@ -1,4 +1,4 @@
-﻿## Infrastructure – SQLite (`ServiceDeskLite.Infrastructure`)
+## Infrastructure – SQLite (`ServiceDeskLite.Infrastructure`)
 
 #### `ServiceDeskLiteDbContext`
 
@@ -29,6 +29,7 @@ builder.HasIndex(t => t.Status);
 ```
 
 Value converter: `TicketId` ↔ `Guid` via `TicketIdConverter`.
+
 #### Migrations
 
 Currently, one migration: `20260219091433_InitialCreate` (Initial schema).
@@ -39,10 +40,59 @@ Migrations are auto-applied on startup when `Provider = Sqlite`.
 - `GetByIdAsync` → `FirstOrDefaultAsync(t => t.Id == id)`
 - `ExistsAsync` → `AnyAsync(t => t.Id == id)`
 - `SearchAsync` → LINQ with filters, sort, paging; tie-breaker: `.ThenBy(t => t.Id)`
--
+
 #### `EfUnitOfWork`
 
 ```csharp
 public Task SaveChangesAsync(CancellationToken ct = default)
     => _dbContext.SaveChangesAsync(ct);
+```
+
+#### Component Relationships
+
+```mermaid
+classDiagram
+    class ITicketRepository {
+        <<interface>>
+        +AddAsync(ticket, ct)
+        +GetByIdAsync(id, ct)
+        +ExistsAsync(id, ct)
+        +SearchAsync(criteria, paging, sort, ct)
+    }
+    class IUnitOfWork {
+        <<interface>>
+        +SaveChangesAsync(ct)
+    }
+    class EfTicketRepository {
+        <<Scoped>>
+        -ServiceDeskLiteDbContext _dbContext
+        +AddAsync(ticket, ct)
+        +GetByIdAsync(id, ct)
+        +ExistsAsync(id, ct)
+        +SearchAsync(criteria, paging, sort, ct)
+    }
+    class EfUnitOfWork {
+        <<Scoped>>
+        -ServiceDeskLiteDbContext _dbContext
+        +SaveChangesAsync(ct)
+    }
+    class ServiceDeskLiteDbContext {
+        <<Scoped>>
+        +DbSet~Ticket~ Tickets
+    }
+    class TicketConfiguration {
+        <<IEntityTypeConfiguration~Ticket~>>
+        +Configure(builder) void
+    }
+    class TicketIdConverter {
+        <<ValueConverter>>
+        TicketId ↔ Guid
+    }
+
+    EfTicketRepository ..|> ITicketRepository : implements
+    EfUnitOfWork ..|> IUnitOfWork : implements
+    EfTicketRepository --> ServiceDeskLiteDbContext : uses
+    EfUnitOfWork --> ServiceDeskLiteDbContext : uses
+    ServiceDeskLiteDbContext --> TicketConfiguration : configured by
+    TicketConfiguration --> TicketIdConverter : applies
 ```
