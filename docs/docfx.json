@@ -6,6 +6,21 @@
         "resource": [
             { "files": [ "**/*.png", "**/*.jpg", "**/*.svg", "**/*.gif" ], "src": "." }
         ],
+        "template": [
+            "default"
+        ],
+        "postProcessors": [ "ExtractSearchIndex" ],
+        "styles": [],
+        "scripts": [
+            "styles/mermaid.js"
+        ],
+        "markdownEngineProperties": {
+            "markdigExtensions": [
+                "PipeTables",
+                "AutoIdentifiers",
+                "AutoLinks"
+            ]
+        },
         "dest": "_site",
         "globalMetadata": {
             "_appTitle": "ServiceDeskLite Documentation",
