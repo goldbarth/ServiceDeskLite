@@ -1,0 +1,20 @@
+﻿sequenceDiagram
+    participant Cmp as Blazor Component
+    participant AC as TicketsApiClient
+    participant HC as HttpClient
+    participant Api as ServiceDeskLite.API
+
+    Cmp->>+AC: SearchAsync(request)
+    AC->>+HC: GetAsync(/api/v1/tickets?...)
+    HC->>+Api: GET /api/v1/tickets
+    Api-->>-HC: 200 OK + JSON body
+    HC-->>-AC: HttpResponseMessage
+
+    alt IsSuccessStatusCode
+        AC->>AC: Deserialize PagedResponse~TicketListItemResponse~
+        AC-->>Cmp: ApiResult.Success(value)
+    else Error response
+        AC->>AC: Deserialize ProblemDetails
+        AC->>AC: Map to ApiError (status, code, traceId, ...)
+        AC-->>-Cmp: ApiResult.Failure(ApiError)
+    end

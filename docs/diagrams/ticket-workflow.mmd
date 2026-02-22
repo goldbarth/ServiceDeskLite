@@ -1,0 +1,19 @@
+﻿stateDiagram-v2
+    [*] --> New : created
+
+    New --> Triaged : triage
+
+    Triaged --> InProgress : start work
+    Triaged --> Waiting : defer
+    Triaged --> Resolved : quick-resolve
+
+    InProgress --> Waiting : block
+    InProgress --> Resolved : complete
+
+    Waiting --> InProgress : unblock
+    Waiting --> Resolved : resolve
+
+    Resolved --> Closed : close
+    Resolved --> InProgress : reopen
+
+    Closed --> [*]

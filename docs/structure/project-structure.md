@@ -33,6 +33,23 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── overview.md
 │   │   ├── toc.yml
 │   │   └── web.md
+│   ├── assets
+│   │   └── diagrams
+│   ├── diagrams
+│   │   ├── api-client-call-flow.mmd
+│   │   ├── client-api-result-types.mmd
+│   │   ├── component-relationships-inmemory.mmd
+│   │   ├── component-relationships-sqlite.mmd
+│   │   ├── dependency-rules.mmd
+│   │   ├── domain-model.mmd
+│   │   ├── exception-handling-pipeline.mmd
+│   │   ├── handler-signature-contract.mmd
+│   │   ├── middleware-pipeline.mmd
+│   │   ├── request-lifecycle.mmd
+│   │   ├── result-error-type-model.mmd
+│   │   ├── system-context.mmd
+│   │   ├── ticket-workflow.mmd
+│   │   └── uow-commit-boundary.mmd
 │   ├── operations
 │   │   ├── ci.md
 │   │   ├── commands.md
@@ -42,13 +59,13 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── project-structure.md
 │   │   ├── solution-map.md
 │   │   └── toc.yml
+│   ├── styles
 │   ├── testing
 │   │   ├── e2e.md
 │   │   ├── overview.md
 │   │   └── toc.yml
 │   ├── docfx.json
 │   ├── index.md
-│   ├── PROJECT_CONTEXT.md
 │   ├── PROJECT_OVERVIEW.md
 │   └── toc.yml
 ├── src

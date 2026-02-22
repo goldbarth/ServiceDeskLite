@@ -1,0 +1,44 @@
+﻿classDiagram
+    class ITicketRepository {
+        <<interface>>
+        +AddAsync(ticket, ct)
+        +GetByIdAsync(id, ct)
+        +ExistsAsync(id, ct)
+        +SearchAsync(criteria, paging, sort, ct)
+    }
+    class IUnitOfWork {
+        <<interface>>
+        +SaveChangesAsync(ct)
+    }
+    class EfTicketRepository {
+        <<Scoped>>
+        -ServiceDeskLiteDbContext _dbContext
+        +AddAsync(ticket, ct)
+        +GetByIdAsync(id, ct)
+        +ExistsAsync(id, ct)
+        +SearchAsync(criteria, paging, sort, ct)
+    }
+    class EfUnitOfWork {
+        <<Scoped>>
+        -ServiceDeskLiteDbContext _dbContext
+        +SaveChangesAsync(ct)
+    }
+    class ServiceDeskLiteDbContext {
+        <<Scoped>>
+        +DbSet~Ticket~ Tickets
+    }
+    class TicketConfiguration {
+<<IEntityTypeConfiguration~Ticket~>>
++Configure(builder) void
+}
+class TicketIdConverter {
+<<ValueConverter>>
+TicketId ↔ Guid
+}
+
+EfTicketRepository ..|> ITicketRepository : implements
+EfUnitOfWork ..|> IUnitOfWork : implements
+EfTicketRepository --> ServiceDeskLiteDbContext : uses
+EfUnitOfWork --> ServiceDeskLiteDbContext : uses
+ServiceDeskLiteDbContext --> TicketConfiguration : configured by
+TicketConfiguration --> TicketIdConverter : applies

@@ -1,0 +1,6 @@
+﻿flowchart TD
+    EX([Unhandled Exception]) --> Cancel{IsCancellation?\nOperationCanceled\n+ request aborted}
+    Cancel -- yes --> NC([No response\nrequest aborted])
+    Cancel -- no --> Client{IsClientBadRequest?\nBadHttpRequestException\nFormatException\nInvalidOperationException}
+    Client -- yes --> R400(["400 Bad Request\nProblemDetails\n(WARNING logged)"])
+    Client -- no --> R500(["500 Internal Server Error\nProblemDetails\n(ERROR logged)"])

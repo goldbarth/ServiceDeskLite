@@ -1,0 +1,46 @@
+﻿classDiagram
+    class Result {
+        +bool IsSuccess
+        +bool IsFailure
+        +ApplicationError? Error
+        +Success()$ Result
+        +Failure(error)$ Result
+        +Validation(code, msg)$ Result
+        +NotFound(code, msg)$ Result
+        +DomainViolation(code, msg)$ Result
+    }
+    class ResultT["Result~T~"] {
+        +bool IsSuccess
+        +bool IsFailure
+        +T? Value
+        +ApplicationError? Error
+        +Success(value)$ ResultT
+        +Failure(error)$ ResultT
+        +Validation(code, msg)$ ResultT
+        +NotFound(code, msg)$ ResultT
+        +DomainViolation(code, msg)$ ResultT
+    }
+    class ApplicationError {
+        <<record>>
+        +string Code
+        +string Message
+        +ErrorType Type
+        +IReadOnlyDictionary? Meta
+        +Validation(code, msg)$ ApplicationError
+        +NotFound(code, msg)$ ApplicationError
+        +Conflict(code, msg)$ ApplicationError
+        +DomainViolation(code, msg)$ ApplicationError
+        +Unexpected(code, msg)$ ApplicationError
+    }
+    class ErrorType {
+        <<enumeration>>
+        Validation
+        DomainViolation
+        NotFound
+        Conflict
+        Unexpected
+    }
+
+    Result --> ApplicationError : carries on failure
+    ResultT --> ApplicationError : carries on failure
+    ApplicationError --> ErrorType : typed as

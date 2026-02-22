@@ -1,0 +1,9 @@
+﻿flowchart TD
+    Start([HandleAsync\nCreateTicketCommand?]) --> NullCheck{command\nis null?}
+    NullCheck -- yes --> ValFail(["Result.Validation\n'command.required'"])
+    NullCheck -- no --> Construct["new Ticket()\nGuard validates all inputs"]
+    Construct -- DomainException --> DomainFail(["Result.DomainViolation\ne.g. 'title.required'"])
+    Construct -- ok --> ExistsCheck{ExistsAsync\nticket id}
+    ExistsCheck -- true --> ConflictFail(["Result.Conflict\n'ticket.duplicate'"])
+    ExistsCheck -- false --> Persist["AddAsync\n+ SaveChangesAsync"]
+    Persist --> Success(["Result.Success\nCreateTicketResult(id)"])

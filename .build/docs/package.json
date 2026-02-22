@@ -1,0 +1,10 @@
+{
+    "name": "servicedesklite-docs-build",
+    "private": true,
+    "devDependencies": {
+        "@mermaid-js/mermaid-cli": "11.4.2"
+    },
+    "scripts": {
+        "generate": "node generate-diagrams.mjs"
+    }
+}

@@ -18,17 +18,7 @@
 9.  Endpoint mapping
 ```
 
-```mermaid
-flowchart LR
-    Req([Incoming\nRequest])
-    Req --> SL["Serilog\nRequest Logging"]
-    SL --> OA["UseApiDocumentation\n(OpenAPI)"]
-    OA --> EH["UseApiErrorHandling\n(ExceptionHandler)"]
-    EH --> HTTPS[UseHttpsRedirection]
-    HTTPS --> CORS["UseCors\n(WebDev policy)"]
-    CORS --> EP[Endpoint\nRouting]
-    EP --> Res([Response])
-```
+![Middleware Pipeline](../assets/diagrams/middleware-pipeline.svg)
 
 #### Endpoints (`TicketsEndpoints.cs`)
 
@@ -46,27 +36,7 @@ All errors return RFC 9457 ProblemDetails via `ResultToProblemDetailsMapper`.
 
 The following sequence covers the `POST /api/v1/tickets` happy path. All other endpoints follow the same structure.
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant EP as API Endpoint
-    participant H as CreateTicketHandler
-    participant Repo as ITicketRepository
-    participant UoW as IUnitOfWork
-
-    C->>+EP: POST /api/v1/tickets\n{ title, description, priority, dueAt }
-    EP->>EP: bind CreateTicketRequest
-    EP->>EP: map → CreateTicketCommand
-    EP->>+H: HandleAsync(command)
-    H->>H: null check, new Ticket() + Guard
-    H->>Repo: ExistsAsync(id)
-    Repo-->>H: false
-    H->>Repo: AddAsync(ticket)
-    H->>UoW: SaveChangesAsync()
-    H-->>-EP: Result.Success(CreateTicketResult)
-    EP->>EP: map → CreateTicketResponse
-    EP-->>-C: 201 Created\nLocation: /api/v1/tickets/{id}
-```
+![Request Lifecycle](../assets/diagrams/request-lifecycle.svg)
 
 #### Correlation
 
@@ -109,14 +79,7 @@ Fluent bridge: `result.ToHttpResult(ctx, mapper, value => Results.Ok(value.ToRes
 
 Logging: 5xx → ERROR, 409 → WARNING, 400 → WARNING, others → INFO.
 
-```mermaid
-flowchart TD
-    EX([Unhandled Exception]) --> Cancel{IsCancellation?\nOperationCanceled\n+ request aborted}
-    Cancel -- yes --> NC([No response\nrequest aborted])
-    Cancel -- no --> Client{IsClientBadRequest?\nBadHttpRequestException\nFormatException\nInvalidOperationException}
-    Client -- yes --> R400(["400 Bad Request\nProblemDetails\n(WARNING logged)"])
-    Client -- no --> R500(["500 Internal Server Error\nProblemDetails\n(ERROR logged)"])
-```
+![Exception Handling Pipeline](../assets/diagrams/exception-handling-pipeline.svg)
 
 #### Enum Mapping (`Api/Mapping/Tickets/TicketEnumMapping.cs`)
 

@@ -433,3 +433,6 @@ CLAUDE.md
 
 # DocFX output
 docs/_site/
+
+# Mermaid diagram outputs (generated)
+docs/assets/diagrams/*.svg

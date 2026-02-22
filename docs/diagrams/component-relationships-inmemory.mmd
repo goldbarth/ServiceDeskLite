@@ -1,0 +1,36 @@
+﻿classDiagram
+    class InMemoryStore {
+        <<Singleton>>
+        -ConcurrentDictionary~TicketId,Ticket~ _tickets
+        +TryGetTicket(id, out ticket) bool
+        +ContainsTicket(id) bool
+        +SnapshotTickets() IReadOnlyCollection~Ticket~
+        +ApplyAdds(adds) void
+    }
+    class InMemoryUnitOfWork {
+        <<Scoped>>
+        -InMemoryStore _store
+        +List~object~ PendingAdds
+        +SaveChangesAsync(ct) Task
+    }
+    class InMemoryTicketRepository {
+        <<Scoped>>
+        -InMemoryStore _store
+        -InMemoryUnitOfWork _unitOfWork
+        +AddAsync(ticket, ct)
+        +GetByIdAsync(id, ct)
+        +ExistsAsync(id, ct)
+        +SearchAsync(criteria, paging, sort, ct)
+    }
+    class ITicketRepository {
+        <<interface>>
+    }
+    class IUnitOfWork {
+        <<interface>>
+    }
+
+    InMemoryTicketRepository ..|> ITicketRepository : implements
+    InMemoryUnitOfWork ..|> IUnitOfWork : implements
+    InMemoryTicketRepository --> InMemoryStore : reads from
+    InMemoryTicketRepository --> InMemoryUnitOfWork : buffers adds in
+    InMemoryUnitOfWork --> InMemoryStore : commits to

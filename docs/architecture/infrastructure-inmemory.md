@@ -39,67 +39,13 @@ internal sealed class InMemoryUnitOfWork : IUnitOfWork
 
 #### Component Relationships
 
-```mermaid
-classDiagram
-    class InMemoryStore {
-        <<Singleton>>
-        -ConcurrentDictionary~TicketId,Ticket~ _tickets
-        +TryGetTicket(id, out ticket) bool
-        +ContainsTicket(id) bool
-        +SnapshotTickets() IReadOnlyCollection~Ticket~
-        +ApplyAdds(adds) void
-    }
-    class InMemoryUnitOfWork {
-        <<Scoped>>
-        -InMemoryStore _store
-        +List~object~ PendingAdds
-        +SaveChangesAsync(ct) Task
-    }
-    class InMemoryTicketRepository {
-        <<Scoped>>
-        -InMemoryStore _store
-        -InMemoryUnitOfWork _unitOfWork
-        +AddAsync(ticket, ct)
-        +GetByIdAsync(id, ct)
-        +ExistsAsync(id, ct)
-        +SearchAsync(criteria, paging, sort, ct)
-    }
-    class ITicketRepository {
-        <<interface>>
-    }
-    class IUnitOfWork {
-        <<interface>>
-    }
-
-    InMemoryTicketRepository ..|> ITicketRepository : implements
-    InMemoryUnitOfWork ..|> IUnitOfWork : implements
-    InMemoryTicketRepository --> InMemoryStore : reads from
-    InMemoryTicketRepository --> InMemoryUnitOfWork : buffers adds in
-    InMemoryUnitOfWork --> InMemoryStore : commits to
-```
+![Component Relationships](../assets/diagrams/component-relationships-inmemory.svg)
 
 #### Unit of Work Commit Boundary
 
 The two-phase write (buffer → commit) prevents partially visible state within a request scope.
 
-```mermaid
-sequenceDiagram
-    participant H as Handler
-    participant Repo as InMemoryTicketRepository
-    participant UoW as InMemoryUnitOfWork (Scoped)
-    participant Store as InMemoryStore (Singleton)
-
-    H->>Repo: AddAsync(ticket)
-    Repo->>UoW: PendingAdds.Add(ticket)
-    Note over UoW: ticket buffered – not yet visible
-
-    H->>UoW: SaveChangesAsync()
-    UoW->>Store: ApplyAdds([ticket])
-    Note over Store: ConcurrentDictionary.TryAdd\nthrows on duplicate key
-    Store-->>UoW: ok
-    UoW->>UoW: PendingAdds.Clear()
-    UoW-->>H: completed
-```
+![Unit of Work Commit Boundary](../assets/diagrams/uow-commit-boundary.svg)
 
 #### DI Lifetime Summary
 

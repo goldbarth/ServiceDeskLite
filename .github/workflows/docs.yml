@@ -14,25 +14,39 @@ jobs:
     build:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
+            -   uses: actions/checkout@v4
 
-            - uses: actions/setup-dotnet@v4
-              with:
-                  dotnet-version: "10.0.x"
+            -   uses: actions/setup-dotnet@v4
+                with:
+                    dotnet-version: "10.0.x"
 
-            - name: Install DocFX
-              run: dotnet tool update -g docfx
+            -   uses: actions/setup-node@v4
+                with:
+                    node-version: "20"
+                    cache: "npm"
+                    cache-dependency-path: build/docs/package-lock.json
 
-            - name: Generate docs (DocsGen)
-              run: dotnet run --project ./tools/ServiceDeskLite.DocsGen -c Release
+            -   name: Install docs tooling
+                working-directory: build/docs
+                run: npm ci
 
-            - name: Build site
-              run: docfx ./docs/docfx.json
+            -   name: Generate diagrams (Mermaid → SVG)
+                working-directory: build/docs
+                run: npm run docs:diagrams
 
-            - name: Upload artifact
-              uses: actions/upload-pages-artifact@v3
-              with:
-                  path: docs/_site
+            -   name: Install DocFX
+                run: dotnet tool update -g docfx
+
+            -   name: Generate docs (DocsGen)
+                run: dotnet run --project ./tools/ServiceDeskLite.DocsGen -c Release
+
+            -   name: Build site
+                run: docfx ./docs/docfx.json
+
+            -   name: Upload artifact
+                uses: actions/upload-pages-artifact@v3
+                with:
+                    path: docs/_site
     
     deploy:
         needs: build

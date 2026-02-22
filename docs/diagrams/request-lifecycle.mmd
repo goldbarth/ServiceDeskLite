@@ -1,0 +1,19 @@
+﻿sequenceDiagram
+    participant C as Client
+    participant EP as API Endpoint
+    participant H as CreateTicketHandler
+    participant Repo as ITicketRepository
+    participant UoW as IUnitOfWork
+
+    C->>+EP: POST /api/v1/tickets\n{ title, description, priority, dueAt }
+    EP->>EP: bind CreateTicketRequest
+    EP->>EP: map → CreateTicketCommand
+    EP->>+H: HandleAsync(command)
+    H->>H: null check, new Ticket() + Guard
+    H->>Repo: ExistsAsync(id)
+    Repo-->>H: false
+    H->>Repo: AddAsync(ticket)
+    H->>UoW: SaveChangesAsync()
+    H-->>-EP: Result.Success(CreateTicketResult)
+    EP->>EP: map → CreateTicketResponse
+    EP-->>-C: 201 Created\nLocation: /api/v1/tickets/{id}

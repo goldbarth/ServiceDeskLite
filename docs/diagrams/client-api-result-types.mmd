@@ -1,0 +1,30 @@
+﻿classDiagram
+    class ITicketsApiClient {
+        <<interface>>
+        +SearchAsync(request, ct) Task
+        +GetByIdAsync(id, ct) Task
+        +CreateAsync(request, ct) Task
+    }
+    class TicketsApiClient {
+        -HttpClient _http
+        +SearchAsync(request, ct) Task
+        +GetByIdAsync(id, ct) Task
+        +CreateAsync(request, ct) Task
+    }
+    class ApiResultT["ApiResult~T~"] {
+        +bool IsSuccess
+        +T? Value
+        +ApiError? Error
+    }
+    class ApiError {
+        +int Status
+        +string? Title
+        +string? Detail
+        +string? Code
+        +string? ErrorType
+        +string? TraceId
+        +Dictionary~string,object~? Meta
+    }
+
+    TicketsApiClient ..|> ITicketsApiClient : implements
+    ApiResultT --> ApiError : contains on failure

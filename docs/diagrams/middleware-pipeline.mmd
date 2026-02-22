@@ -1,0 +1,9 @@
+﻿flowchart LR
+    Req([Incoming\nRequest])
+    Req --> SL["Serilog\nRequest Logging"]
+    SL --> OA["UseApiDocumentation\n(OpenAPI)"]
+    OA --> EH["UseApiErrorHandling\n(ExceptionHandler)"]
+    EH --> HTTPS[UseHttpsRedirection]
+    HTTPS --> CORS["UseCors\n(WebDev policy)"]
+    CORS --> EP[Endpoint\nRouting]
+    EP --> Res([Response])

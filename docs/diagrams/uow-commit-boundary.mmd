@@ -1,0 +1,16 @@
+﻿sequenceDiagram
+    participant H as Handler
+    participant Repo as InMemoryTicketRepository
+    participant UoW as InMemoryUnitOfWork (Scoped)
+    participant Store as InMemoryStore (Singleton)
+
+    H->>Repo: AddAsync(ticket)
+    Repo->>UoW: PendingAdds.Add(ticket)
+    Note over UoW: ticket buffered – not yet visible
+
+    H->>UoW: SaveChangesAsync()
+    UoW->>Store: ApplyAdds([ticket])
+    Note over Store: ConcurrentDictionary.TryAdd\nthrows on duplicate key
+    Store-->>UoW: ok
+    UoW->>UoW: PendingAdds.Clear()
+    UoW-->>H: completed

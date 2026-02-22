@@ -1,0 +1,11 @@
+﻿graph LR
+    User(["Browser / User"])
+    Web["ServiceDeskLite.Web\n(Blazor Server)"]
+    Api["ServiceDeskLite.API\n(Minimal API)"]
+    SQLite[("SQLite\nservicedesklite.db")]
+    InMem[("In-Process Memory\n(dev / test)")]
+
+    User -->|HTTPS| Web
+    Web -->|REST / JSON| Api
+    Api -->|EF Core| SQLite
+    Api -. InMemory .-> InMem

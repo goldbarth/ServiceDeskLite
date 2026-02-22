@@ -1,0 +1,28 @@
+﻿graph TB
+    subgraph Hosts["Hosts (Outer Boundary)"]
+        Web["Web\n(Blazor Server)"]
+        Api["API\n(Minimal API)"]
+    end
+    subgraph InfraLayer["Infrastructure (Adapters)"]
+        Infra["Infrastructure\n(EF Core / SQLite)"]
+        InfraIM["Infrastructure.InMemory"]
+    end
+    subgraph AppLayer["Application (Use Cases & Ports)"]
+        App["Application"]
+        Contracts["Contracts\n(V1 DTOs)"]
+    end
+    subgraph DomainLayer["Domain (Core)"]
+        Domain["Domain\n(Aggregates, Rules)"]
+    end
+
+    Web --> Contracts
+    Api --> App
+    Api --> Contracts
+    Api --> Domain
+    Api --> Infra
+    Api --> InfraIM
+    App --> Domain
+    Infra --> App
+    Infra --> Domain
+    InfraIM --> App
+    InfraIM --> Domain
