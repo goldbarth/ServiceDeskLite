@@ -34,11 +34,13 @@ jobs:
               run: dotnet build ./ServiceDeskLite.slnx -c Release --no-restore
 
             - name: Generate OpenAPI snapshot
+              if: runner.os == 'Linux'
               run: |
                 chmod +x .build/docs/generate-openapi.sh
                 ./.build/docs/generate-openapi.sh
 
             - name: Fail if OpenAPI snapshot drifted
+              if: runner.os == 'Linux'
               run: |
                 if ! git diff --exit-code -- docs/api/openapi.v1.json; then
                     echo "OpenAPI snapshot drift detected."
