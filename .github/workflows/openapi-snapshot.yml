@@ -1,0 +1,35 @@
+﻿name: openapi-snapshot
+
+on:
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+jobs:
+    generate:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: "10.0.x"
+
+            - name: Restore
+              run: dotnet restore ./ServiceDeskLite.slnx
+
+            - name: Build
+              run: dotnet build ./ServiceDeskLite.slnx -c Release --no-restore
+
+            - name: Generate OpenAPI snapshot
+              run: |
+                  chmod +x .build/docs/generate-openapi.sh
+                  ./.build/docs/generate-openapi.sh
+
+            - name: Upload snapshot artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: openapi-v1-snapshot
+                  path: docs/api/openapi.v1.json
+                  if-no-files-found: error
