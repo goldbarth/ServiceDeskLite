@@ -24,14 +24,14 @@ jobs:
                 with:
                     node-version: "20"
                     cache: "npm"
-                    cache-dependency-path: build/docs/package-lock.json
+                    cache-dependency-path: .build/docs/package-lock.json
 
             -   name: Install docs tooling
-                working-directory: build/docs
+                working-directory: .build/docs
                 run: npm ci
 
             -   name: Generate diagrams (Mermaid → SVG)
-                working-directory: build/docs
+                working-directory: .build/docs
                 run: npm run docs:diagrams
 
             -   name: Install DocFX
