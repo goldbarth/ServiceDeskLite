@@ -119,3 +119,23 @@ public static PagedResponse<TicketListItemResponse>
     "Persistence": { "Provider": "InMemory" }
 }
 ```
+
+## OpenAPI Contract Snapshot
+
+The API exposes an OpenAPI v1 specification which is:
+
+- Generated from the running Minimal API
+- Snapshotted into `docs/api/openapi.v1.json`
+- Rendered via ReDoc on GitHub Pages
+- Verified in CI to detect contract drift
+
+### Purpose
+
+This ensures:
+
+- Contract-driven development
+- Transparent API surface for consumers
+- Deterministic documentation builds
+- Early detection of breaking changes
+
+The OpenAPI snapshot acts as a versioned contract artifact between API and Web layer.
