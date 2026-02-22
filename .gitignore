@@ -434,5 +434,8 @@ CLAUDE.md
 # DocFX output
 docs/_site/
 
+# ReDoc Bundle
+docs/api/redoc.standalone.js
+
 # Mermaid diagram outputs (generated)
 docs/assets/diagrams/*.svg
