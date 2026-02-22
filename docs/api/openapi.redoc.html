@@ -1,15 +1,68 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <title>ServiceDeskLite API (OpenAPI v1)</title>
     <style>
-        html, body { height: 100%; margin: 0; }
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        #status {
+            padding: 12px;
+            font-family: system-ui, sans-serif;
+        }
     </style>
-    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
 </head>
 <body>
-<redoc spec-url="openapi.v1.json"></redoc>
+<div id="status">Loading…</div>
+<div id="redoc-container"></div>
+
+<script src="./redoc.standalone.js"></script>
+
+<script>
+    window.addEventListener('unhandledrejection', (e) => {
+        const status = document.getElementById('status');
+        if (status) status.textContent = 'ERROR (unhandled): ' + (e?.reason?.message ?? String(e.reason ?? e));
+    });
+    
+    (async () => {
+        const status = document.getElementById('status');
+
+        try {
+            if (typeof Redoc === 'undefined') {
+                status.textContent = 'ERROR: Redoc global is undefined (redoc.standalone.js not loaded).';
+                return;
+            }
+
+            status.textContent = 'Fetching openapi.v1.json…';
+            const res = await fetch('./openapi.v1.json', {cache: 'no-store'});
+            status.textContent = `Fetch status: ${res.status}`;
+
+            if (!res.ok) {
+                status.textContent = `ERROR: Failed to load openapi.v1.json (${res.status})`;
+                return;
+            }
+
+            const text = await res.text();
+            status.textContent = `Downloaded ${text.length} chars. Parsing JSON…`;
+
+            const spec = JSON.parse(text);
+
+            // Minimal sanity checks, so we can see if spec is "empty"
+            const hasPaths = spec.paths && Object.keys(spec.paths).length > 0;
+            status.textContent = `Parsed. openapi=${spec.openapi ?? 'n/a'}, paths=${hasPaths ? 'yes' : 'no'}. Rendering…`;
+
+            // Catch async init failures (common with OpenAPI 3.1.x edge cases)
+            await Redoc.init(spec, {}, document.getElementById('redoc-container'));
+            status.remove();
+        } catch (err) {
+            status.textContent = 'ERROR: ' + (err?.message ?? String(err));
+            console.error(err);
+        }
+    })();
+</script>
 </body>
 </html>

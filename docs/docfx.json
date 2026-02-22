@@ -4,7 +4,7 @@
             { "files": [ "**/*.md", "**/toc.yml" ], "src": "." }
         ],
         "resource": [
-            { "files": [ "api/openapi.v1.json", "api/openapi.redoc.html" ], "src": "." },
+            { "files": [ "api/openapi.v1.json", "api/openapi.redoc.html", "api/redoc.standalone.js" ], "src": "." },
             { "files": [ "**/*.png", "**/*.jpg", "**/*.svg", "**/*.gif" ], "src": "." }
         ],
         "dest": "_site",
