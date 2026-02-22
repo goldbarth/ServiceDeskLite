@@ -1,15 +1,11 @@
 # OpenAPI
 
-This project publishes an OpenAPI v1 contract.
+This page renders the OpenAPI v1 snapshot as interactive documentation.
 
-- **Snapshot (committed):** `openapi.v1.json`
-- **Purpose:** Stable, versioned API contract for review, CI drift detection, and potential client generation.
+## Interactive docs (ReDoc)
 
-## Snapshot
+<iframe src="openapi.redoc.html" style="width:100%; height: 85vh; border:0;"></iframe>
 
-- [Download `openapi.v1.json`](openapi.v1.json)
+## Snapshot file
 
-## Notes
-
-- The snapshot is generated from the running API and normalized deterministically.
-- CI fails if the API contract changes without updating the snapshot.
+- [Download openapi.v1.json](openapi.v1.json)
