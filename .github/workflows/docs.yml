@@ -32,7 +32,7 @@ jobs:
 
             -   name: Generate diagrams (Mermaid → SVG)
                 working-directory: .build/docs
-                run: npm run docs:diagrams
+                run: npm run generate
 
             -   name: Install DocFX
                 run: dotnet tool update -g docfx
