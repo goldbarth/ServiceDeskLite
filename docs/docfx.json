@@ -1,9 +1,10 @@
 ﻿{
     "build": {
         "content": [
-            { "files": [ "**/*.md", "**/toc.yml", "api/**/*.json" ], "src": "." }
+            { "files": [ "**/*.md", "**/toc.yml" ], "src": "." }
         ],
         "resource": [
+            { "files": [ "api/openapi.v1.json" ], "src": "." },
             { "files": [ "**/*.png", "**/*.jpg", "**/*.svg", "**/*.gif" ], "src": "." }
         ],
         "dest": "_site",
