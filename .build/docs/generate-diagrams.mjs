@@ -36,13 +36,21 @@ if (!existsSync(mmdcCli)) {
 
 console.log(`Generating ${files.length} diagram(s)...`);
 
+const puppeteerConfig = resolve(__dirname, "puppeteer.config.cjs");
+
 for (const file of files) {
     const inFile = join(inputDir, file);
     const outFile = join(outputDir, `${basename(file, ".mmd")}.svg`);
 
     execFileSync(
         process.execPath, // node.exe that runs this script
-        [mmdcCli, "-i", inFile, "-o", outFile, "-b", "transparent"],
+        [
+            mmdcCli, 
+            "-i", inFile, 
+            "-o", outFile, 
+            "-b", "transparent",
+            "--puppeteerConfigFile", puppeteerConfig
+        ],
         { stdio: "inherit" }
     );
 }
