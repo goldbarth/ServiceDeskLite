@@ -36,7 +36,7 @@ if (!existsSync(mmdcCli)) {
 
 console.log(`Generating ${files.length} diagram(s)...`);
 
-const puppeteerConfig = resolve(__dirname, "puppeteer.config.cjs");
+const puppeteerConfig = resolve(__dirname, "puppeteer.config.json");
 
 for (const file of files) {
     const inFile = join(inputDir, file);
