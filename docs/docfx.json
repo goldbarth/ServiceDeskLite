@@ -1,7 +1,7 @@
 ﻿{
     "build": {
         "content": [
-            { "files": [ "**/*.md", "**/toc.yml" ], "src": "." }
+            { "files": [ "**/*.md", "**/toc.yml", "api/**/*.json" ], "src": "." }
         ],
         "resource": [
             { "files": [ "**/*.png", "**/*.jpg", "**/*.svg", "**/*.gif" ], "src": "." }
