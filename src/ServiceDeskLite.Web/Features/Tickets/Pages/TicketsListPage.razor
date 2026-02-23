@@ -43,6 +43,15 @@
                                OnClick="ReloadAsync"
                                Title="Reload" />
 
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           Href="/tickets/new"
+                           Disabled="_isLoading"
+                           Size="Size.Small">
+                    Neues Ticket
+                </MudButton>
+
                 <MudSelect T="int"
                            Dense="true"
                            Label="Page size"
