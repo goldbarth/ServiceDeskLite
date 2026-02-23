@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 using Microsoft.AspNetCore.WebUtilities;
 
@@ -15,6 +16,12 @@ public sealed class TicketsApiClient : ITicketsApiClient
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
+    };
+
+    private static readonly JsonSerializerOptions _sendOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter() }
     };
 
     public TicketsApiClient(HttpClient http)
@@ -68,6 +75,21 @@ public sealed class TicketsApiClient : ITicketsApiClient
         };
 
         return await SendAsync<CreateTicketResponse>(httpRequest, ct);
+    }
+
+    public async Task<ApiResult<TicketResponse>> ChangeStatusAsync(
+        Guid id,
+        ChangeTicketStatusRequest request,
+        CancellationToken ct = default)
+    {
+        var httpRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"api/v1/tickets/{id}/status")
+        {
+            Content = JsonContent.Create(request, options: _sendOptions)
+        };
+
+        return await SendAsync<TicketResponse>(httpRequest, ct);
     }
 
     // -----------------------------

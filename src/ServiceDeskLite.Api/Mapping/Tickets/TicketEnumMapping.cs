@@ -4,6 +4,7 @@ using ServiceDeskLite.Contracts.V1.Tickets;
 using AppSortDirection = ServiceDeskLite.Application.Tickets.Shared.SortDirection;
 using AppTicketSortField = ServiceDeskLite.Application.Tickets.Shared.TicketSortField;
 using DomainTicketPriority = ServiceDeskLite.Domain.Tickets.TicketPriority;
+using DomainTicketStatus = ServiceDeskLite.Domain.Tickets.TicketStatus;
 
 namespace ServiceDeskLite.Api.Mapping.Tickets;
 
@@ -33,5 +34,16 @@ internal static class TicketEnumMapping
         SortDirection.Asc  => AppSortDirection.Asc,
         SortDirection.Desc => AppSortDirection.Desc,
         _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unsupported SortDirection.")
+    };
+
+    public static DomainTicketStatus ToDomain(this TicketStatus value) => value switch
+    {
+        TicketStatus.New        => DomainTicketStatus.New,
+        TicketStatus.Triaged    => DomainTicketStatus.Triaged,
+        TicketStatus.InProgress => DomainTicketStatus.InProgress,
+        TicketStatus.Waiting    => DomainTicketStatus.Waiting,
+        TicketStatus.Resolved   => DomainTicketStatus.Resolved,
+        TicketStatus.Closed     => DomainTicketStatus.Closed,
+        _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unsupported TicketStatus.")
     };
 }

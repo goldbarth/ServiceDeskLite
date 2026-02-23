@@ -47,4 +47,10 @@ public class Result<T>
         string message,
         IReadOnlyDictionary<string, object>? meta = null)
         => Failure(ApplicationError.DomainViolation(code, message, meta));
+
+    public static Result<T> Conflict(
+        string code,
+        string message,
+        IReadOnlyDictionary<string, object>? meta = null)
+        => Failure(ApplicationError.Conflict(code, message, meta));
 }

@@ -1,0 +1,82 @@
+@using MudBlazor
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Change Ticket Status</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudSelect T="string" Label="New Status" @bind-Value="_selectedStatus"
+                   Disabled="_isSubmitting" Class="mb-4">
+            @foreach (var s in _allowedStatuses)
+            {
+                <MudSelectItem Value="@s">@s</MudSelectItem>
+            }
+        </MudSelect>
+        @if (_error is not null)
+        {
+            <AppErrorPanel Error="_error" />
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Disabled="_isSubmitting">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                   OnClick="SubmitAsync"
+                   Disabled="@(_isSubmitting || string.IsNullOrEmpty(_selectedStatus))">
+            @if (_isSubmitting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Apply
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Inject] ITicketsApiClient TicketsApi { get; set; } = default!;
+
+    [Parameter] public Guid TicketId { get; set; }
+    [Parameter] public string CurrentStatus { get; set; } = string.Empty;
+
+    private IReadOnlyList<string> _allowedStatuses = [];
+    private string _selectedStatus = string.Empty;
+    private bool _isSubmitting;
+    private ApiError? _error;
+
+    protected override void OnInitialized()
+    {
+        _allowedStatuses = StatusTransitionHelper.GetAllowedTransitions(CurrentStatus);
+        _selectedStatus = _allowedStatuses.Count > 0 ? _allowedStatuses[0] : string.Empty;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        if (string.IsNullOrEmpty(_selectedStatus))
+            return;
+
+        if (!Enum.TryParse<TicketStatus>(_selectedStatus, out var newStatus))
+        {
+            _error = new ApiError { Status = 0, Title = "Invalid status", Detail = _selectedStatus };
+            return;
+        }
+
+        _isSubmitting = true;
+        _error = null;
+
+        var result = await TicketsApi.ChangeStatusAsync(
+            TicketId,
+            new ChangeTicketStatusRequest(newStatus));
+
+        _isSubmitting = false;
+
+        if (result.IsSuccess)
+        {
+            MudDialog.Close(DialogResult.Ok(result.Value!));
+            return;
+        }
+
+        _error = result.Error;
+    }
+}

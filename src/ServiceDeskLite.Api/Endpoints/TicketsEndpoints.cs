@@ -3,6 +3,7 @@
 using ServiceDeskLite.Api.Http.ProblemDetails;
 using ServiceDeskLite.Api.Mapping.Tickets;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Application.Tickets.ChangeTicketStatus;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
 using ServiceDeskLite.Application.Tickets.SearchTickets;
@@ -33,6 +34,16 @@ public static class TicketsEndpoints
             .Produces<TicketResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+
+        // POST /api/v1/tickets/{id}/status
+        tickets.MapPost("/{id:guid}/status", ChangeTicketStatusAsync)
+            .WithName("Tickets_ChangeStatus")
+            .WithSummary("Change ticket status")
+            .Produces<TicketResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         // GET /api/v1/tickets?page=1&pageSize=20
@@ -81,6 +92,23 @@ public static class TicketsEndpoints
     {
         var query = new GetTicketByIdQuery(new TicketId(id));
         var result = await handler.HandleAsync(query, ct);
+
+        return result.ToHttpResult(ctx, mapper, dto => Results.Ok(dto.ToResponse()));
+    }
+
+    private static async Task<IResult> ChangeTicketStatusAsync(
+        HttpContext ctx,
+        Guid id,
+        [FromBody] ChangeTicketStatusRequest request,
+        ChangeTicketStatusHandler handler,
+        ResultToProblemDetailsMapper mapper,
+        CancellationToken ct)
+    {
+        var cmd = new ChangeTicketStatusCommand(
+            Id: new TicketId(id),
+            NewStatus: request.NewStatus.ToDomain());
+
+        var result = await handler.HandleAsync(cmd, ct);
 
         return result.ToHttpResult(ctx, mapper, dto => Results.Ok(dto.ToResponse()));
     }

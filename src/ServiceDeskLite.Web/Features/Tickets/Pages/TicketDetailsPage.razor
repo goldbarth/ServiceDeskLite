@@ -1,4 +1,4 @@
-﻿@page "/tickets/{Id:guid}"
+@page "/tickets/{Id:guid}"
 @using MudBlazor
 
 <PageTitle>Ticket Details</PageTitle>
@@ -13,7 +13,7 @@ else if (_error is not null)
 }
 else if (_ticket is null)
 {
-    <MudText>Ticket nicht gefunden.</MudText>
+    <MudText>Ticket not found.</MudText>
 }
 else
 {
@@ -27,12 +27,23 @@ else
             Due:
             @(_ticket.DueAt is null ? "-" : _ticket.DueAt.Value.ToString("u"))
         </MudText>
+
+        @{
+            var allowedTransitions = StatusTransitionHelper.GetAllowedTransitions(_ticket.Status);
+        }
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
+                   OnClick="OpenChangeStatusDialogAsync"
+                   Disabled="@(allowedTransitions.Count == 0)">
+            Change Status
+        </MudButton>
     </MudPaper>
 }
 
 @code {
     [Inject] ITicketsApiClient TicketsApi { get; set; } = default!;
-    
+    [Inject] IDialogService DialogService { get; set; } = default!;
+    [Inject] ISnackbar Snackbar { get; set; } = default!;
+
     [Parameter] public Guid Id { get; set; }
 
     private bool _isLoading;
@@ -48,14 +59,30 @@ else
         var result = await TicketsApi.GetByIdAsync(Id);
 
         if (result.IsSuccess)
-        {
             _ticket = result.Value;
-        }
         else
-        {
             _error = result.Error;
-        }
 
         _isLoading = false;
+    }
+
+    private async Task OpenChangeStatusDialogAsync()
+    {
+        var parameters = new DialogParameters<ChangeStatusDialog>
+        {
+            { x => x.TicketId, _ticket!.Id },
+            { x => x.CurrentStatus, _ticket!.Status }
+        };
+
+        var dialog = await DialogService.ShowAsync<ChangeStatusDialog>(
+            "Change Ticket Status", parameters);
+
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: TicketResponse updated })
+        {
+            _ticket = updated;
+            Snackbar.Add("Status updated.", Severity.Success);
+        }
     }
 }

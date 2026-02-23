@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
+using ServiceDeskLite.Application.Tickets.ChangeTicketStatus;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
 using ServiceDeskLite.Application.Tickets.SearchTickets;
@@ -13,6 +14,7 @@ public static class DependencyInjection
         services.AddScoped<CreateTicketHandler>();
         services.AddScoped<GetTicketByIdHandler>();
         services.AddScoped<SearchTicketsHandler>();
+        services.AddScoped<ChangeTicketStatusHandler>();
 
         return services;
     }
