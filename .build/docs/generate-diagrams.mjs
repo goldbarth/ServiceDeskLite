@@ -37,6 +37,7 @@ if (!existsSync(mmdcCli)) {
 console.log(`Generating ${files.length} diagram(s)...`);
 
 const puppeteerConfig = resolve(__dirname, "puppeteer.config.json");
+const mermaidConfig = resolve(__dirname, "mermaid.config.json");
 
 for (const file of files) {
     const inFile = join(inputDir, file);
@@ -45,10 +46,11 @@ for (const file of files) {
     execFileSync(
         process.execPath, // node.exe that runs this script
         [
-            mmdcCli, 
-            "-i", inFile, 
-            "-o", outFile, 
-            "-b", "transparent",
+            mmdcCli,
+            "-i", inFile,
+            "-o", outFile,
+            "-b", "white",
+            "-c", mermaidConfig,
             "--puppeteerConfigFile", puppeteerConfig
         ],
         { stdio: "inherit" }

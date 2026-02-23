@@ -1,0 +1,5 @@
+{
+    "theme": "default",
+    "flowchart": { "padding": 20 },
+    "stateDiagram": { "padding": 20 }
+}
