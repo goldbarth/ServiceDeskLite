@@ -136,8 +136,8 @@
                 Seite @_page von @data.TotalPages — @data.TotalCount Gesamt (je @_pageSize)
             </MudText>
 
-            <MudPagination Page="_page"
-                           PageChanged="OnPageChangedAsync"
+            <MudPagination Selected="_page"
+                           SelectedChanged="OnPageChangedAsync"
                            Count="@Math.Max(1, data.TotalPages)"
                            Disabled="_isLoading"/>
         </div>
