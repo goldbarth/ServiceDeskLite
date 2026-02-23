@@ -1,0 +1,17 @@
+﻿@media (min-width: 768px) {
+.navbar-collapse.collapse {
+        display: none !important;
+    }
+
+.navbar-collapse.collapse.in {
+        display: block !important;
+    }
+
+.navbar-header .navbar-toggle {
+        display: block !important;
+    }
+
+.navbar-nav {
+        float: none !important;
+    }
+}
