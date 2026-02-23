@@ -21,6 +21,34 @@ public sealed class TicketSeeder : ITicketSeeder
         _uow = uow;
     }
 
+    private static readonly string[] Titles =
+    [
+        "Cannot login", "Printer issue", "VPN unstable", "Request access", "Update software",
+        "Email not syncing", "Monitor flickering", "Keyboard unresponsive", "Cannot open Excel",
+        "Outlook crash on startup", "Slow network in meeting room", "No sound after update",
+        "Password reset required", "Missing drive mapping", "Scanner offline",
+        "Browser plugin broken", "Teams call drops", "File share permission denied",
+        "CPU fan noise", "Battery drains fast", "Projector not detected", "USB port dead",
+        "Antivirus blocking app", "Clock out of sync", "Remote desktop timeout",
+    ];
+
+    private static readonly string[] Descriptions =
+    [
+        "Affects multiple users in the same department.",
+        "Reproducible on every attempt.",
+        "Started after last Windows update.",
+        "Only occurs on certain machines.",
+        "User urgently needs this resolved.",
+        "Temporary workaround in place.",
+        "No error message shown.",
+        "Error code visible in event log.",
+        "Happens intermittently.",
+        "Confirmed on two separate devices.",
+    ];
+
+    private static readonly TicketPriority[] Priorities =
+        [TicketPriority.Low, TicketPriority.Medium, TicketPriority.High, TicketPriority.Critical];
+
     public async Task SeedAsync(CancellationToken ct = default)
     {
         // Check if at least one ticket exists.
@@ -34,49 +62,26 @@ public sealed class TicketSeeder : ITicketSeeder
             return;
 
         var now = DateTimeOffset.UtcNow;
+        const int count = 100;
 
-        var t1 = new Ticket(
-            id: TicketId.New(),
-            title: "Cannot login",
-            description: "User cannot login to the portal.",
-            priority: TicketPriority.High,
-            createdAt: now.AddMinutes(-50),
-            dueAt: now.AddDays(2));
+        for (var i = 0; i < count; i++)
+        {
+            var title = $"{Titles[i % Titles.Length]} #{i + 1}";
+            var description = Descriptions[i % Descriptions.Length];
+            var priority = Priorities[i % Priorities.Length];
+            var createdAt = now.AddMinutes(-(count - i) * 15);
+            var dueAt = i % 3 == 0 ? createdAt.AddDays(3 + i % 7) : (DateTimeOffset?)null;
 
-        var t2 = new Ticket(
-            id: TicketId.New(),
-            title: "Printer issue",
-            description: "Office printer shows error code E13.",
-            priority: TicketPriority.Medium,
-            createdAt: now.AddMinutes(-40));
+            var ticket = new Ticket(
+                id: TicketId.New(),
+                title: title,
+                description: description,
+                priority: priority,
+                createdAt: createdAt,
+                dueAt: dueAt);
 
-        var t3 = new Ticket(
-            id: TicketId.New(),
-            title: "VPN unstable",
-            description: "VPN disconnects every 10 minutes.",
-            priority: TicketPriority.Medium,
-            createdAt: now.AddMinutes(-30),
-            dueAt: now.AddDays(1));
-
-        var t4 = new Ticket(
-            id: TicketId.New(),
-            title: "Request access",
-            description: "Need access to finance folder.",
-            priority: TicketPriority.Low,
-            createdAt: now.AddMinutes(-20));
-
-        var t5 = new Ticket(
-            id: TicketId.New(),
-            title: "Update software",
-            description: "Please update the ticketing client.",
-            priority: TicketPriority.Low,
-            createdAt: now.AddMinutes(-10));
-
-        await _tickets.AddAsync(t1, ct);
-        await _tickets.AddAsync(t2, ct);
-        await _tickets.AddAsync(t3, ct);
-        await _tickets.AddAsync(t4, ct);
-        await _tickets.AddAsync(t5, ct);
+            await _tickets.AddAsync(ticket, ct);
+        }
 
         await _uow.SaveChangesAsync(ct);
     }
