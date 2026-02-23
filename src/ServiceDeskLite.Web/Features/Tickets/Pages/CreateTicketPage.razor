@@ -1,0 +1,123 @@
+@page "/tickets/new"
+@using MudBlazor
+
+@inject ITicketsApiClient TicketsApi
+@inject NavigationManager Nav
+
+<PageTitle>Neues Ticket</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Neues Ticket</MudText>
+
+<MudPaper Class="pa-4" Elevation="1" Style="max-width: 640px;">
+    <MudForm @ref="_form" @bind-IsValid="_isFormValid">
+
+        <MudTextField T="string"
+                      Label="Titel"
+                      @bind-Value="_title"
+                      Required="true"
+                      RequiredError="Titel ist erforderlich."
+                      MaxLength="200"
+                      Disabled="_isLoading"
+                      Class="mb-4" />
+
+        <MudTextField T="string"
+                      Label="Beschreibung"
+                      @bind-Value="_description"
+                      Required="true"
+                      RequiredError="Beschreibung ist erforderlich."
+                      MaxLength="2000"
+                      Lines="4"
+                      Disabled="_isLoading"
+                      Class="mb-4" />
+
+        <MudSelect T="TicketPriority"
+                   Label="Priorität"
+                   @bind-Value="_priority"
+                   Required="true"
+                   RequiredError="Priorität ist erforderlich."
+                   Disabled="_isLoading"
+                   Class="mb-4">
+            @foreach (var p in Enum.GetValues<TicketPriority>())
+            {
+                <MudSelectItem Value="@p">@p</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudDatePicker Label="Fälligkeitsdatum (optional)"
+                       @bind-Date="_dueAt"
+                       Disabled="_isLoading"
+                       Class="mb-6" />
+
+        @if (_apiError is not null)
+        {
+            <AppErrorPanel Error="_apiError" />
+        }
+
+        <div class="d-flex gap-3 mt-4">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Disabled="_isLoading"
+                       OnClick="SubmitAsync">
+                @if (_isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+                    <span>Wird erstellt…</span>
+                }
+                else
+                {
+                    <span>Erstellen</span>
+                }
+            </MudButton>
+
+            <MudButton Variant="Variant.Text"
+                       Disabled="_isLoading"
+                       Href="/tickets">
+                Abbrechen
+            </MudButton>
+        </div>
+
+    </MudForm>
+</MudPaper>
+
+@code {
+    private MudForm _form = default!;
+
+    private string _title = string.Empty;
+    private string _description = string.Empty;
+    private TicketPriority _priority = TicketPriority.Medium;
+    private DateTime? _dueAt;
+
+    private bool _isLoading;
+    private bool _isFormValid;
+    private ApiError? _apiError;
+
+    private async Task SubmitAsync()
+    {
+        await _form.Validate();
+
+        if (!_isFormValid)
+            return;
+
+        _isLoading = true;
+        _apiError = null;
+
+        var command = new CreateTicketRequest(
+            Title: _title,
+            Description: _description,
+            Priority: _priority,
+            DueAt: _dueAt.HasValue
+                ? new DateTimeOffset(_dueAt.Value, TimeSpan.Zero)
+                : null);
+
+        var result = await TicketsApi.CreateAsync(command);
+
+        if (result.IsSuccess)
+        {
+            Nav.NavigateTo($"/tickets/{result.Value!.Id}");
+            return;
+        }
+
+        _apiError = result.Error;
+        _isLoading = false;
+    }
+}
