@@ -47,18 +47,17 @@ public class TicketsApiClientTests
     public async Task GetByIdAsync_Returns_failure_when_api_returns_400_with_problem_details()
     {
         var traceId = "abc-123";
+        // RFC 9457: extensions are serialized flat at the top level of the problem object.
+        // [JsonExtensionData] captures unknown top-level properties, not a nested "extensions" key.
         var problemJson = JsonSerializer.Serialize(new
         {
             type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
             title = "Validation Error",
             status = 400,
             detail = "Title is required",
-            extensions = new Dictionary<string, object>
-            {
-                ["code"] = "create_ticket.title.required",
-                ["errorType"] = "Validation",
-                ["traceId"] = traceId
-            }
+            code = "create_ticket.title.required",
+            errorType = "Validation",
+            traceId
         });
 
         var handler = FakeHttpMessageHandler.WithRawJson(HttpStatusCode.BadRequest, problemJson);
