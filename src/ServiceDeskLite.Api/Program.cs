@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
+
 using Serilog;
 
 using ServiceDeskLite.Api.Composition;
@@ -51,7 +53,10 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(o =>
+{
+    o.SwaggerDoc("v1", new OpenApiInfo { Title = "ServiceDeskLite API", Version = "v1" });
+});
 
 var app = builder.Build();
 
@@ -77,8 +82,14 @@ app.UseHttpsRedirection();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(o =>
+    {
+        o.RoutePrefix = "swagger";
+        o.SwaggerEndpoint("/swagger/v1/swagger.json", "ServiceDeskLite API v1");
+        o.DocumentTitle = "ServiceDeskLite Swagger";
+    });
     
+    // goldbarth: seeder for testing purpose
     using var scope = app.Services.CreateScope();
     var seeder = scope.ServiceProvider.GetRequiredService<ITicketSeeder>();
     await seeder.SeedAsync();

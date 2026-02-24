@@ -2,9 +2,11 @@
     "name": "servicedesklite-docs-build",
     "private": true,
     "devDependencies": {
-        "@mermaid-js/mermaid-cli": "11.4.2"
+        "@mermaid-js/mermaid-cli": "11.4.2",
+        "swagger-ui-dist": "^5.0.0"
     },
     "scripts": {
-        "generate": "node generate-diagrams.mjs"
+        "generate": "node generate-diagrams.mjs",
+        "swagger-ui": "node copy-swagger-ui.mjs"
     }
 }

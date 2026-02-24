@@ -1,7 +1,9 @@
 # OpenAPI
+### Interactive docs
 
 This page renders the OpenAPI v1 snapshot as interactive documentation.
 
-## Interactive docs (ReDoc)
+## Swagger UI
+<iframe src="openapi.swagger.html" style="width:100%; height: 100vh; border:5;"></iframe>
 
-<iframe src="openapi.redoc.html" style="width:100%; height: 85vh; border:0;"></iframe>
+

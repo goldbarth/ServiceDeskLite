@@ -1,7 +1,4 @@
-﻿- name: Index
-  href: index.md
-
-- name: Overview
+﻿- name: Overview
   href: overview.md
 
 - name: Domain
