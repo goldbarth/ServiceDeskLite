@@ -126,7 +126,7 @@ The API exposes an OpenAPI v1 specification which is:
 
 - Generated from the running Minimal API
 - Snapshotted into `docs/api/openapi.v1.json`
-- Rendered via ReDoc on GitHub Pages
+- Rendered via Swagger UI on GitHub Pages
 - Verified in CI to detect contract drift
 
 ### Purpose
