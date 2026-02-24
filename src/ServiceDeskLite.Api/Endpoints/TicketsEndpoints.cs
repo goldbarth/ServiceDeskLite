@@ -18,6 +18,15 @@ public static class TicketsEndpoints
 {
     public static RouteGroupBuilder MapTicketsEndpoints(this RouteGroupBuilder tickets)
     {
+        // GET /api/v1/tickets?page=1&pageSize=20
+        tickets.MapGet("/", SearchTicketsAsync)
+            .WithName("Tickets_Search")
+            .WithSummary("Search tickets")
+            .WithDescription("Returns a paged list of tickets with deterministic sorting (CreatedAt + Id).")
+            .Produces<PagedResponse<TicketListItemResponse>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+        
         // POST /api/v1/tickets
         tickets.MapPost("/", CreateTicketAsync)
             .WithName("Tickets_Create")
@@ -44,15 +53,6 @@ public static class TicketsEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
-            .ProducesProblem(StatusCodes.Status500InternalServerError);
-
-        // GET /api/v1/tickets?page=1&pageSize=20
-        tickets.MapGet("/", SearchTicketsAsync)
-            .WithName("Tickets_Search")
-            .WithSummary("Search tickets")
-            .WithDescription("Returns a paged list of tickets with deterministic sorting (CreatedAt + Id).")
-            .Produces<PagedResponse<TicketListItemResponse>>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         return tickets;

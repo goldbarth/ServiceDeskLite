@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 
@@ -38,10 +39,10 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services
-    .AddApiDocumentation()                          // OpenAPI
-    .AddApiErrorHandling()                          // ErrorHandling + ProblemDetails + Mapper
-    .AddApplication()                               // Application Layer
-    .AddApiInfrastructure(builder.Configuration);   // Infrastructure Provider Switch
+    .AddApiDocumentation() // OpenAPI
+    .AddApiErrorHandling() // ErrorHandling + ProblemDetails + Mapper
+    .AddApplication() // Application Layer
+    .AddApiInfrastructure(builder.Configuration); // Infrastructure Provider Switch
 
 builder.Services.AddCors(options =>
 {
@@ -56,7 +57,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(o =>
 {
     o.SwaggerDoc("v1", new OpenApiInfo { Title = "ServiceDeskLite API", Version = "v1" });
+    o.OrderActionsBy(api => $"{api.RelativePath}_{api.HttpMethod}");
 });
+
 
 var app = builder.Build();
 
@@ -88,7 +91,7 @@ if (app.Environment.IsDevelopment())
         o.SwaggerEndpoint("/swagger/v1/swagger.json", "ServiceDeskLite API v1");
         o.DocumentTitle = "ServiceDeskLite Swagger";
     });
-    
+
     // goldbarth: seeder for testing purpose
     using var scope = app.Services.CreateScope();
     var seeder = scope.ServiceProvider.GetRequiredService<ITicketSeeder>();
@@ -108,4 +111,6 @@ api.MapGroup("/tickets")
 app.Run();
 
 
-public partial class Program { }
+public partial class Program
+{
+}
