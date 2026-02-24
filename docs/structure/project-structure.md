@@ -12,16 +12,20 @@ The repository is organized into layered projects and mirrored test projects.
 ├── .github
 │   └── workflows
 │       ├── ci.yml
-│       └── docs.yml
+│       ├── docs.yml
+│       └── openapi-snapshot.yml
 ├── docs
 │   ├── adr
 │   │   ├── 0001-initial-architecture.md
+│   │   ├── draft-openapi-snapshot.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
 │   │   ├── openapi.md
+│   │   ├── openapi.redoc.html
 │   │   ├── openapi.v1.json
 │   │   ├── overview.md
+│   │   ├── redoc.standalone.js
 │   │   └── toc.yml
 │   ├── architecture
 │   │   ├── api.md
@@ -35,6 +39,20 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   └── web.md
 │   ├── assets
 │   │   └── diagrams
+│   │       ├── api-client-call-flow.svg
+│   │       ├── client-api-result-types.svg
+│   │       ├── component-relationships-inmemory.svg
+│   │       ├── component-relationships-sqlite.svg
+│   │       ├── dependency-rules.svg
+│   │       ├── domain-model.svg
+│   │       ├── exception-handling-pipeline.svg
+│   │       ├── handler-signature-contract.svg
+│   │       ├── middleware-pipeline.svg
+│   │       ├── request-lifecycle.svg
+│   │       ├── result-error-type-model.svg
+│   │       ├── system-context.svg
+│   │       ├── ticket-workflow.svg
+│   │       └── uow-commit-boundary.svg
 │   ├── diagrams
 │   │   ├── api-client-call-flow.mmd
 │   │   ├── client-api-result-types.mmd
@@ -59,14 +77,16 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── project-structure.md
 │   │   ├── solution-map.md
 │   │   └── toc.yml
-│   ├── styles
+│   ├── template
+│   │   └── styles
+│   │       └── main.css
 │   ├── testing
 │   │   ├── e2e.md
 │   │   ├── overview.md
 │   │   └── toc.yml
 │   ├── docfx.json
 │   ├── index.md
-│   ├── PROJECT_OVERVIEW.md
+│   ├── logo.svg
 │   └── toc.yml
 ├── src
 │   ├── ServiceDeskLite.Api
@@ -124,6 +144,9 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── DependencyInjection
 │   │   │   └── DependencyInjection.cs
 │   │   ├── Tickets
+│   │   │   ├── ChangeTicketStatus
+│   │   │   │   ├── ChangeTicketStatusCommand.cs
+│   │   │   │   └── ChangeTicketStatusHandler.cs
 │   │   │   ├── CreateTicket
 │   │   │   │   ├── CreateTicketCommand.cs
 │   │   │   │   ├── CreateTicketHandler.cs
@@ -153,13 +176,15 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── PagedResponse.cs
 │   │   │   │   └── SortDirection.cs
 │   │   │   └── Tickets
+│   │   │       ├── ChangeTicketStatusRequest.cs
 │   │   │       ├── CreateTicketRequest.cs
 │   │   │       ├── CreateTicketResponse.cs
 │   │   │       ├── SearchTicketsRequest.cs
 │   │   │       ├── TicketListItemResponse.cs
 │   │   │       ├── TicketPriority.cs
 │   │   │       ├── TicketResponse.cs
-│   │   │       └── TicketSortField.cs
+│   │   │       ├── TicketSortField.cs
+│   │   │       └── TicketStatus.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Contracts.csproj
 │   ├── ServiceDeskLite.Domain
@@ -249,11 +274,15 @@ The repository is organized into layered projects and mirrored test projects.
 │       │   │       └── Pages
 │       │   │           └── UsersPage.razor
 │       │   ├── Tickets
-│       │   │   └── Pages
-│       │   │       ├── TicketDetailsPage.razor
-│       │   │       ├── TicketsListPage.razor
-│       │   │       ├── TicketsListPage.razor.cs
-│       │   │       └── TicketsPageState.cs
+│       │   │   ├── Components
+│       │   │   │   └── ChangeStatusDialog.razor
+│       │   │   ├── Pages
+│       │   │   │   ├── CreateTicketPage.razor
+│       │   │   │   ├── TicketDetailsPage.razor
+│       │   │   │   ├── TicketsListPage.razor
+│       │   │   │   ├── TicketsListPage.razor.cs
+│       │   │   │   └── TicketsPageState.cs
+│       │   │   └── StatusTransitionHelper.cs
 │       │   └── _Imports.razor
 │       ├── Properties
 │       │   └── launchSettings.json
@@ -324,12 +353,16 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── ApiWebApplicationFactory.cs
 │   │   │   ├── InMemorySink.cs
 │   │   │   └── TestEndpointFilter.cs
+│   │   ├── Tickets
+│   │   │   └── ChangeTicketStatusEndpointTests.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Tests.Api.csproj
 │   ├── ServiceDeskLite.Tests.Application
 │   │   ├── Common
 │   │   │   └── ResultTests.cs
 │   │   ├── Tickets
+│   │   │   ├── ChangeTicketStatus
+│   │   │   │   └── ChangeTicketStatusHandlerTests.cs
 │   │   │   ├── CreateTicket
 │   │   │   │   └── CreateTicketHandlerTests.cs
 │   │   │   ├── GetTicketById
@@ -350,6 +383,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── TestServiceProvider.cs
 │   │   │   └── TicketFactory.cs
 │   │   ├── Tickets
+│   │   │   ├── ChangeTicketStatusTests.cs
 │   │   │   ├── CommitBoundaryTests.cs
 │   │   │   ├── DeterministicPagingSortingTests.cs
 │   │   │   ├── DuplicateDetectionTests.cs

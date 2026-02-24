@@ -4,3 +4,4 @@
 | ADR | Title |
 |---:|---|
 | 0001 | [ADR 0001: Initial Architecture](0001-initial-architecture.md) |
+| — | [ADR 000X: OpenAPI Snapshot Strategy](draft-openapi-snapshot.md) |

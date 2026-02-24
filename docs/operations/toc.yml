@@ -1,8 +1,8 @@
-﻿- name: Commands
-  href: commands.md
-
-- name: CI
+﻿- name: CI
   href: ci.md
+
+- name: Commands
+  href: commands.md
 
 - name: Commit Conventions
   href: commit-conventions.md
