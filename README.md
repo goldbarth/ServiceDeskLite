@@ -36,7 +36,7 @@ If you're reviewing this repository for architectural clarity, the following ent
 
 - **Architecture Overview**  
   High-level system structure, layering decisions and core design principles.  
-  → https://goldbarth.github.io/ServiceDeskLite/architecture/index.html
+  → https://goldbarth.github.io/ServiceDeskLite/architecture/overview.html
 
 - **Architectural Decision Records (ADR)**  
   Explicit documentation of major design decisions and trade-offs.  
