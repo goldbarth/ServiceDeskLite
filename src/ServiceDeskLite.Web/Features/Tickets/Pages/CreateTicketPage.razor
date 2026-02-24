@@ -1,9 +1,6 @@
 @page "/tickets/new"
 @using MudBlazor
 
-@inject ITicketsApiClient TicketsApi
-@inject NavigationManager Nav
-
 <PageTitle>Neues Ticket</PageTitle>
 
 <MudText Typo="Typo.h4" Class="mb-4">Neues Ticket</MudText>
@@ -80,6 +77,9 @@
 </MudPaper>
 
 @code {
+    [Inject] private ITicketsApiClient TicketsApiClient { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+    
     private MudForm _form = default!;
 
     private string _title = string.Empty;
@@ -109,7 +109,7 @@
                 ? new DateTimeOffset(_dueAt.Value, TimeSpan.Zero)
                 : null);
 
-        var result = await TicketsApi.CreateAsync(command);
+        var result = await TicketsApiClient.CreateAsync(command);
 
         if (result.IsSuccess)
         {
