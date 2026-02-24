@@ -14,7 +14,7 @@ It reflects a commitment to treating architecture as a deliberate discipline rat
     <img src="https://img.shields.io/badge/Docs-DocFX-2C3E50?logo=readthedocs&logoColor=white" alt="DocFX Docs" />
   </a>
   <a href="https://goldbarth.github.io/ServiceDeskLite/api/openapi.html">
-    <img src="https://img.shields.io/badge/API-OpenAPI%20(ReDoc)-2C3E50?logo=swagger&logoColor=white" alt="OpenAPI ReDoc" />
+    <img src="https://img.shields.io/badge/API-OpenAPI%20(ReDoc)-2C3E50?logo=swagger&logoColor=white" alt="OpenAPI Swagger" />
   </a>
   <a href="./docs">
     <img src="https://img.shields.io/badge/Docs-Source%20(in%20repo)-2C3E50?logo=github&logoColor=white" alt="Docs Source" />
@@ -22,7 +22,7 @@ It reflects a commitment to treating architecture as a deliberate discipline rat
 </p>
 
 - **Docs (DocFX landing page):** https://goldbarth.github.io/ServiceDeskLite/index.html
-- **API Reference (ReDoc / OpenAPI):** https://goldbarth.github.io/ServiceDeskLite/api/openapi.html
+- **API Reference (Swagger / OpenAPI):** https://goldbarth.github.io/ServiceDeskLite/api/openapi.html
 - **Docs Source (repository):** https://github.com/goldbarth/ServiceDeskLite/tree/main/docs
 
 > DocFX is the reader-friendly documentation site. The `/docs` folder is the source of truth and is reviewed via pull requests.
