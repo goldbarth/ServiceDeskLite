@@ -14,7 +14,7 @@ It reflects a commitment to treating architecture as a deliberate discipline rat
     <img src="https://img.shields.io/badge/Docs-DocFX-2C3E50?logo=readthedocs&logoColor=white" alt="DocFX Docs" />
   </a>
   <a href="https://goldbarth.github.io/ServiceDeskLite/api/openapi.html">
-    <img src="https://img.shields.io/badge/API-OpenAPI%20(ReDoc)-2C3E50?logo=swagger&logoColor=white" alt="OpenAPI Swagger" />
+    <img src="https://img.shields.io/badge/API-OpenAPI%20(Swagger)-2C3E50?logo=swagger&logoColor=white" alt="OpenAPI Swagger" />
   </a>
   <a href="./docs">
     <img src="https://img.shields.io/badge/Docs-Source%20(in%20repo)-2C3E50?logo=github&logoColor=white" alt="Docs Source" />
