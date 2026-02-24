@@ -13,6 +13,7 @@ namespace ServiceDeskLite.Web.Features.Tickets.Pages;
 
 public partial class TicketsListPage
 {
+    [Inject] private ITicketsApiClient TicketsApi { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
     
     private int _page = 1;
