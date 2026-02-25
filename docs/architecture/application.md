@@ -42,6 +42,8 @@ public class Result<T>
         IReadOnlyDictionary<string, object>? meta = null)
     public static Result<T> DomainViolation(string code, string message,
         IReadOnlyDictionary<string, object>? meta = null)
+    public static Result<T> Conflict(string code, string message,
+        IReadOnlyDictionary<string, object>? meta = null)
 }
 ```
 
@@ -154,6 +156,24 @@ public class SearchTicketsHandler
 }
 ```
 
+#### `ChangeTicketStatus`
+
+```csharp
+public sealed record ChangeTicketStatusCommand(TicketId Id, TicketStatus NewStatus);
+
+// Handler: validates null, loads ticket (NotFound if missing),
+//          calls ticket.ChangeStatus, saves via UnitOfWork.
+//          invalid_transition → Result<T>.Conflict (409)
+//          other DomainException → Result<T>.DomainViolation (400)
+public sealed class ChangeTicketStatusHandler
+{
+    public async Task<Result<TicketDetailsDto>> HandleAsync(
+        ChangeTicketStatusCommand? command, CancellationToken ct = default)
+}
+```
+
+Returns the updated ticket as `TicketDetailsDto` (same as `GetTicketById`).
+
 #### Shared Application Types
 
 ```csharp
@@ -205,6 +225,28 @@ public static class PagingPolicy
     public const int MaxPageSize = 200;
 }
 ```
+
+#### Exception Mappers
+
+Two helper classes centralise the translation from caught exceptions to `ApplicationError`:
+
+```csharp
+// Domain layer exceptions → ApplicationError.DomainViolation
+public static class DomainExceptionMapper
+{
+    public static ApplicationError ToApplicationError(DomainException ex)
+}
+
+// Persistence layer exceptions → ApplicationError.Conflict or ApplicationError.Unexpected
+// Conflict is detected by inspecting the exception message for keywords
+// ("already exists", "duplicate", "unique", "concurrency").
+public static class PersistenceExceptionMapper
+{
+    public static ApplicationError ToApplicationError(Exception ex)
+}
+```
+
+Handlers use these instead of duplicating the mapping logic inline.
 
 #### Repository & Unit of Work Abstractions
 
