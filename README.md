@@ -63,8 +63,11 @@ If you're reviewing this repository for architectural clarity, the following ent
   Contract-first API surface with versioned endpoints.
   → https://goldbarth.github.io/ServiceDeskLite/api/openapi.html
 
+<<<<<<< docs-update
+=======
 ---
 
+>>>>>>> main
 ## Architecture
 
 ServiceDeskLite is structured as a strict layered system with inward-only dependencies.
