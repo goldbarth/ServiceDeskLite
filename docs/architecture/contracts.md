@@ -14,6 +14,9 @@ public sealed record CreateTicketRequest(
 
 public sealed record CreateTicketResponse(Guid Id);
 
+// POST /api/v1/tickets/{id}/status
+public sealed record ChangeTicketStatusRequest(TicketStatus NewStatus);
+
 // GET /api/v1/tickets/{id}
 public sealed record TicketResponse(
     Guid Id,
@@ -55,6 +58,7 @@ public sealed record PagedResponse<T>(
 
 ```csharp
 public enum TicketPriority  { Low, Medium, High, Critical }
+public enum TicketStatus    { New, Triaged, InProgress, Waiting, Resolved, Closed }
 public enum TicketSortField { CreatedAt, DueAt, Priority, Status, Title }
 public enum SortDirection   { Asc, Desc }
 ```

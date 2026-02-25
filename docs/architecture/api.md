@@ -24,11 +24,12 @@
 
 Base route group: `/api/v1/tickets`
 
-| HTTP | Route                     | Handler             | Returns                                          |
-|------|---------------------------|---------------------|--------------------------------------------------|
-| POST | /api/v1/tickets           | CreateTicketAsync   | 201 Created + CreateTicketResponse               |
-| GET  | /api/v1/tickets/{id:guid} | GetTicketByIdAsync  | 200 OK + TicketResponse                          |
-| GET  | /api/v1/tickets           | SearchTicketsAsync  | 200 OK + PagedResponse\<TicketListItemResponse\> |
+| HTTP | Route                            | Handler                  | Returns                                          |
+|------|----------------------------------|--------------------------|--------------------------------------------------|
+| POST | /api/v1/tickets                  | CreateTicketAsync        | 201 Created + CreateTicketResponse               |
+| GET  | /api/v1/tickets/{id:guid}        | GetTicketByIdAsync       | 200 OK + TicketResponse                          |
+| GET  | /api/v1/tickets                  | SearchTicketsAsync       | 200 OK + PagedResponse\<TicketListItemResponse\> |
+| POST | /api/v1/tickets/{id:guid}/status | ChangeTicketStatusAsync  | 200 OK + TicketResponse                          |
 
 All errors return RFC 9457 ProblemDetails via `ResultToProblemDetailsMapper`.
 
@@ -86,6 +87,7 @@ Logging: 5xx → ERROR, 409 → WARNING, 400 → WARNING, others → INFO.
 ```csharp
 // Contracts → Domain
 public static DomainTicketPriority ToDomain(this TicketPriority value)
+public static DomainTicketStatus   ToDomain(this TicketStatus value)
 
 // Contracts → Application
 public static AppTicketSortField  ToApplication(this TicketSortField value)
