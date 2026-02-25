@@ -20,8 +20,6 @@ Design decisions, trade-offs and system boundaries are made explicit and documen
 
 It reflects a commitment to treating architecture as a deliberate discipline rather than an emergent byproduct of feature growth.
 
----
-
 ## Documentation
 
 <p>
@@ -42,8 +40,6 @@ It reflects a commitment to treating architecture as a deliberate discipline rat
 
 > DocFX is the reader-friendly documentation site. The `/docs` folder is the source of truth and is reviewed via pull requests.
 
----
-
 ## Start Here
 
 This project is structured as an explicit engineering case.
@@ -63,11 +59,6 @@ If you're reviewing this repository for architectural clarity, the following ent
   Contract-first API surface with versioned endpoints.
   → https://goldbarth.github.io/ServiceDeskLite/api/openapi.html
 
-<<<<<<< docs-update
-=======
----
-
->>>>>>> main
 ## Architecture
 
 ServiceDeskLite is structured as a strict layered system with inward-only dependencies.
