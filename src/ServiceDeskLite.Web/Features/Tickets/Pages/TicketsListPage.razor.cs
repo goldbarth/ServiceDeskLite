@@ -135,7 +135,7 @@ public partial class TicketsListPage
         await LoadAsync(_page);
     }
     
-    private void OnRowClick(TableRowClickEventArgs<TicketListItemResponse> args)
+    private void HandleRowClick(TableRowClickEventArgs<TicketListItemResponse> args)
     {
         var id = args.Item!.Id;
         Nav.NavigateTo($"/tickets/{id}");
