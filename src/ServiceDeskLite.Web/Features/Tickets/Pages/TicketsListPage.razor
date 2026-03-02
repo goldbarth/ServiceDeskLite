@@ -39,7 +39,7 @@
                 <MudIconButton Icon="@Icons.Material.Filled.Refresh"
                                Disabled="_isLoading"
                                OnClick="ReloadAsync"
-                               Title="Reload" />
+                               title="Reload" />
 
                 <MudButton Variant="Variant.Filled"
                            Color="Color.Primary"
@@ -66,10 +66,11 @@
         </div>
 
         <MudPaper Elevation="1" Class="pa-2">
-            <MudTable Items="data.Items"
+            <MudTable T="TicketListItemResponse"
+                      Items="data.Items"
                       Dense="true"
                       Hover="true"
-                      RowClick="OnRowClick">
+                      OnRowClick="HandleRowClick">
                 <HeaderContent>
                     <MudTh>Id</MudTh>
                     <MudTh>
