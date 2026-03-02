@@ -7,18 +7,25 @@
   <a href="https://github.com/goldbarth/ServiceDeskLite/actions/workflows/docs.yml">
     <img src="https://github.com/goldbarth/ServiceDeskLite/actions/workflows/docs.yml/badge.svg" alt="Docs" />
   </a>
-  <img src="https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white" alt=".NET 10" />
+  <img src="https://img.shields.io/badge/.NET-10_LTS-512BD4?logo=dotnet&logoColor=white" alt=".NET 10 LTS" />
   <img src="https://img.shields.io/badge/License-MIT-2C3E50" alt="MIT" />
 </p>
 
 ## Purpose
 
-ServiceDeskLite is a deliberately structured engineering case built to explore and apply Clean Architecture principles in a modern .NET environment.
+ServiceDeskLite is a structured backend application built to apply Clean Architecture principles in a modern .NET (LTS) environment.
 
-The project prioritizes architectural clarity over feature growth.
-Design decisions, trade-offs and system boundaries are made explicit and documented.
+The project focuses on:
 
-It reflects a commitment to treating architecture as a deliberate discipline rather than an emergent byproduct of feature growth.
+- Strict layering
+- Explicit domain rules
+- Controlled dependencies
+- Consistent error handling
+- Testable application logic
+
+The goal is not feature breadth, but structural clarity and enforceable boundaries.
+
+---
 
 ## Documentation
 
@@ -30,38 +37,56 @@ It reflects a commitment to treating architecture as a deliberate discipline rat
     <img src="https://img.shields.io/badge/API-OpenAPI%20(Swagger)-2C3E50?logo=swagger&logoColor=white" alt="OpenAPI Swagger" />
   </a>
   <a href="./docs">
-    <img src="https://img.shields.io/badge/Docs-Source%20(in%20repo)-2C3E50?logo=github&logoColor=white" alt="Docs Source" />
+    <img src="https://img.shields.io/badge/Docs-Source-2C3E50?logo=github&logoColor=white" alt="Docs Source" />
   </a>
 </p>
 
-- **Docs (DocFX landing page):** https://goldbarth.github.io/ServiceDeskLite/index.html
-- **API Reference (Swagger / OpenAPI):** https://goldbarth.github.io/ServiceDeskLite/api/openapi.html
-- **Docs Source (repository):** https://github.com/goldbarth/ServiceDeskLite/tree/main/docs
+- **Architecture Overview**  
+  https://goldbarth.github.io/ServiceDeskLite/architecture/overview.html
 
-> DocFX is the reader-friendly documentation site. The `/docs` folder is the source of truth and is reviewed via pull requests.
+- **Architectural Decision Records (ADR)**  
+  https://goldbarth.github.io/ServiceDeskLite/adr/index.html
 
-## Start Here
+- **API Reference (OpenAPI / ReDoc)**  
+  https://goldbarth.github.io/ServiceDeskLite/api/openapi.html
 
-This project is structured as an explicit engineering case.
-Documentation is intentionally organized to reflect architectural intent rather than feature growth.
+Documentation is versioned and reviewed via pull requests.  
+The `/docs` folder is the source of truth.
 
-If you're reviewing this repository for architectural clarity, the following entry points provide the fastest overview:
+---
 
-- **Architecture Overview**
-  High-level system structure, layering decisions and core design principles.
-  → https://goldbarth.github.io/ServiceDeskLite/architecture/overview.html
+## Architectural Characteristics
 
-- **Architectural Decision Records (ADR)**
-  Explicit documentation of major design decisions and trade-offs.
-  → https://goldbarth.github.io/ServiceDeskLite/adr/index.html
+- Domain layer without external dependencies
+- Application layer depends only on Domain
+- Infrastructure implements interfaces defined inward
+- API layer coordinates use cases, not business rules
+- No outward dependency references allowed
 
-- **API Reference (OpenAPI / ReDoc)**
-  Contract-first API surface with versioned endpoints.
-  → https://goldbarth.github.io/ServiceDeskLite/api/openapi.html
+### Error Handling Strategy
 
-## Architecture
+- Result-based application flow
+- No exceptions crossing application boundaries
+- RFC 9457 ProblemDetails as HTTP contract
+- Explicit failure modeling in use cases
 
-ServiceDeskLite is structured as a strict layered system with inward-only dependencies.
+### Persistence Strategy
+
+- EF Core (SQLite)
+- InMemory provider for test scenarios
+- Provider switch via configuration
+- Explicit UnitOfWork commit boundary
+
+### Testing Strategy
+
+- End-to-end tests for both persistence providers
+- Application layer testable without web host
+- Infrastructure isolated behind interfaces
+
+---
+
+## Layer Structure
+
 
 ```
 ┌─────────────────────────────────────┐
@@ -78,4 +103,29 @@ ServiceDeskLite is structured as a strict layered system with inward-only depend
 └─────────────────────────────────────┘
 ```
 
-No layer may reference anything from a layer outer to it. Violations are blocking issues.
+
+Dependency direction is strictly inward.  
+Violations are treated as blocking issues.
+
+---
+
+## Review Entry Points
+
+For architectural evaluation:
+
+1. `architecture/overview`
+2. `adr/`
+3. `Application` use case implementations
+4. Dependency graph between projects
+5. Error handling flow from Domain to API
+
+---
+
+## Design Intent
+
+The project demonstrates how strict layering and explicit error modeling can:
+
+- Reduce accidental coupling
+- Keep business rules independent of infrastructure
+- Limit refactoring risk
+- Make behavior testable without runtime environment
