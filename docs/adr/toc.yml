@@ -1,5 +1,5 @@
 ﻿- name: ADR Index
   href: index.md
 
-- name: ADR 0001 - Initial Architecture
-  href: 0001-initial-architecture.md
+- name: ADR 0001 - Clean / Hexagonal Layered Architecture
+  href: 0001-hexagonal-layered-architecture.md
