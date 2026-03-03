@@ -21,15 +21,25 @@ public sealed class ApiProblemDetailsFactory
             Instance = ctx.Request.Path,
             Extensions =
             {
-                [ContractsProblemDetailsConventions.ExtensionKeys.Code] = error.Code,
-                [ContractsProblemDetailsConventions.ExtensionKeys.ErrorType] = error.Type.ToString(),
-                [ContractsProblemDetailsConventions.ExtensionKeys.TraceId] = Correlation.GetTraceId(ctx)
+                [ProblemDetailsContract.Extensions.Code] = error.Code,
+                [ProblemDetailsContract.Extensions.ErrorType] = MapErrorType(error.Type),
+                [ProblemDetailsContract.Extensions.TraceId] = Correlation.GetTraceId(ctx)
             }
         };
 
         if (error.Meta is not null && error.Meta.Count > 0)
-            pd.Extensions[ContractsProblemDetailsConventions.ExtensionKeys.Meta] = error.Meta;
+            pd.Extensions[ProblemDetailsContract.Extensions.Meta] = error.Meta;
 
         return pd;
     }
+
+    private static string MapErrorType(ErrorType type) => type switch
+    {
+        ErrorType.Validation => ProblemDetailsContract.ErrorTypes.Validation,
+        ErrorType.NotFound => ProblemDetailsContract.ErrorTypes.NotFound,
+        ErrorType.Conflict => ProblemDetailsContract.ErrorTypes.Conflict,
+        ErrorType.DomainViolation => ProblemDetailsContract.ErrorTypes.DomainViolation,
+        ErrorType.Unexpected => ProblemDetailsContract.ErrorTypes.Unexpected,
+        _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+    };
 }
