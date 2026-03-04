@@ -2,7 +2,6 @@
 
 using MudBlazor;
 
-using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Contracts.V1.Common;
 using ServiceDeskLite.Contracts.V1.Tickets;
 using ServiceDeskLite.Web.Api.V1;
@@ -17,7 +16,7 @@ public partial class TicketsListPage
     [Inject] private NavigationManager Nav { get; set; } = default!;
     
     private int _page = 1;
-    private int _pageSize = PagingPolicy.DefaultPageSize;
+    private int _pageSize = new SearchTicketsRequest().PageSize;
 
     private bool _isLoading;
     private PagedResponse<TicketListItemResponse>? _paged;
