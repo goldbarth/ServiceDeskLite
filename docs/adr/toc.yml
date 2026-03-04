@@ -1,5 +1,53 @@
 ﻿- name: ADR Index
   href: index.md
 
-- name: ADR 0001 - Clean / Hexagonal Layered Architecture
+- name: ADR 0001 - Layered Architecture
   href: 0001-hexagonal-layered-architecture.md
+
+- name: ADR 0002 - Result Pattern
+  href: 0002-result-pattern.md
+
+- name: ADR 0003 - ProblemDetails
+  href: 0003-problem-details.md
+
+- name: ADR 0004 - Minimal API, no MediatR
+  href: 0004-minimal-api-no-mediatr.md
+
+- name: ADR 0005 - Strongly-Typed IDs
+  href: 0005-strongly-typed-ids.md
+
+- name: ADR 0006 - EF Core + SQLite
+  href: 0006-ef-core-sqlite.md
+
+- name: ADR 0007 - Swappable Persistence
+  href: 0007-swappable-persistence.md
+
+- name: ADR 0008 - Unit of Work
+  href: 0008-unit-of-work.md
+
+- name: ADR 0009 - Deterministic Paging
+  href: 0009-deterministic-paging.md
+
+- name: ADR 0010 - Contracts Project
+  href: 0010-contracts-project.md
+
+- name: ADR 0011 - Serilog
+  href: 0011-serilog.md
+
+- name: ADR 0012 - OpenAPI + Swagger UI
+  href: 0012-openapi-swagger.md
+
+- name: ADR 0013 - OpenAPI Snapshot
+  href: 0013-openapi-snapshot.md
+
+- name: ADR 0014 - Docs as Code
+  href: 0014-docs-as-code.md
+
+- name: ADR 0015 - Blazor + MudBlazor
+  href: 0015-blazor-mudblazor.md
+
+- name: ADR 0016 - Lock Files
+  href: 0016-lock-files.md
+
+- name: ADR 0017 - CI Matrix
+  href: 0017-ci-matrix.md
