@@ -1,5 +1,6 @@
-﻿import { execFileSync } from "node:child_process";
-import { readdirSync, mkdirSync, existsSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { readdirSync, mkdirSync, existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, extname, basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -39,22 +40,34 @@ console.log(`Generating ${files.length} diagram(s)...`);
 const puppeteerConfig = resolve(__dirname, "puppeteer.config.json");
 const mermaidConfig = resolve(__dirname, "mermaid.config.json");
 
-for (const file of files) {
-    const inFile = join(inputDir, file);
-    const outFile = join(outputDir, `${basename(file, ".mmd")}.svg`);
+// Mermaid CLI 11.x renders literal "\n" in labels; convert to <br/> before rendering.
+const normalizeMermaidSource = source => source.replace(/\\n/g, "<br/>");
+const tempInputDir = mkdtempSync(join(tmpdir(), "servicedesklite-mermaid-"));
 
-    execFileSync(
-        process.execPath, // node.exe that runs this script
-        [
-            mmdcCli,
-            "-i", inFile,
-            "-o", outFile,
-            "-b", "white",
-            "-c", mermaidConfig,
-            "--puppeteerConfigFile", puppeteerConfig
-        ],
-        { stdio: "inherit" }
-    );
+try {
+    for (const file of files) {
+        const inFile = join(inputDir, file);
+        const outFile = join(outputDir, `${basename(file, ".mmd")}.svg`);
+        const normalizedInFile = join(tempInputDir, file);
+
+        const inputSource = readFileSync(inFile, "utf8");
+        writeFileSync(normalizedInFile, normalizeMermaidSource(inputSource), "utf8");
+
+        execFileSync(
+            process.execPath, // node.exe that runs this script
+            [
+                mmdcCli,
+                "-i", normalizedInFile,
+                "-o", outFile,
+                "-b", "white",
+                "-c", mermaidConfig,
+                "--puppeteerConfigFile", puppeteerConfig
+            ],
+            { stdio: "inherit" }
+        );
+    }
+} finally {
+    rmSync(tempInputDir, { recursive: true, force: true });
 }
 
 console.log("Mermaid diagrams generated.");
