@@ -7,6 +7,7 @@ using ServiceDeskLite.Application.Tickets.AddComment;
 using ServiceDeskLite.Application.Tickets.AssignTicket;
 using ServiceDeskLite.Application.Tickets.ChangeTicketStatus;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
+using ServiceDeskLite.Application.Tickets.GetAuditEvents;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
 using ServiceDeskLite.Application.Tickets.SearchTickets;
 using ServiceDeskLite.Application.Tickets.Shared;
@@ -63,6 +64,15 @@ public static class TicketsEndpoints
             .WithSummary("Add a comment to a ticket")
             .Produces<CommentResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+
+        // GET /api/v1/tickets/{id}/audit-events
+        tickets.MapGet("/{id:guid}/audit-events", GetAuditEventsAsync)
+            .WithName("Tickets_GetAuditEvents")
+            .WithSummary("Get audit history for a ticket")
+            .WithDescription("Returns all audit events for a ticket in chronological order.")
+            .Produces<IReadOnlyList<AuditEventResponse>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
@@ -174,6 +184,21 @@ public static class TicketsEndpoints
         var result = await handler.HandleAsync(cmd, ct);
 
         return result.ToHttpResult(ctx, mapper, dto => Results.Ok(dto.ToResponse()));
+    }
+
+    private static async Task<IResult> GetAuditEventsAsync(
+        HttpContext ctx,
+        Guid id,
+        GetAuditEventsHandler handler,
+        ResultToProblemDetailsMapper mapper,
+        CancellationToken ct)
+    {
+        var query = new GetAuditEventsQuery(new TicketId(id));
+        var result = await handler.HandleAsync(query, ct);
+
+        return result.ToHttpResult(ctx, mapper, dtos =>
+            Results.Ok(dtos.Select(d => new AuditEventResponse(
+                d.Id, d.EventType, d.Actor, d.OccurredAt, d.Payload)).ToList()));
     }
 
     private static async Task<IResult> SearchTicketsAsync(

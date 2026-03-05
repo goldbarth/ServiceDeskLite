@@ -17,7 +17,8 @@ public static class InMemoryServiceCollectionExtensions
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<InMemoryUnitOfWork>());
 
         services.AddScoped<ITicketRepository, InMemoryTicketRepository>();
-        
+        services.AddScoped<IAuditEventRepository, InMemoryAuditEventRepository>();
+
         return services;
     } 
 }

@@ -4,6 +4,7 @@ using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
 using ServiceDeskLite.Application.Tickets.Shared;
+using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Tests.Application.Tickets.CreateTicket;
@@ -15,7 +16,7 @@ public class CreateTicketHandlerTests
     {
         var repo = new FakeTicketRepository();
         var uow = new FakeUnitOfWork();
-        var handler = new CreateTicketHandler(repo, uow);
+        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow);
 
         var cmd = new CreateTicketCommand(
             Title: " ",
@@ -37,7 +38,7 @@ public class CreateTicketHandlerTests
         var repo = new FakeTicketRepository();
         var uow = new FakeUnitOfWork(
             new InvalidOperationException("Ticket already exists: 123"));
-        var handler = new CreateTicketHandler(repo, uow);
+        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow);
 
         var cmd = new CreateTicketCommand(
             Title: "Test",
@@ -57,7 +58,7 @@ public class CreateTicketHandlerTests
     {
         var repo = new FakeTicketRepository();
         var uow = new FakeUnitOfWork(new IOException("disk full"));
-        var handler = new CreateTicketHandler(repo, uow);
+        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow);
 
         var cmd = new CreateTicketCommand(
             Title: "Test",
@@ -117,5 +118,14 @@ public class CreateTicketHandlerTests
 
             return Task.CompletedTask;
         }
+    }
+    
+    private sealed class FakeAuditEventRepository : IAuditEventRepository
+    {
+        public Task AddAsync(AuditEvent auditEvent, CancellationToken ct = default)
+            => Task.CompletedTask;
+
+        public Task<IReadOnlyList<AuditEvent>> GetByTicketIdAsync(TicketId ticketId, CancellationToken ct = default)
+            => throw new NotImplementedException();
     }
 }

@@ -1,19 +1,21 @@
 ﻿using System.Collections.Concurrent;
 
+using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Infrastructure.InMemory.Persistence;
 
 internal sealed class InMemoryStore
 {
-    private readonly ConcurrentDictionary<TicketId, Ticket>  _tickets = new();
-    
+    private readonly ConcurrentDictionary<TicketId, Ticket> _tickets = new();
+    private readonly ConcurrentBag<AuditEvent> _auditEvents = new();
+
     public bool TryGetTicket(TicketId id, out Ticket? ticket)
         => _tickets.TryGetValue(id, out ticket);
-    
+
     public bool ContainsTicket(TicketId id)
         => _tickets.ContainsKey(id);
-    
+
     public IReadOnlyCollection<Ticket> SnapshotTickets()
         => _tickets.Values.ToArray();
 
@@ -25,4 +27,16 @@ internal sealed class InMemoryStore
                 throw new InvalidOperationException($"Ticket already exists: {ticket.Id}");
         }
     }
+
+    public void AppendAuditEvents(IEnumerable<AuditEvent> events)
+    {
+        foreach (var e in events)
+            _auditEvents.Add(e);
+    }
+
+    public IReadOnlyList<AuditEvent> GetAuditEventsByTicketId(TicketId ticketId)
+        => _auditEvents
+            .Where(e => e.TicketId == ticketId)
+            .OrderBy(e => e.OccurredAt)
+            .ToList();
 }

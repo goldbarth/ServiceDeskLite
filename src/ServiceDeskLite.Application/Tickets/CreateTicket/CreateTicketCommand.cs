@@ -7,4 +7,5 @@ public sealed record CreateTicketCommand(
     string Description,
     TicketPriority Priority,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? DueAt = null);
+    DateTimeOffset? DueAt = null,
+    string? Actor = null);

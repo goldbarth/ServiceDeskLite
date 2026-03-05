@@ -4,6 +4,7 @@ using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.AssignTicket;
 using ServiceDeskLite.Application.Tickets.Shared;
+using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Tests.Application.Tickets.AssignTicket;
@@ -67,6 +68,7 @@ public sealed class AssignTicketHandlerTests
     {
         var ticket = CreateTicket();
         ticket.Assign(new Assignee("Alice"));
+        ticket.ClearDomainEvents(); // clear setup event so only the unassign event remains
         var handler = CreateHandler(existingTicket: ticket);
         var cmd = new AssignTicketCommand(ticket.Id, AssigneeName: null);
 
@@ -144,7 +146,7 @@ public sealed class AssignTicketHandlerTests
         FakeUnitOfWork? uow = null)
     {
         var repo = new FakeTicketRepository(existingTicket);
-        return new AssignTicketHandler(repo, uow ?? new FakeUnitOfWork());
+        return new AssignTicketHandler(repo, new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork());
     }
 
     private static Ticket CreateTicket() =>
@@ -185,5 +187,14 @@ public sealed class AssignTicketHandlerTests
             SaveCalls++;
             return Task.CompletedTask;
         }
+    }
+    
+    private sealed class FakeAuditEventRepository : IAuditEventRepository
+    {
+        public Task AddAsync(AuditEvent auditEvent, CancellationToken ct = default)
+            => Task.CompletedTask;
+
+        public Task<IReadOnlyList<AuditEvent>> GetByTicketIdAsync(TicketId ticketId, CancellationToken ct = default)
+            => throw new NotImplementedException();
     }
 }
