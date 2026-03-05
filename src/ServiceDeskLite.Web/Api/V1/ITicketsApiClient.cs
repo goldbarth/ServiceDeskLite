@@ -26,4 +26,9 @@ public interface ITicketsApiClient
         Guid id,
         AssignTicketRequest request,
         CancellationToken ct = default);
+
+    Task<ApiResult<CommentResponse>> AddCommentAsync(
+        Guid id,
+        AddCommentRequest request,
+        CancellationToken ct = default);
 }

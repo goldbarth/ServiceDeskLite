@@ -1,6 +1,7 @@
 using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
+using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Common;
 using ServiceDeskLite.Domain.Tickets;
 
@@ -47,7 +48,11 @@ public sealed class ChangeTicketStatusHandler
                 ticket.Priority,
                 ticket.CreatedAt,
                 ticket.DueAt,
-                ticket.Assignee));
+                ticket.Assignee,
+                ticket.Comments
+                    .OrderBy(c => c.CreatedAt)
+                    .Select(c => new CommentDto(c.Id, c.Content, c.Author, c.CreatedAt))
+                    .ToList()));
         }
         catch (DomainException ex) when (ex.Error.Code == TicketErrors.InvalidTransitionCode)
         {

@@ -45,6 +45,49 @@ else
             @(_ticket.Assignee is null ? "Assign" : "Reassign")
         </MudButton>
     </MudPaper>
+
+    <MudPaper Class="pa-4 mt-4">
+        <MudText Typo="Typo.h6" Class="mb-3">Comments (@_ticket.Comments.Count)</MudText>
+
+        @if (_ticket.Comments.Count == 0)
+        {
+            <MudText Color="Color.Secondary">No comments yet.</MudText>
+        }
+        else
+        {
+            @foreach (var comment in _ticket.Comments)
+            {
+                <MudPaper Outlined="true" Class="pa-3 mb-2">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        @(comment.Author ?? "Anonymous") · @comment.CreatedAt.ToString("u")
+                    </MudText>
+                    <MudText Class="mt-1">@comment.Content</MudText>
+                </MudPaper>
+            }
+        }
+
+        <MudDivider Class="my-4" />
+
+        <MudTextField T="string" Label="Author (optional)" @bind-Value="_commentAuthor"
+                      MaxLength="100" Class="mb-2" Disabled="_isSubmittingComment" />
+        <MudTextField T="string" Label="Comment" @bind-Value="_commentContent"
+                      Lines="3" MaxLength="2000" Class="mb-2" Disabled="_isSubmittingComment" />
+
+        @if (_commentError is not null)
+        {
+            <AppErrorPanel Error="_commentError" />
+        }
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   OnClick="SubmitCommentAsync"
+                   Disabled="@(_isSubmittingComment || string.IsNullOrWhiteSpace(_commentContent))">
+            @if (_isSubmittingComment)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Add Comment
+        </MudButton>
+    </MudPaper>
 }
 
 @code {
@@ -57,6 +100,11 @@ else
     private bool _isLoading;
     private ApiError? _error;
     private TicketResponse? _ticket;
+
+    private string? _commentAuthor;
+    private string? _commentContent;
+    private bool _isSubmittingComment;
+    private ApiError? _commentError;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -92,6 +140,38 @@ else
             _ticket = updated;
             Snackbar.Add("Status updated.", Severity.Success);
         }
+    }
+
+    private async Task SubmitCommentAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_commentContent))
+            return;
+
+        _isSubmittingComment = true;
+        _commentError = null;
+
+        var result = await TicketsApi.AddCommentAsync(
+            _ticket!.Id,
+            new AddCommentRequest(
+                Content: _commentContent.Trim(),
+                Author: string.IsNullOrWhiteSpace(_commentAuthor) ? null : _commentAuthor.Trim()));
+
+        _isSubmittingComment = false;
+
+        if (result.IsSuccess)
+        {
+            // Reload ticket to get the updated comment list
+            var updated = await TicketsApi.GetByIdAsync(_ticket!.Id);
+            if (updated.IsSuccess)
+                _ticket = updated.Value;
+
+            _commentContent = null;
+            _commentAuthor = null;
+            Snackbar.Add("Comment added.", Severity.Success);
+            return;
+        }
+
+        _commentError = result.Error;
     }
 
     private async Task OpenAssignDialogAsync()
