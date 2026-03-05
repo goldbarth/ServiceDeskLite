@@ -92,6 +92,21 @@ public sealed class TicketsApiClient : ITicketsApiClient
         return await SendAsync<TicketResponse>(httpRequest, ct);
     }
 
+    public async Task<ApiResult<TicketResponse>> AssignAsync(
+        Guid id,
+        AssignTicketRequest request,
+        CancellationToken ct = default)
+    {
+        var httpRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"api/v1/tickets/{id}/assign")
+        {
+            Content = JsonContent.Create(request, options: _sendOptions)
+        };
+
+        return await SendAsync<TicketResponse>(httpRequest, ct);
+    }
+
     // -----------------------------
     // Central Send Logic
     // -----------------------------

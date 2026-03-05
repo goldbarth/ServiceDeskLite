@@ -3,6 +3,7 @@
 using ServiceDeskLite.Api.Http.ProblemDetails;
 using ServiceDeskLite.Api.Mapping.Tickets;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Application.Tickets.AssignTicket;
 using ServiceDeskLite.Application.Tickets.ChangeTicketStatus;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
@@ -49,6 +50,17 @@ public static class TicketsEndpoints
         tickets.MapPost("/{id:guid}/status", ChangeTicketStatusAsync)
             .WithName("Tickets_ChangeStatus")
             .WithSummary("Change ticket status")
+            .Produces<TicketResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+
+        // POST /api/v1/tickets/{id}/assign
+        tickets.MapPost("/{id:guid}/assign", AssignTicketAsync)
+            .WithName("Tickets_Assign")
+            .WithSummary("Assign or unassign a ticket")
+            .WithDescription("Set AssigneeName to null to unassign.")
             .Produces<TicketResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
@@ -107,6 +119,23 @@ public static class TicketsEndpoints
         var cmd = new ChangeTicketStatusCommand(
             Id: new TicketId(id),
             NewStatus: request.NewStatus.ToDomain());
+
+        var result = await handler.HandleAsync(cmd, ct);
+
+        return result.ToHttpResult(ctx, mapper, dto => Results.Ok(dto.ToResponse()));
+    }
+
+    private static async Task<IResult> AssignTicketAsync(
+        HttpContext ctx,
+        Guid id,
+        [FromBody] AssignTicketRequest request,
+        AssignTicketHandler handler,
+        ResultToProblemDetailsMapper mapper,
+        CancellationToken ct)
+    {
+        var cmd = new AssignTicketCommand(
+            Id: new TicketId(id),
+            AssigneeName: request.AssigneeName);
 
         var result = await handler.HandleAsync(cmd, ct);
 

@@ -74,6 +74,55 @@ public sealed class TicketTests
         ex.Error.Code.Should().Be("domain.max_length");
     }
     
+    // -----------------------------------------------------------------------
+    // Ticket.Assign
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Assign_ValidAssignee_SetsAssignee()
+    {
+        var ticket = CreateTicket();
+        var assignee = new Assignee("Alice");
+
+        ticket.Assign(assignee);
+
+        ticket.Assignee.Should().Be(assignee);
+    }
+
+    [Fact]
+    public void Assign_NullAssignee_ClearsAssignee()
+    {
+        var ticket = CreateTicket();
+        ticket.Assign(new Assignee("Alice"));
+
+        ticket.Assign(null);
+
+        ticket.Assignee.Should().BeNull();
+    }
+
+    [Fact]
+    public void Assign_ClosedTicket_ThrowsDomainException_WithExpectedErrorCode()
+    {
+        var ticket = CreateClosedTicket();
+
+        var act = () => ticket.Assign(new Assignee("Alice"));
+
+        act.Should().Throw<DomainException>()
+            .Which.Error.Code.Should().Be(TicketErrors.CannotAssignClosedCode);
+    }
+
+    [Fact]
+    public void NewTicket_HasNoAssignee()
+    {
+        var ticket = CreateTicket();
+
+        ticket.Assignee.Should().BeNull();
+    }
+
+    // -----------------------------------------------------------------------
+    // Helpers
+    // -----------------------------------------------------------------------
+
     private static Ticket CreateTicket(
         TicketStatus? initialStatus = null)
     {
@@ -88,6 +137,15 @@ public sealed class TicketTests
         // goldbarth: Tests with different start status (legitimate domain API):
         // if (initialStatus is not null) { ... }
 
+        return ticket;
+    }
+
+    private static Ticket CreateClosedTicket()
+    {
+        var ticket = CreateTicket();
+        ticket.ChangeStatus(TicketStatus.Triaged);
+        ticket.ChangeStatus(TicketStatus.Resolved);
+        ticket.ChangeStatus(TicketStatus.Closed);
         return ticket;
     }
 

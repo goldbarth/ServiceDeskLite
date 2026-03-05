@@ -45,6 +45,13 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
                 v => v.HasValue ? new DateTimeOffset(v.Value, TimeSpan.Zero) : null))
             .IsRequired(false);
 
+        builder.Property(t => t.Assignee)
+            .HasConversion(
+                v => v.HasValue ? v.Value.Name : null,
+                v => v != null ? new Assignee(v) : (Assignee?)null)
+            .HasMaxLength(Assignee.MaxNameLength)
+            .IsRequired(false);
+
         // Indices for search/paging
         builder.HasIndex(t => t.CreatedAt);
         builder.HasIndex(t => t.Status);

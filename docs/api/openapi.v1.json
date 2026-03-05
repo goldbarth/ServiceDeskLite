@@ -1,6 +1,20 @@
 {
   "components": {
     "schemas": {
+      "AssignTicketRequest": {
+        "properties": {
+          "assigneeName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "assigneeName"
+        ],
+        "type": "object"
+      },
       "ChangeTicketStatusRequest": {
         "properties": {
           "newStatus": {
@@ -199,6 +213,12 @@
       },
       "TicketResponse": {
         "properties": {
+          "assignee": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -234,7 +254,8 @@
           "priority",
           "status",
           "createdAt",
-          "dueAt"
+          "dueAt",
+          "assignee"
         ],
         "type": "object"
       },
@@ -467,6 +488,89 @@
           }
         },
         "summary": "Get ticket by id",
+        "tags": [
+          "Tickets"
+        ]
+      }
+    },
+    "/api/v1/tickets/{id}/assign": {
+      "post": {
+        "description": "Set AssigneeName to null to unassign.",
+        "operationId": "Tickets_Assign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignTicketRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Assign or unassign a ticket",
         "tags": [
           "Tickets"
         ]

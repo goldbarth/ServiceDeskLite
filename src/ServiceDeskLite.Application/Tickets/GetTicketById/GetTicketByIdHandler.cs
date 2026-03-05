@@ -40,7 +40,8 @@ public sealed class GetTicketByIdHandler
             ticket.Status,
             ticket.Priority,
             ticket.CreatedAt,
-            ticket.DueAt);
+            ticket.DueAt,
+            ticket.Assignee);
         
         return Result<TicketDetailsDto>.Success(dto);
     }

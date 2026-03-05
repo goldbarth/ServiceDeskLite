@@ -1,0 +1,72 @@
+@using MudBlazor
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Assign Ticket</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField T="string" Label="Assignee" @bind-Value="_assigneeName"
+                      Placeholder="Leave empty to unassign"
+                      Disabled="_isSubmitting"
+                      MaxLength="100"
+                      Class="mb-4" />
+        @if (_error is not null)
+        {
+            <AppErrorPanel Error="_error" />
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Disabled="_isSubmitting">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                   OnClick="SubmitAsync"
+                   Disabled="_isSubmitting">
+            @if (_isSubmitting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Apply
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Inject] ITicketsApiClient TicketsApi { get; set; } = default!;
+
+    [Parameter] public Guid TicketId { get; set; }
+    [Parameter] public string? CurrentAssignee { get; set; }
+
+    private string? _assigneeName;
+    private bool _isSubmitting;
+    private ApiError? _error;
+
+    protected override void OnInitialized()
+    {
+        _assigneeName = CurrentAssignee;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        _isSubmitting = true;
+        _error = null;
+
+        // Empty string → treat as unassign (null)
+        var name = string.IsNullOrWhiteSpace(_assigneeName) ? null : _assigneeName.Trim();
+
+        var result = await TicketsApi.AssignAsync(
+            TicketId,
+            new AssignTicketRequest(name));
+
+        _isSubmitting = false;
+
+        if (result.IsSuccess)
+        {
+            MudDialog.Close(DialogResult.Ok(result.Value!));
+            return;
+        }
+
+        _error = result.Error;
+    }
+}

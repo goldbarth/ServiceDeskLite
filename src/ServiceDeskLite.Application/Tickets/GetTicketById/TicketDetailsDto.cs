@@ -9,4 +9,5 @@ public record TicketDetailsDto(
     TicketStatus Status,
     TicketPriority Priority,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? DueAt);
+    DateTimeOffset? DueAt,
+    Assignee? Assignee);
