@@ -7,5 +7,5 @@ public sealed record TicketResponse(
     string Priority,
     string Status,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? DueAt
-    );
+    DateTimeOffset? DueAt,
+    string? Assignee);

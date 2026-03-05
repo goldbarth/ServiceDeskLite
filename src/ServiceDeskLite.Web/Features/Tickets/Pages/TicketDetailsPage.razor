@@ -27,6 +27,9 @@ else
             Due:
             @(_ticket.DueAt is null ? "-" : _ticket.DueAt.Value.ToString("u"))
         </MudText>
+        <MudText>
+            Assignee: @(_ticket.Assignee ?? "-")
+        </MudText>
 
         @{
             var allowedTransitions = StatusTransitionHelper.GetAllowedTransitions(_ticket.Status);
@@ -35,6 +38,11 @@ else
                    OnClick="OpenChangeStatusDialogAsync"
                    Disabled="@(allowedTransitions.Count == 0)">
             Change Status
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="mt-4 ml-2"
+                   OnClick="OpenAssignDialogAsync"
+                   Disabled="@(_ticket.Status == "Closed")">
+            @(_ticket.Assignee is null ? "Assign" : "Reassign")
         </MudButton>
     </MudPaper>
 }
@@ -83,6 +91,26 @@ else
         {
             _ticket = updated;
             Snackbar.Add("Status updated.", Severity.Success);
+        }
+    }
+
+    private async Task OpenAssignDialogAsync()
+    {
+        var parameters = new DialogParameters<AssignTicketDialog>
+        {
+            { x => x.TicketId, _ticket!.Id },
+            { x => x.CurrentAssignee, _ticket!.Assignee }
+        };
+
+        var dialog = await DialogService.ShowAsync<AssignTicketDialog>(
+            "Assign Ticket", parameters);
+
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: TicketResponse updated })
+        {
+            _ticket = updated;
+            Snackbar.Add("Assignee updated.", Severity.Success);
         }
     }
 }

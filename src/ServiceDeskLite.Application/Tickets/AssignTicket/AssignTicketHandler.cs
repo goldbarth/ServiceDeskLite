@@ -4,26 +4,26 @@ using ServiceDeskLite.Application.Tickets.GetTicketById;
 using ServiceDeskLite.Domain.Common;
 using ServiceDeskLite.Domain.Tickets;
 
-namespace ServiceDeskLite.Application.Tickets.ChangeTicketStatus;
+namespace ServiceDeskLite.Application.Tickets.AssignTicket;
 
-public sealed class ChangeTicketStatusHandler
+public sealed class AssignTicketHandler
 {
     private readonly ITicketRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public ChangeTicketStatusHandler(ITicketRepository repository, IUnitOfWork unitOfWork)
+    public AssignTicketHandler(ITicketRepository repository, IUnitOfWork unitOfWork)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
     public async Task<Result<TicketDetailsDto>> HandleAsync(
-        ChangeTicketStatusCommand? command,
+        AssignTicketCommand? command,
         CancellationToken ct = default)
     {
         if (command is null)
             return Result<TicketDetailsDto>.Validation(
-                "change_ticket_status.command.null",
+                "assign_ticket.command.null",
                 "Command must not be null.");
 
         var ticket = await _repository.GetByIdAsync(command.Id, ct);
@@ -36,7 +36,12 @@ public sealed class ChangeTicketStatusHandler
 
         try
         {
-            ticket.ChangeStatus(command.NewStatus);
+            // Translate string? → Assignee? – DomainException propagates if name violates invariants
+            Assignee? assignee = command.AssigneeName is not null
+                ? new Assignee(command.AssigneeName)
+                : null;
+
+            ticket.Assign(assignee);
             await _unitOfWork.SaveChangesAsync(ct);
 
             return Result<TicketDetailsDto>.Success(new TicketDetailsDto(
@@ -49,7 +54,7 @@ public sealed class ChangeTicketStatusHandler
                 ticket.DueAt,
                 ticket.Assignee));
         }
-        catch (DomainException ex) when (ex.Error.Code == TicketErrors.InvalidTransitionCode)
+        catch (DomainException ex) when (ex.Error.Code == TicketErrors.CannotAssignClosedCode)
         {
             return Result<TicketDetailsDto>.Conflict(ex.Error.Code, ex.Error.Message);
         }

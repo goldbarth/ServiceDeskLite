@@ -11,6 +11,7 @@ public sealed class Ticket
     public TicketStatus Status { get; private set; }
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset? DueAt { get; private set; }
+    public Assignee? Assignee { get; private set; }
 
     public Ticket(
         TicketId id,
@@ -39,7 +40,15 @@ public sealed class Ticket
         TicketWorkflow.EnsureCanTransition(Status, newStatus);
 
         Status = newStatus;
-        
+
         // ChangedAt
+    }
+
+    public void Assign(Assignee? assignee)
+    {
+        if (Status == TicketStatus.Closed)
+            throw new DomainException(TicketErrors.CannotAssignClosed());
+
+        Assignee = assignee;
     }
 }

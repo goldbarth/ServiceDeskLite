@@ -14,7 +14,8 @@ public static class TicketsMapping
             Priority: dto.Priority.ToString(),
             Status: dto.Status.ToString(),
             CreatedAt: dto.CreatedAt,
-            DueAt: dto.DueAt
+            DueAt: dto.DueAt,
+            Assignee: dto.Assignee?.Name
         );
 
     public static TicketListItemResponse ToListItemResponse(this TicketListItemDto dto)
