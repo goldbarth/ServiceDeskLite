@@ -4,6 +4,9 @@ namespace ServiceDeskLite.Domain.Tickets;
 
 public sealed class Ticket
 {
+    public const int MaxTitleLength = 200;
+    public const int MaxDescriptionLength = 2000;
+
     public TicketId Id { get; }
     public string Title { get; private set; }
     public string Description { get; private set; }
@@ -22,9 +25,9 @@ public sealed class Ticket
         DateTimeOffset? dueAt = null)
     {
         Guard.NotNullOrWhiteSpace(title, nameof(title));
-        Guard.MaxLength(title, 200, nameof(title));
+        Guard.MaxLength(title, MaxTitleLength, nameof(title));
         Guard.NotNullOrWhiteSpace(description, nameof(description));
-        Guard.MaxLength(description, 2000, nameof(description));
+        Guard.MaxLength(description, MaxDescriptionLength, nameof(description));
 
         Id = id;
         Title = title;
