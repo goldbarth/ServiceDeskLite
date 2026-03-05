@@ -15,7 +15,10 @@ public static class TicketsMapping
             Status: dto.Status.ToString(),
             CreatedAt: dto.CreatedAt,
             DueAt: dto.DueAt,
-            Assignee: dto.Assignee?.Name
+            Assignee: dto.Assignee?.Name,
+            Comments: dto.Comments
+                .Select(c => new CommentResponse(c.Id.Value, c.Content, c.Author, c.CreatedAt))
+                .ToList()
         );
 
     public static TicketListItemResponse ToListItemResponse(this TicketListItemDto dto)

@@ -8,4 +8,5 @@ public sealed record TicketResponse(
     string Status,
     DateTimeOffset CreatedAt,
     DateTimeOffset? DueAt,
-    string? Assignee);
+    string? Assignee,
+    IReadOnlyList<CommentResponse> Comments);

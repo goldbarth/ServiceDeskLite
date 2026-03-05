@@ -16,6 +16,9 @@ public sealed class Ticket
     public DateTimeOffset? DueAt { get; private set; }
     public Assignee? Assignee { get; private set; }
 
+    private readonly List<Comment> _comments = [];
+    public IReadOnlyList<Comment> Comments => _comments.AsReadOnly();
+
     public Ticket(
         TicketId id,
         string title,
@@ -53,5 +56,12 @@ public sealed class Ticket
             throw new DomainException(TicketErrors.CannotAssignClosed());
 
         Assignee = assignee;
+    }
+
+    public Comment AddComment(string content, DateTimeOffset createdAt, string? author = null)
+    {
+        var comment = new Comment(CommentId.New(), content, createdAt, author);
+        _comments.Add(comment);
+        return comment;
     }
 }

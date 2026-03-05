@@ -3,6 +3,7 @@
 using ServiceDeskLite.Api.Http.ProblemDetails;
 using ServiceDeskLite.Api.Mapping.Tickets;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Application.Tickets.AddComment;
 using ServiceDeskLite.Application.Tickets.AssignTicket;
 using ServiceDeskLite.Application.Tickets.ChangeTicketStatus;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
@@ -54,6 +55,15 @@ public static class TicketsEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+
+        // POST /api/v1/tickets/{id}/comments
+        tickets.MapPost("/{id:guid}/comments", AddCommentAsync)
+            .WithName("Tickets_AddComment")
+            .WithSummary("Add a comment to a ticket")
+            .Produces<CommentResponse>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         // POST /api/v1/tickets/{id}/assign
@@ -123,6 +133,30 @@ public static class TicketsEndpoints
         var result = await handler.HandleAsync(cmd, ct);
 
         return result.ToHttpResult(ctx, mapper, dto => Results.Ok(dto.ToResponse()));
+    }
+
+    private static async Task<IResult> AddCommentAsync(
+        HttpContext ctx,
+        Guid id,
+        [FromBody] AddCommentRequest request,
+        AddCommentHandler handler,
+        ResultToProblemDetailsMapper mapper,
+        CancellationToken ct)
+    {
+        var cmd = new AddCommentCommand(
+            TicketId: new TicketId(id),
+            Content: request.Content,
+            Author: request.Author,
+            CreatedAt: DateTimeOffset.UtcNow);
+
+        var result = await handler.HandleAsync(cmd, ct);
+
+        return result.ToHttpResult(ctx, mapper, success =>
+        {
+            var c = success.Comment;
+            var body = new CommentResponse(c.Id.Value, c.Content, c.Author, c.CreatedAt);
+            return Results.Created($"/api/v1/tickets/{id}/comments/{c.Id.Value}", body);
+        });
     }
 
     private static async Task<IResult> AssignTicketAsync(

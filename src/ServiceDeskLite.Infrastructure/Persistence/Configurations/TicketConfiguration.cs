@@ -55,5 +55,33 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
         // Indices for search/paging
         builder.HasIndex(t => t.CreatedAt);
         builder.HasIndex(t => t.Status);
+
+        // Comments are part of the Ticket aggregate – owned entity, separate table.
+        // EF accesses the private _comments backing field to populate the collection.
+        builder.Navigation(t => t.Comments).HasField("_comments");
+        builder.OwnsMany(t => t.Comments, comment =>
+        {
+            comment.ToTable("TicketComments");
+
+            comment.HasKey(c => c.Id);
+
+            comment.Property(c => c.Id)
+                .HasConversion(v => v.Value, v => new CommentId(v))
+                .ValueGeneratedNever();
+
+            comment.Property(c => c.Content)
+                .IsRequired()
+                .HasMaxLength(Comment.MaxContentLength);
+
+            comment.Property(c => c.Author)
+                .HasMaxLength(Comment.MaxAuthorLength)
+                .IsRequired(false);
+
+            comment.Property(c => c.CreatedAt)
+                .HasConversion(dtoConverter)
+                .IsRequired();
+
+            comment.HasIndex(c => c.CreatedAt);
+        });
     }
 }

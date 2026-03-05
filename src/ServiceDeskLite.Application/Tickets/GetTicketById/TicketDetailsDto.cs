@@ -1,4 +1,5 @@
-﻿using ServiceDeskLite.Domain.Tickets;
+﻿using ServiceDeskLite.Application.Tickets.Shared;
+using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Application.Tickets.GetTicketById;
 
@@ -10,4 +11,5 @@ public record TicketDetailsDto(
     TicketPriority Priority,
     DateTimeOffset CreatedAt,
     DateTimeOffset? DueAt,
-    Assignee? Assignee);
+    Assignee? Assignee,
+    IReadOnlyList<CommentDto> Comments);

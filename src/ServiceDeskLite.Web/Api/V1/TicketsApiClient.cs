@@ -107,6 +107,21 @@ public sealed class TicketsApiClient : ITicketsApiClient
         return await SendAsync<TicketResponse>(httpRequest, ct);
     }
 
+    public async Task<ApiResult<CommentResponse>> AddCommentAsync(
+        Guid id,
+        AddCommentRequest request,
+        CancellationToken ct = default)
+    {
+        var httpRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"api/v1/tickets/{id}/comments")
+        {
+            Content = JsonContent.Create(request, options: _sendOptions)
+        };
+
+        return await SendAsync<CommentResponse>(httpRequest, ct);
+    }
+
     // -----------------------------
     // Central Send Logic
     // -----------------------------
