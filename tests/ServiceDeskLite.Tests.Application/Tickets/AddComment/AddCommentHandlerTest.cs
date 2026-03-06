@@ -4,6 +4,7 @@ using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.AddComment;
 using ServiceDeskLite.Application.Tickets.Shared;
+using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Tests.Application.Tickets.AddComment;
@@ -152,11 +153,10 @@ public sealed class AddCommentHandlerTest
 
     private static AddCommentHandler CreateHandler(
         Ticket? existingTicket,
-        FakeUnitOfWork? uow = null
-    )
+        FakeUnitOfWork? uow = null)
     {
         var repo = new FakeTicketRepository(existingTicket);
-        return new AddCommentHandler(repo, uow ?? new FakeUnitOfWork());
+        return new AddCommentHandler(repo, new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork());
     }
     
     private static Ticket CreateTicket() => 
@@ -188,5 +188,14 @@ public sealed class AddCommentHandlerTest
             SaveCalls++;
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class FakeAuditEventRepository : IAuditEventRepository
+    {
+        public Task AddAsync(AuditEvent auditEvent, CancellationToken ct = default)
+            => Task.CompletedTask;
+
+        public Task<IReadOnlyList<AuditEvent>> GetByTicketIdAsync(TicketId ticketId, CancellationToken ct = default)
+            => throw new NotImplementedException();
     }
 }

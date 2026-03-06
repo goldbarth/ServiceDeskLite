@@ -122,6 +122,17 @@ public sealed class TicketsApiClient : ITicketsApiClient
         return await SendAsync<CommentResponse>(httpRequest, ct);
     }
 
+    public async Task<ApiResult<IReadOnlyList<AuditEventResponse>>> GetAuditEventsAsync(
+        Guid id,
+        CancellationToken ct = default)
+    {
+        var httpRequest = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"api/v1/tickets/{id}/audit-events");
+
+        return await SendAsync<IReadOnlyList<AuditEventResponse>>(httpRequest, ct);
+    }
+
     // -----------------------------
     // Central Send Logic
     // -----------------------------

@@ -1,20 +1,27 @@
 using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Application.Tickets.Audit;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Common;
 using ServiceDeskLite.Domain.Tickets;
+using ServiceDeskLite.Domain.Tickets.Events;
 
 namespace ServiceDeskLite.Application.Tickets.AssignTicket;
 
 public sealed class AssignTicketHandler
 {
     private readonly ITicketRepository _repository;
+    private readonly IAuditEventRepository _auditRepository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public AssignTicketHandler(ITicketRepository repository, IUnitOfWork unitOfWork)
+    public AssignTicketHandler(
+        ITicketRepository repository,
+        IAuditEventRepository auditRepository,
+        IUnitOfWork unitOfWork)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
@@ -43,6 +50,12 @@ public sealed class AssignTicketHandler
                 : null;
 
             ticket.Assign(assignee);
+
+            var domainEvent = ticket.DomainEvents.OfType<AssigneeChangedDomainEvent>().Single();
+            await _auditRepository.AddAsync(
+                AuditEventFactory.FromAssigneeChanged(domainEvent, command.Actor, DateTimeOffset.UtcNow), ct);
+            ticket.ClearDomainEvents();
+
             await _unitOfWork.SaveChangesAsync(ct);
 
             return Result<TicketDetailsDto>.Success(new TicketDetailsDto(

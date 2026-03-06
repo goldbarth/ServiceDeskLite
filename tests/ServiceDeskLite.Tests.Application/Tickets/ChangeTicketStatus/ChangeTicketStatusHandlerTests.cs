@@ -4,6 +4,7 @@ using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.ChangeTicketStatus;
 using ServiceDeskLite.Application.Tickets.Shared;
+using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Tests.Application.Tickets.ChangeTicketStatus;
@@ -87,7 +88,7 @@ public class ChangeTicketStatusHandlerTests
         FakeUnitOfWork? uow = null)
     {
         var repo = new FakeTicketRepository(existingTicket);
-        return new ChangeTicketStatusHandler(repo, uow ?? new FakeUnitOfWork());
+        return new ChangeTicketStatusHandler(repo, new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork());
     }
 
     private static Ticket CreateTicket(TicketStatus status)
@@ -108,6 +109,8 @@ public class ChangeTicketStatusHandlerTests
             ticket.ChangeStatus(TicketStatus.InProgress);
         }
 
+        // Clear setup events so only events from the actual SUT operation remain
+        ticket.ClearDomainEvents();
         return ticket;
     }
 
@@ -137,5 +140,14 @@ public class ChangeTicketStatusHandlerTests
             SaveCalls++;
             return Task.CompletedTask;
         }
+    }
+    
+    private sealed class FakeAuditEventRepository : IAuditEventRepository
+    {
+        public Task AddAsync(AuditEvent auditEvent, CancellationToken ct = default)
+            => Task.CompletedTask;
+
+        public Task<IReadOnlyList<AuditEvent>> GetByTicketIdAsync(TicketId ticketId, CancellationToken ct = default)
+            => throw new NotImplementedException();
     }
 }

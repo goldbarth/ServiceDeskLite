@@ -1,4 +1,5 @@
 @page "/tickets/{Id:guid}"
+@using System.Text.Json
 @using MudBlazor
 
 <PageTitle>Ticket Details</PageTitle>
@@ -17,77 +18,115 @@ else if (_ticket is null)
 }
 else
 {
-    <MudPaper Class="pa-4">
-        <MudText Typo="Typo.h5">@_ticket.Title</MudText>
+    <MudText Typo="Typo.h5" Class="mb-4">@_ticket.Title</MudText>
 
-        <MudText>Status: @_ticket.Status</MudText>
-        <MudText>Priority: @_ticket.Priority</MudText>
-        <MudText>Created: @_ticket.CreatedAt.ToString("u")</MudText>
-        <MudText>
-            Due:
-            @(_ticket.DueAt is null ? "-" : _ticket.DueAt.Value.ToString("u"))
-        </MudText>
-        <MudText>
-            Assignee: @(_ticket.Assignee ?? "-")
-        </MudText>
+    <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
 
-        @{
-            var allowedTransitions = StatusTransitionHelper.GetAllowedTransitions(_ticket.Status);
-        }
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
-                   OnClick="OpenChangeStatusDialogAsync"
-                   Disabled="@(allowedTransitions.Count == 0)">
-            Change Status
-        </MudButton>
-        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="mt-4 ml-2"
-                   OnClick="OpenAssignDialogAsync"
-                   Disabled="@(_ticket.Status == "Closed")">
-            @(_ticket.Assignee is null ? "Assign" : "Reassign")
-        </MudButton>
-    </MudPaper>
+        @* ── Tab 1: Details ── *@
+        <MudTabPanel Text="Details">
+            <MudSimpleTable Hover="false" Striped="false" Dense="true" Class="mb-4" Style="max-width:480px">
+                <tbody>
+                    <tr><td><MudText Typo="Typo.body2" Color="Color.Secondary">Status</MudText></td><td>@_ticket.Status</td></tr>
+                    <tr><td><MudText Typo="Typo.body2" Color="Color.Secondary">Priority</MudText></td><td>@_ticket.Priority</td></tr>
+                    <tr><td><MudText Typo="Typo.body2" Color="Color.Secondary">Assignee</MudText></td><td>@(_ticket.Assignee ?? "-")</td></tr>
+                    <tr><td><MudText Typo="Typo.body2" Color="Color.Secondary">Created</MudText></td><td>@_ticket.CreatedAt.ToString("u")</td></tr>
+                    <tr><td><MudText Typo="Typo.body2" Color="Color.Secondary">Due</MudText></td><td>@(_ticket.DueAt is null ? "-" : _ticket.DueAt.Value.ToString("u"))</td></tr>
+                </tbody>
+            </MudSimpleTable>
 
-    <MudPaper Class="pa-4 mt-4">
-        <MudText Typo="Typo.h6" Class="mb-3">Comments (@_ticket.Comments.Count)</MudText>
+            <MudText Typo="Typo.body1" Class="mb-4">@_ticket.Description</MudText>
 
-        @if (_ticket.Comments.Count == 0)
-        {
-            <MudText Color="Color.Secondary">No comments yet.</MudText>
-        }
-        else
-        {
-            @foreach (var comment in _ticket.Comments)
-            {
-                <MudPaper Outlined="true" Class="pa-3 mb-2">
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        @(comment.Author ?? "Anonymous") · @comment.CreatedAt.ToString("u")
-                    </MudText>
-                    <MudText Class="mt-1">@comment.Content</MudText>
-                </MudPaper>
+            @{
+                var allowedTransitions = StatusTransitionHelper.GetAllowedTransitions(_ticket.Status);
             }
-        }
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       OnClick="OpenChangeStatusDialogAsync"
+                       Disabled="@(allowedTransitions.Count == 0)">
+                Change Status
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2"
+                       OnClick="OpenAssignDialogAsync"
+                       Disabled="@(_ticket.Status == "Closed")">
+                @(_ticket.Assignee is null ? "Assign" : "Reassign")
+            </MudButton>
+        </MudTabPanel>
 
-        <MudDivider Class="my-4" />
-
-        <MudTextField T="string" Label="Author (optional)" @bind-Value="_commentAuthor"
-                      MaxLength="100" Class="mb-2" Disabled="_isSubmittingComment" />
-        <MudTextField T="string" Label="Comment" @bind-Value="_commentContent"
-                      Lines="3" MaxLength="2000" Class="mb-2" Disabled="_isSubmittingComment" />
-
-        @if (_commentError is not null)
-        {
-            <AppErrorPanel Error="_commentError" />
-        }
-
-        <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                   OnClick="SubmitCommentAsync"
-                   Disabled="@(_isSubmittingComment || string.IsNullOrWhiteSpace(_commentContent))">
-            @if (_isSubmittingComment)
+        @* ── Tab 2: Comments ── *@
+        <MudTabPanel Text=@($"Comments ({_ticket.Comments.Count})")>
+            @if (_ticket.Comments.Count == 0)
             {
-                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <MudText Color="Color.Secondary">No comments yet.</MudText>
             }
-            Add Comment
-        </MudButton>
-    </MudPaper>
+            else
+            {
+                @foreach (var comment in _ticket.Comments)
+                {
+                    <MudPaper Outlined="true" Class="pa-3 mb-2">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            @(comment.Author ?? "Anonymous") · @comment.CreatedAt.ToString("u")
+                        </MudText>
+                        <MudText Class="mt-1">@comment.Content</MudText>
+                    </MudPaper>
+                }
+            }
+
+            <MudDivider Class="my-4" />
+
+            <MudTextField T="string" Label="Author (optional)" @bind-Value="_commentAuthor"
+                          MaxLength="100" Class="mb-2" Disabled="_isSubmittingComment" />
+            <MudTextField T="string" Label="Comment" @bind-Value="_commentContent"
+                          Lines="3" MaxLength="2000" Class="mb-2" Disabled="_isSubmittingComment" />
+
+            @if (_commentError is not null)
+            {
+                <AppErrorPanel Error="_commentError" />
+            }
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       OnClick="SubmitCommentAsync"
+                       Disabled="@(_isSubmittingComment || string.IsNullOrWhiteSpace(_commentContent))">
+                @if (_isSubmittingComment)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Add Comment
+            </MudButton>
+        </MudTabPanel>
+
+        @* ── Tab 3: History ── *@
+        <MudTabPanel Text=@($"History ({_auditEvents?.Count ?? 0})")>
+            @if (_auditEventsError is not null)
+            {
+                <AppErrorPanel Error="_auditEventsError" />
+            }
+            else if (_auditEvents is null || _auditEvents.Count == 0)
+            {
+                <MudText Color="Color.Secondary">No history yet.</MudText>
+            }
+            else
+            {
+                <MudTimeline TimelineAlign="TimelineAlign.Start">
+                    @foreach (var e in _auditEvents)
+                    {
+                        <MudTimelineItem Color="EventTypeColor(e.EventType)" Size="Size.Small">
+                            <ItemContent>
+                                <MudText Typo="Typo.body1"><b>@FormatEventType(e.EventType)</b></MudText>
+                                <MudText Typo="Typo.body2">@FormatPayload(e.EventType, e.Payload)</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @e.OccurredAt.ToString("u")
+                                    @if (e.Actor is not null)
+                                    {
+                                        <span> · @e.Actor</span>
+                                    }
+                                </MudText>
+                            </ItemContent>
+                        </MudTimelineItem>
+                    }
+                </MudTimeline>
+            }
+        </MudTabPanel>
+
+    </MudTabs>
 }
 
 @code {
@@ -106,21 +145,36 @@ else
     private bool _isSubmittingComment;
     private ApiError? _commentError;
 
+    private IReadOnlyList<AuditEventResponse>? _auditEvents;
+    private ApiError? _auditEventsError;
+
     protected override async Task OnParametersSetAsync()
     {
         _isLoading = true;
         _error = null;
         _ticket = null;
+        _auditEvents = null;
+        _auditEventsError = null;
 
-        var result = await TicketsApi.GetByIdAsync(Id);
+        var ticketResult = await TicketsApi.GetByIdAsync(Id);
+        var auditResult  = await TicketsApi.GetAuditEventsAsync(Id);
 
-        if (result.IsSuccess)
-            _ticket = result.Value;
+        if (ticketResult.IsSuccess)
+            _ticket = ticketResult.Value;
         else
-            _error = result.Error;
+            _error = ticketResult.Error;
+
+        if (auditResult.IsSuccess)
+            _auditEvents = auditResult.Value;
+        else
+            _auditEventsError = auditResult.Error;
 
         _isLoading = false;
     }
+
+    // -----------------------------------------------------------------------
+    // Dialogs & actions
+    // -----------------------------------------------------------------------
 
     private async Task OpenChangeStatusDialogAsync()
     {
@@ -138,6 +192,7 @@ else
         if (result is { Canceled: false, Data: TicketResponse updated })
         {
             _ticket = updated;
+            await RefreshAuditEventsAsync();
             Snackbar.Add("Status updated.", Severity.Success);
         }
     }
@@ -160,11 +215,11 @@ else
 
         if (result.IsSuccess)
         {
-            // Reload ticket to get the updated comment list
             var updated = await TicketsApi.GetByIdAsync(_ticket!.Id);
             if (updated.IsSuccess)
                 _ticket = updated.Value;
 
+            await RefreshAuditEventsAsync();
             _commentContent = null;
             _commentAuthor = null;
             Snackbar.Add("Comment added.", Severity.Success);
@@ -190,7 +245,74 @@ else
         if (result is { Canceled: false, Data: TicketResponse updated })
         {
             _ticket = updated;
+            await RefreshAuditEventsAsync();
             Snackbar.Add("Assignee updated.", Severity.Success);
+        }
+    }
+
+    private async Task RefreshAuditEventsAsync()
+    {
+        var r = await TicketsApi.GetAuditEventsAsync(Id);
+        if (r.IsSuccess)
+            _auditEvents = r.Value;
+    }
+
+    // -----------------------------------------------------------------------
+    // History rendering helpers
+    // -----------------------------------------------------------------------
+
+    private static string GetStr(Dictionary<string, JsonElement> p, string key)
+        => p.TryGetValue(key, out var v) ? v.GetString() ?? string.Empty : string.Empty;
+
+    private static string FormatEventType(string eventType) => eventType switch
+    {
+        "ticket.created"          => "Ticket created",
+        "ticket.status_changed"   => "Status changed",
+        "ticket.assignee_changed" => "Assignee changed",
+        "ticket.comment_added"    => "Comment added",
+        _                         => eventType
+    };
+
+    private static Color EventTypeColor(string eventType) => eventType switch
+    {
+        "ticket.created"          => Color.Success,
+        "ticket.status_changed"   => Color.Info,
+        "ticket.assignee_changed" => Color.Warning,
+        "ticket.comment_added"    => Color.Default,
+        _                         => Color.Default
+    };
+
+    private static string FormatPayload(string eventType, string payload)
+    {
+        try
+        {
+            var p = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(payload);
+            if (p is null) return payload;
+
+            return eventType switch
+            {
+                "ticket.created" =>
+                    $"{GetStr(p, "title")} · Priority: {GetStr(p, "priority")}",
+
+                "ticket.status_changed" =>
+                    $"{GetStr(p, "fromStatus")} → {GetStr(p, "toStatus")}",
+
+                "ticket.assignee_changed" =>
+                    GetStr(p, "newAssignee") is { Length: > 0 } next
+                        ? $"Assigned to {next}"
+                        : $"Unassigned from {GetStr(p, "previousAssignee")}",
+
+                "ticket.comment_added" =>
+                    GetStr(p, "author") is { Length: > 0 } author
+                        ? $"By {author} ({GetStr(p, "contentLength")} chars)"
+                        : $"Anonymous ({GetStr(p, "contentLength")} chars)",
+
+                _ => payload
+            };
+        }
+        catch
+        {
+            return payload;
         }
     }
 }

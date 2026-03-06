@@ -4,6 +4,7 @@ using ServiceDeskLite.Application.Tickets.AddComment;
 using ServiceDeskLite.Application.Tickets.AssignTicket;
 using ServiceDeskLite.Application.Tickets.ChangeTicketStatus;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
+using ServiceDeskLite.Application.Tickets.GetAuditEvents;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
 using ServiceDeskLite.Application.Tickets.SearchTickets;
 
@@ -19,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<ChangeTicketStatusHandler>();
         services.AddScoped<AssignTicketHandler>();
         services.AddScoped<AddCommentHandler>();
+        services.AddScoped<GetAuditEventsHandler>();
 
         return services;
     }

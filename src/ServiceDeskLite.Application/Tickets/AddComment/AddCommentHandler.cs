@@ -1,18 +1,25 @@
 using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Application.Tickets.Audit;
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Common;
+using ServiceDeskLite.Domain.Tickets.Events;
 
 namespace ServiceDeskLite.Application.Tickets.AddComment;
 
 public sealed class AddCommentHandler
 {
     private readonly ITicketRepository _repository;
+    private readonly IAuditEventRepository _auditRepository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public AddCommentHandler(ITicketRepository repository, IUnitOfWork unitOfWork)
+    public AddCommentHandler(
+        ITicketRepository repository,
+        IAuditEventRepository auditRepository,
+        IUnitOfWork unitOfWork)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
@@ -36,6 +43,12 @@ public sealed class AddCommentHandler
         try
         {
             var comment = ticket.AddComment(command.Content, command.CreatedAt, command.Author);
+
+            var domainEvent = ticket.DomainEvents.OfType<CommentAddedDomainEvent>().Single();
+            await _auditRepository.AddAsync(
+                AuditEventFactory.FromCommentAdded(domainEvent, command.CreatedAt), ct);
+            ticket.ClearDomainEvents();
+
             await _unitOfWork.SaveChangesAsync(ct);
 
             return Result<AddCommentResult>.Success(

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServiceDeskLite.Infrastructure.Persistence;
 
@@ -10,9 +11,11 @@ using ServiceDeskLite.Infrastructure.Persistence;
 namespace ServiceDeskLite.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ServiceDeskLiteDbContext))]
-    partial class ServiceDeskLiteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260305155646_AddAuditEvents")]
+    partial class AddAuditEvents
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.3");

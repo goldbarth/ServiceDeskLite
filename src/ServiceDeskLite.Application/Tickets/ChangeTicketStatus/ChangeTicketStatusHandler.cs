@@ -1,20 +1,27 @@
 using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Application.Tickets.Audit;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Common;
 using ServiceDeskLite.Domain.Tickets;
+using ServiceDeskLite.Domain.Tickets.Events;
 
 namespace ServiceDeskLite.Application.Tickets.ChangeTicketStatus;
 
 public sealed class ChangeTicketStatusHandler
 {
     private readonly ITicketRepository _repository;
+    private readonly IAuditEventRepository _auditRepository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public ChangeTicketStatusHandler(ITicketRepository repository, IUnitOfWork unitOfWork)
+    public ChangeTicketStatusHandler(
+        ITicketRepository repository,
+        IAuditEventRepository auditRepository,
+        IUnitOfWork unitOfWork)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
@@ -38,6 +45,12 @@ public sealed class ChangeTicketStatusHandler
         try
         {
             ticket.ChangeStatus(command.NewStatus);
+
+            var domainEvent = ticket.DomainEvents.OfType<StatusChangedDomainEvent>().Single();
+            await _auditRepository.AddAsync(
+                AuditEventFactory.FromStatusChanged(domainEvent, command.Actor, DateTimeOffset.UtcNow), ct);
+            ticket.ClearDomainEvents();
+
             await _unitOfWork.SaveChangesAsync(ct);
 
             return Result<TicketDetailsDto>.Success(new TicketDetailsDto(

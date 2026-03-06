@@ -31,4 +31,8 @@ public interface ITicketsApiClient
         Guid id,
         AddCommentRequest request,
         CancellationToken ct = default);
+
+    Task<ApiResult<IReadOnlyList<AuditEventResponse>>> GetAuditEventsAsync(
+        Guid id,
+        CancellationToken ct = default);
 }
