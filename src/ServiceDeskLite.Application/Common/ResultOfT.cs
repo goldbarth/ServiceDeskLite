@@ -42,6 +42,12 @@ public class Result<T>
         IReadOnlyDictionary<string, object>? meta = null)
         => Failure(ApplicationError.Validation(code, message, meta));
 
+    public static Result<T> ValidationWithFields(
+        string code,
+        string message,
+        IReadOnlyDictionary<string, string[]> fieldErrors)
+        => Failure(ApplicationError.ValidationWithFields(code, message, fieldErrors));
+
     public static Result<T> DomainViolation(
         string code,
         string message,

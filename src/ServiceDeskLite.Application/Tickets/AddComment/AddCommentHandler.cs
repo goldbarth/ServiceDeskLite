@@ -1,5 +1,6 @@
 using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Application.Common.Validation;
 using ServiceDeskLite.Application.Tickets.Audit;
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Common;
@@ -12,15 +13,18 @@ public sealed class AddCommentHandler
     private readonly ITicketRepository _repository;
     private readonly IAuditEventRepository _auditRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICommandValidator<AddCommentCommand> _validator;
 
     public AddCommentHandler(
         ITicketRepository repository,
         IAuditEventRepository auditRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICommandValidator<AddCommentCommand> validator)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _validator = validator ?? throw new ArgumentNullException(nameof(validator));
     }
 
     public async Task<Result<AddCommentResult>> HandleAsync(
@@ -31,6 +35,13 @@ public sealed class AddCommentHandler
             return Result<AddCommentResult>.Validation(
                 "add_comment.command.null",
                 "Command must not be null.");
+
+        var validation = _validator.Validate(command);
+        if (!validation.IsValid)
+            return Result<AddCommentResult>.ValidationWithFields(
+                "add_comment.validation_failed",
+                "Validation failed.",
+                validation.FieldErrors);
 
         var ticket = await _repository.GetByIdAsync(command.TicketId, ct);
 

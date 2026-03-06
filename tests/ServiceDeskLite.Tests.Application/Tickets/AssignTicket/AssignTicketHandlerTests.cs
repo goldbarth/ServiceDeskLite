@@ -2,6 +2,7 @@ using FluentAssertions;
 
 using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Application.Common.Validation;
 using ServiceDeskLite.Application.Tickets.AssignTicket;
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Audit;
@@ -109,32 +110,34 @@ public sealed class AssignTicketHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_AssigneeNameTooLong_ReturnsDomainViolation()
+    public async Task HandleAsync_AssigneeNameTooLong_ReturnsValidationFailure()
     {
         var ticket = CreateTicket();
-        var handler = CreateHandler(existingTicket: ticket);
+        var handler = CreateHandler(existingTicket: ticket, validator: new AssignTicketValidator());
         var tooLong = new string('x', Assignee.MaxNameLength + 1);
         var cmd = new AssignTicketCommand(ticket.Id, tooLong);
 
         var result = await handler.HandleAsync(cmd);
 
         result.IsFailure.Should().BeTrue();
-        result.Error!.Type.Should().Be(ErrorType.DomainViolation);
-        result.Error.Code.Should().Be("domain.max_length");
+        result.Error!.Type.Should().Be(ErrorType.Validation);
+        result.Error.Code.Should().Be("assign_ticket.validation_failed");
+        result.Error.FieldErrors.Should().ContainKey("assigneeName");
     }
 
     [Fact]
-    public async Task HandleAsync_EmptyAssigneeName_ReturnsDomainViolation()
+    public async Task HandleAsync_EmptyAssigneeName_ReturnsValidationFailure()
     {
         var ticket = CreateTicket();
-        var handler = CreateHandler(existingTicket: ticket);
+        var handler = CreateHandler(existingTicket: ticket, validator: new AssignTicketValidator());
         var cmd = new AssignTicketCommand(ticket.Id, AssigneeName: "");
 
         var result = await handler.HandleAsync(cmd);
 
         result.IsFailure.Should().BeTrue();
-        result.Error!.Type.Should().Be(ErrorType.DomainViolation);
-        result.Error.Code.Should().Be("domain.not_empty");
+        result.Error!.Type.Should().Be(ErrorType.Validation);
+        result.Error.Code.Should().Be("assign_ticket.validation_failed");
+        result.Error.FieldErrors.Should().ContainKey("assigneeName");
     }
 
     // -----------------------------------------------------------------------
@@ -143,10 +146,11 @@ public sealed class AssignTicketHandlerTests
 
     private static AssignTicketHandler CreateHandler(
         Ticket? existingTicket,
-        FakeUnitOfWork? uow = null)
+        FakeUnitOfWork? uow = null,
+        ICommandValidator<AssignTicketCommand>? validator = null)
     {
         var repo = new FakeTicketRepository(existingTicket);
-        return new AssignTicketHandler(repo, new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork());
+        return new AssignTicketHandler(repo, new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork(), validator ?? new FakeValidator());
     }
 
     private static Ticket CreateTicket() =>
@@ -196,5 +200,10 @@ public sealed class AssignTicketHandlerTests
 
         public Task<IReadOnlyList<AuditEvent>> GetByTicketIdAsync(TicketId ticketId, CancellationToken ct = default)
             => throw new NotImplementedException();
+    }
+    
+    private sealed class FakeValidator : ICommandValidator<AssignTicketCommand>
+    {
+        public FieldValidationResult Validate(AssignTicketCommand command) => FieldValidationResult.Ok;
     }
 }
