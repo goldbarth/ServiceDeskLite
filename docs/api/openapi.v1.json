@@ -417,6 +417,40 @@
             "schema": {
               "$ref": "#/components/schemas/SortDirection"
             }
+          },
+          {
+            "in": "query",
+            "name": "Q",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "Statuses",
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/TicketStatus"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "Priorities",
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/TicketPriority"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "Assignee",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
