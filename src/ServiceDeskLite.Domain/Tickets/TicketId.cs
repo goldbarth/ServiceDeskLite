@@ -2,5 +2,5 @@
 
 public readonly record struct TicketId(Guid Value)
 {
-    public static TicketId New() => new(Guid.NewGuid());
+    public static TicketId New() => new(Guid.CreateVersion7());
 }

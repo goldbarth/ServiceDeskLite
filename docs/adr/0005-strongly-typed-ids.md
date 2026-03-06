@@ -34,7 +34,7 @@ passes static analysis, and only surfaces at runtime.
 ```csharp
 public readonly record struct TicketId(Guid Value)
 {
-    public static TicketId New() => new(Guid.NewGuid());
+    public static TicketId New() => new(Guid.CreateVersion7());
 }
 ```
 
@@ -114,8 +114,12 @@ Revisit when:
 1. The project adopts a source-generator–based strongly-typed ID library
    (e.g. `StronglyTypedId`) — the hand-rolled struct can be replaced with
    a generated equivalent without changing any consumers.
-2. UUIDv7 or another time-ordered ID strategy is needed for natural
-   sort order — change `TicketId.New()` only.
+2. ~~UUIDv7 or another time-ordered ID strategy is needed for natural
+   sort order — change `TicketId.New()` only.~~ Applied: `Guid.CreateVersion7()`
+   (available since .NET 9) replaces `Guid.NewGuid()` in all domain ID types
+   (`TicketId`, `CommentId`, `AuditEventId`). IDs are now time-ordered,
+   which improves B-tree index locality and makes the `Id` tie-breaker in paging
+   reflect insertion order.
 
 ## Related
 
