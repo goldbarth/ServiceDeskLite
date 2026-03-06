@@ -2,6 +2,7 @@
 
 using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Application.Common.Validation;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Audit;
@@ -16,29 +17,30 @@ public class CreateTicketHandlerTests
     {
         var repo = new FakeTicketRepository();
         var uow = new FakeUnitOfWork();
-        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow);
+        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow, new CreateTicketValidator());
 
         var cmd = new CreateTicketCommand(
             Title: " ",
             Description: "desc",
             Priority: TicketPriority.Medium,
             CreatedAt: DateTimeOffset.UtcNow);
-        
+
         var result = await handler.HandleAsync(cmd);
-        
+
         result.IsFailure.Should().BeTrue();
-        result.Error!.Code.Should().Be("create_ticket.title.required");
+        result.Error!.Code.Should().Be("create_ticket.validation_failed");
+        result.Error.FieldErrors.Should().ContainKey("title");
         uow.SaveCalls.Should().Be(0);
         repo.AddCalls.Should().Be(0);
     }
-    
+
     [Fact]
     public async Task Returns_conflict_error_when_duplicate_ticket()
     {
         var repo = new FakeTicketRepository();
         var uow = new FakeUnitOfWork(
             new InvalidOperationException("Ticket already exists: 123"));
-        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow);
+        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow, new FakeValidator());
 
         var cmd = new CreateTicketCommand(
             Title: "Test",
@@ -58,7 +60,7 @@ public class CreateTicketHandlerTests
     {
         var repo = new FakeTicketRepository();
         var uow = new FakeUnitOfWork(new IOException("disk full"));
-        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow);
+        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow, new FakeValidator());
 
         var cmd = new CreateTicketCommand(
             Title: "Test",
@@ -127,5 +129,10 @@ public class CreateTicketHandlerTests
 
         public Task<IReadOnlyList<AuditEvent>> GetByTicketIdAsync(TicketId ticketId, CancellationToken ct = default)
             => throw new NotImplementedException();
+    }
+
+    private sealed class FakeValidator : ICommandValidator<CreateTicketCommand>
+    {
+        public FieldValidationResult Validate(CreateTicketCommand command) => FieldValidationResult.Ok;
     }
 }

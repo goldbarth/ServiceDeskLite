@@ -1,5 +1,6 @@
 ﻿using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Application.Common.Validation;
 using ServiceDeskLite.Application.Tickets.Audit;
 using ServiceDeskLite.Domain.Common;
 using ServiceDeskLite.Domain.Tickets;
@@ -12,15 +13,18 @@ public sealed class CreateTicketHandler
     private readonly ITicketRepository _repository;
     private readonly IAuditEventRepository _auditRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICommandValidator<CreateTicketCommand> _validator;
 
     public CreateTicketHandler(
         ITicketRepository repo,
         IAuditEventRepository auditRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICommandValidator<CreateTicketCommand> validator)
     {
         _repository = repo ?? throw new ArgumentNullException(nameof(repo));
         _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _validator = validator ?? throw new ArgumentNullException(nameof(validator));
     }
 
     public async Task<Result<CreateTicketResult>> HandleAsync(
@@ -32,15 +36,12 @@ public sealed class CreateTicketHandler
                 "create_ticket.command.null",
                 "Command must not be null.");
 
-        if (string.IsNullOrWhiteSpace(command.Title))
-            return Result<CreateTicketResult>.Validation(
-                "create_ticket.title.required",
-                "Title is required.");
-
-        if (string.IsNullOrWhiteSpace(command.Description))
-            return Result<CreateTicketResult>.Validation(
-                "create_ticket.description.required",
-                "Description is required.");
+        var validation = _validator.Validate(command);
+        if (!validation.IsValid)
+            return Result<CreateTicketResult>.ValidationWithFields(
+                "create_ticket.validation_failed",
+                "Validation failed.",
+                validation.FieldErrors);
 
         try
         {

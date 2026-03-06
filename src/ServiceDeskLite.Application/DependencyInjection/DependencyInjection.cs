@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
+using ServiceDeskLite.Application.Common.Validation;
 using ServiceDeskLite.Application.Tickets.AddComment;
 using ServiceDeskLite.Application.Tickets.AssignTicket;
 using ServiceDeskLite.Application.Tickets.ChangeTicketStatus;
@@ -14,6 +15,12 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        // Validators
+        services.AddScoped<ICommandValidator<CreateTicketCommand>, CreateTicketValidator>();
+        services.AddScoped<ICommandValidator<AddCommentCommand>, AddCommentValidator>();
+        services.AddScoped<ICommandValidator<AssignTicketCommand>, AssignTicketValidator>();
+
+        // Handlers
         services.AddScoped<CreateTicketHandler>();
         services.AddScoped<GetTicketByIdHandler>();
         services.AddScoped<SearchTicketsHandler>();

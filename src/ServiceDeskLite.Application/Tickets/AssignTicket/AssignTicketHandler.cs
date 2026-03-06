@@ -1,5 +1,6 @@
 using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Application.Common.Validation;
 using ServiceDeskLite.Application.Tickets.Audit;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
 using ServiceDeskLite.Application.Tickets.Shared;
@@ -14,15 +15,18 @@ public sealed class AssignTicketHandler
     private readonly ITicketRepository _repository;
     private readonly IAuditEventRepository _auditRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICommandValidator<AssignTicketCommand> _validator;
 
     public AssignTicketHandler(
         ITicketRepository repository,
         IAuditEventRepository auditRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICommandValidator<AssignTicketCommand> validator)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _validator = validator ?? throw new ArgumentNullException(nameof(validator));
     }
 
     public async Task<Result<TicketDetailsDto>> HandleAsync(
@@ -33,6 +37,13 @@ public sealed class AssignTicketHandler
             return Result<TicketDetailsDto>.Validation(
                 "assign_ticket.command.null",
                 "Command must not be null.");
+
+        var validation = _validator.Validate(command);
+        if (!validation.IsValid)
+            return Result<TicketDetailsDto>.ValidationWithFields(
+                "assign_ticket.validation_failed",
+                "Validation failed.",
+                validation.FieldErrors);
 
         var ticket = await _repository.GetByIdAsync(command.Id, ct);
 

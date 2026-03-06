@@ -3,6 +3,7 @@
 using ServiceDeskLite.Api.Http.ProblemDetails;
 using ServiceDeskLite.Api.Mapping.Tickets;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Application.Common.Validation;
 using ServiceDeskLite.Application.Tickets.AddComment;
 using ServiceDeskLite.Application.Tickets.AssignTicket;
 using ServiceDeskLite.Application.Tickets.ChangeTicketStatus;
@@ -208,16 +209,20 @@ public static class TicketsEndpoints
         ResultToProblemDetailsMapper mapper,
         CancellationToken ct)
     {
-        var errors = new Dictionary<string, string[]>();
+        var builder = new FieldValidationBuilder();
 
         if (request.Page < PagingPolicy.MinPage)
-            errors["page"] = [$"must be >= {PagingPolicy.MinPage}"];
+            builder.AddError("page", $"must be >= {PagingPolicy.MinPage}");
 
         if (request.PageSize is < PagingPolicy.MinPageSize or > PagingPolicy.MaxPageSize)
-            errors["pageSize"] = [$"must be between {PagingPolicy.MinPageSize} and {PagingPolicy.MaxPageSize}"];
+            builder.AddError("pageSize", $"must be between {PagingPolicy.MinPageSize} and {PagingPolicy.MaxPageSize}");
 
-        if (errors.Count > 0)
-            return Results.ValidationProblem(errors);
+        var validation = builder.Build();
+        if (!validation.IsValid)
+            return mapper.ToProblem(ctx, ApplicationError.ValidationWithFields(
+                "search_tickets.validation_failed",
+                "Validation failed.",
+                validation.FieldErrors));
         
         var query = new SearchTicketsQuery(
             Criteria: request.ToCriteria(),

@@ -2,6 +2,7 @@
 
 using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Application.Common.Validation;
 using ServiceDeskLite.Application.Tickets.AddComment;
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Audit;
@@ -90,61 +91,64 @@ public sealed class AddCommentHandlerTest
     // -----------------------------------------------------------------------
 
     [Fact]
-    public async Task HandleAsync_ContentTooLong_ReturnsDomainViolation()
+    public async Task HandleAsync_ContentTooLong_ReturnsValidationFailure()
     {
         var ticket = CreateTicket();
-        var handler = CreateHandler(ticket);
+        var handler = CreateHandler(ticket, validator: new AddCommentValidator());
         var tooLongContent = new string('*', Comment.MaxContentLength + 1);
-        
+
         var cmd = new AddCommentCommand(
-            ticket.Id, 
-            Content: tooLongContent, 
-            Author: null, 
+            ticket.Id,
+            Content: tooLongContent,
+            Author: null,
             new DateTimeOffset());
-        
+
         var result = await handler.HandleAsync(cmd);
-        
+
         result.IsFailure.Should().BeTrue();
-        result.Error!.Type.Should().Be(ErrorType.DomainViolation);
-        result.Error.Code.Should().Be("domain.max_length");
+        result.Error!.Type.Should().Be(ErrorType.Validation);
+        result.Error.Code.Should().Be("add_comment.validation_failed");
+        result.Error.FieldErrors.Should().ContainKey("content");
     }
 
     [Fact]
-    public async Task HandleAsync_AuthorTooLong_ReturnsDomainViolation()
+    public async Task HandleAsync_AuthorTooLong_ReturnsValidationFailure()
     {
         var ticket = CreateTicket();
-        var handler = CreateHandler(ticket);
+        var handler = CreateHandler(ticket, validator: new AddCommentValidator());
         var tooLongAuthor = new string('*', Comment.MaxAuthorLength + 1);
-        
+
         var cmd = new AddCommentCommand(
-            ticket.Id, 
-            Content: "Love Connection.", 
-            Author: tooLongAuthor, 
+            ticket.Id,
+            Content: "Love Connection.",
+            Author: tooLongAuthor,
             new DateTimeOffset());
-        
+
         var result = await handler.HandleAsync(cmd);
-        
+
         result.IsFailure.Should().BeTrue();
-        result.Error!.Type.Should().Be(ErrorType.DomainViolation);
-        result.Error.Code.Should().Be("domain.max_length");
+        result.Error!.Type.Should().Be(ErrorType.Validation);
+        result.Error.Code.Should().Be("add_comment.validation_failed");
+        result.Error.FieldErrors.Should().ContainKey("author");
     }
 
     [Fact]
-    public async Task HandleAsync_EmptyContent_ReturnsDomainViolation()
+    public async Task HandleAsync_EmptyContent_ReturnsValidationFailure()
     {
         var ticket = CreateTicket();
-        var handler = CreateHandler(ticket);
+        var handler = CreateHandler(ticket, validator: new AddCommentValidator());
         var cmd = new AddCommentCommand(
             ticket.Id,
             Content: string.Empty,
             Author: null,
             new DateTimeOffset());
-        
+
         var result = await handler.HandleAsync(cmd);
-        
+
         result.IsFailure.Should().BeTrue();
-        result.Error!.Type.Should().Be(ErrorType.DomainViolation);
-        result.Error.Code.Should().Be("domain.not_empty");
+        result.Error!.Type.Should().Be(ErrorType.Validation);
+        result.Error.Code.Should().Be("add_comment.validation_failed");
+        result.Error.FieldErrors.Should().ContainKey("content");
     }
     
     // -----------------------------------------------------------------------
@@ -153,10 +157,11 @@ public sealed class AddCommentHandlerTest
 
     private static AddCommentHandler CreateHandler(
         Ticket? existingTicket,
-        FakeUnitOfWork? uow = null)
+        FakeUnitOfWork? uow = null,
+        ICommandValidator<AddCommentCommand>? validator = null)
     {
         var repo = new FakeTicketRepository(existingTicket);
-        return new AddCommentHandler(repo, new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork());
+        return new AddCommentHandler(repo, new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork(), validator ?? new FakeValidator());
     }
     
     private static Ticket CreateTicket() => 
@@ -197,5 +202,10 @@ public sealed class AddCommentHandlerTest
 
         public Task<IReadOnlyList<AuditEvent>> GetByTicketIdAsync(TicketId ticketId, CancellationToken ct = default)
             => throw new NotImplementedException();
+    }
+    
+    private sealed class FakeValidator : ICommandValidator<AddCommentCommand>
+    {
+        public FieldValidationResult Validate(AddCommentCommand command) => FieldValidationResult.Ok;
     }
 }
