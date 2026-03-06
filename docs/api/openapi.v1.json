@@ -33,6 +33,38 @@
         ],
         "type": "object"
       },
+      "AuditEventResponse": {
+        "properties": {
+          "actor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "payload": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "eventType",
+          "actor",
+          "occurredAt",
+          "payload"
+        ],
+        "type": "object"
+      },
       "ChangeTicketStatusRequest": {
         "properties": {
           "newStatus": {
@@ -624,6 +656,62 @@
           }
         },
         "summary": "Assign or unassign a ticket",
+        "tags": [
+          "Tickets"
+        ]
+      }
+    },
+    "/api/v1/tickets/{id}/audit-events": {
+      "get": {
+        "description": "Returns all audit events for a ticket in chronological order.",
+        "operationId": "Tickets_GetAuditEvents",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEventResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Get audit history for a ticket",
         "tags": [
           "Tickets"
         ]
