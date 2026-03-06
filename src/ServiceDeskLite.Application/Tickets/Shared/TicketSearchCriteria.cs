@@ -6,6 +6,7 @@ public sealed record TicketSearchCriteria(
     string? Text = null,
     IReadOnlyCollection<TicketStatus>? Statuses = null,
     IReadOnlyCollection<TicketPriority>? Priorities = null,
+    string? AssigneeName = null,
     DateTimeOffset? CreatedFrom = null,
     DateTimeOffset? CreatedTo = null,
     DateTimeOffset? DueFrom = null,

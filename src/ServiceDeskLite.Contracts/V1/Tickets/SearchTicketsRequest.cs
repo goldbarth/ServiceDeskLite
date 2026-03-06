@@ -6,5 +6,9 @@ public sealed record SearchTicketsRequest(
     int Page = 1,
     int PageSize = 25,
     TicketSortField? SortField = null,
-    SortDirection? SortDirection = null
+    SortDirection? SortDirection = null,
+    string? Q = null,
+    TicketStatus[]? Statuses = null,
+    TicketPriority[]? Priorities = null,
+    string? Assignee = null
 );

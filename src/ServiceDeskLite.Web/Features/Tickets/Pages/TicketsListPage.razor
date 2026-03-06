@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @page "/tickets"
 
 @using MudBlazor
@@ -7,6 +7,63 @@
 <PageTitle>Tickets</PageTitle>
 
 <MudText Typo="Typo.h4" Class="mb-2">Tickets</MudText>
+
+<MudPaper Elevation="1" Class="pa-3 mb-3">
+    <div class="d-flex flex-wrap gap-3 align-items-end">
+        <MudTextField T="string"
+                      Label="Suche"
+                      Placeholder="Titel oder Beschreibung..."
+                      @bind-Value="_filterQ"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Disabled="@(State is TicketsListState.Loading)"
+                      OnKeyDown="OnSearchKeyDownAsync" />
+
+        <MudSelect T="TicketStatus"
+                   Label="Status"
+                   MultiSelection="true"
+                   @bind-SelectedValues="_filterStatuses"
+                   Dense="true"
+                   Disabled="@(State is TicketsListState.Loading)">
+            @foreach (var s in Enum.GetValues<TicketStatus>())
+            {
+                <MudSelectItem T="TicketStatus" Value="s">@s</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudSelect T="TicketPriority"
+                   Label="Priority"
+                   MultiSelection="true"
+                   @bind-SelectedValues="_filterPriorities"
+                   Dense="true"
+                   Disabled="@(State is TicketsListState.Loading)">
+            @foreach (var p in Enum.GetValues<TicketPriority>())
+            {
+                <MudSelectItem T="TicketPriority" Value="p">@p</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudTextField T="string"
+                      Label="Assignee"
+                      Placeholder="Name..."
+                      @bind-Value="_filterAssignee"
+                      Disabled="@(State is TicketsListState.Loading)"
+                      OnKeyDown="OnSearchKeyDownAsync" />
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="ApplyFiltersAsync"
+                   Disabled="@(State is TicketsListState.Loading)">
+            Suchen
+        </MudButton>
+
+        <MudButton Variant="Variant.Text"
+                   OnClick="ClearFiltersAsync"
+                   Disabled="@(State is TicketsListState.Loading)">
+            Zurücksetzen
+        </MudButton>
+    </div>
+</MudPaper>
 
 @if (State is TicketsListState.Loading or TicketsListState.Idle)
 {
@@ -27,14 +84,12 @@ else if (State is TicketsListState.Loaded { Data.Items.Count: 0 })
 else if (State is TicketsListState.Loaded loaded)
 {
     var data = loaded.Data;
-    var isLoading = false;
 
     <div class="d-flex align-items-center justify-content-between mb-2">
         <MudText Typo="Typo.caption">@data.TotalCount Gesamt</MudText>
 
         <div class="d-flex align-items-center gap-2">
             <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                           Disabled="isLoading"
                            OnClick="ReloadAsync"
                            title="Reload" />
 

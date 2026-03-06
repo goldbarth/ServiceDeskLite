@@ -6,6 +6,13 @@ namespace ServiceDeskLite.Api.Mapping.Tickets;
 
 internal static class SearchTicketsMapping
 {
+    public static TicketSearchCriteria ToCriteria(this SearchTicketsRequest request)
+        => new(
+            Text: request.Q,
+            Statuses: request.Statuses?.Select(s => s.ToDomain()).ToArray(),
+            Priorities: request.Priorities?.Select(p => p.ToDomain()).ToArray(),
+            AssigneeName: request.Assignee);
+
     public static Paging ToPaging(this SearchTicketsRequest request)
         => new(request.Page, request.PageSize);
 

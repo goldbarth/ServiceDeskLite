@@ -220,7 +220,7 @@ public static class TicketsEndpoints
             return Results.ValidationProblem(errors);
         
         var query = new SearchTicketsQuery(
-            Criteria: TicketSearchCriteria.Empty,
+            Criteria: request.ToCriteria(),
             Paging: request.ToPaging(),
             Sort: request.ToSort());
 
