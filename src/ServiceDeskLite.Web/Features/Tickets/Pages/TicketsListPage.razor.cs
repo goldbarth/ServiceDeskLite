@@ -1,152 +1,133 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.WebUtilities;
 
 using MudBlazor;
 
-using ServiceDeskLite.Contracts.V1.Common;
 using ServiceDeskLite.Contracts.V1.Tickets;
-using ServiceDeskLite.Web.Api.V1;
+using ServiceDeskLite.Web.Features.Tickets.State;
 
 using SortDirection = ServiceDeskLite.Contracts.V1.Common.SortDirection;
 
 namespace ServiceDeskLite.Web.Features.Tickets.Pages;
 
-public partial class TicketsListPage
+public partial class TicketsListPage : IDisposable
 {
-    [Inject] private ITicketsApiClient TicketsApi { get; set; } = default!;
+    [Inject] private TicketsListFeatureState FeatureState { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
-    
-    private int _page = 1;
-    private int _pageSize = new SearchTicketsRequest().PageSize;
 
-    private bool _isLoading;
-    private PagedResponse<TicketListItemResponse>? _paged;
-    
-    private ApiError? _apiError;
-    private Exception? _unexpectedError;
+    // -----------------------------------------------------------------------
+    // Derived view properties — read-only projections of FeatureState
+    // -----------------------------------------------------------------------
 
-    private CancellationTokenSource? _cts;
-    private long _loadSeq;
-    
-    private TicketSortField _sortField = TicketSortField.CreatedAt;
-    private SortDirection _sortDirection = SortDirection.Desc;
-    
-    private object? ErrorForLoadable => _apiError;
+    private TicketsListState State => FeatureState.State;
+    private TicketQueryParams Query => FeatureState.Query;
+
+    // -----------------------------------------------------------------------
+    // Lifecycle
+    // -----------------------------------------------------------------------
 
     protected override async Task OnInitializedAsync()
-        => await LoadAsync(_page);
-
-    private async Task OnPageChangedAsync(int page)
     {
-        _page = page;
-        await LoadAsync(_page);
+        FeatureState.OnChanged += HandleStateChanged;
+
+        // If data is fresh and already loaded (user navigated back), skip reload.
+        if (FeatureState is { State: TicketsListState.Loaded, IsStale: false })
+            return;
+
+        var query = ParseQueryFromUrl();
+        await FeatureState.LoadAsync(query);
     }
-    
+
+    public void Dispose()
+        => FeatureState.OnChanged -= HandleStateChanged;
+
+    // -----------------------------------------------------------------------
+    // Event handlers — delegate everything to FeatureState
+    // -----------------------------------------------------------------------
+
+    private Task OnPageChangedAsync(int page)
+        => LoadAndSyncUrlAsync(Query with { Page = page });
+
+    private Task OnPageSizeChangedAsync(int pageSize)
+    {
+        if (Query.PageSize == pageSize) return Task.CompletedTask;
+        return LoadAndSyncUrlAsync(Query with { Page = 1, PageSize = pageSize });
+    }
+
+    private Task SortByAsync(TicketSortField field)
+        => LoadAndSyncUrlAsync(Query.WithSort(field));
+
+    private Task ReloadAsync()
+        => LoadAndSyncUrlAsync(Query);
+
+    private void HandleRowClick(TableRowClickEventArgs<TicketListItemResponse> args)
+        => Nav.NavigateTo($"/tickets/{args.Item!.Id}");
+
+    // -----------------------------------------------------------------------
+    // Rendering helpers
+    // -----------------------------------------------------------------------
+
     private string SortIcon(TicketSortField field)
     {
-        if (_sortField != field)
-            return string.Empty;
-
-        return _sortDirection == SortDirection.Asc
+        if (Query.SortField != field) return string.Empty;
+        return Query.SortDirection == SortDirection.Asc
             ? Icons.Material.Filled.ArrowUpward
             : Icons.Material.Filled.ArrowDownward;
     }
-    
-    private async Task LoadAsync(int page)
+
+    // -----------------------------------------------------------------------
+    // Private helpers
+    // -----------------------------------------------------------------------
+
+    private async Task LoadAndSyncUrlAsync(TicketQueryParams query)
     {
-        _cts?.Cancel();
-        _cts?.Dispose();
-        _cts = new CancellationTokenSource();
-
-        var seq = Interlocked.Increment(ref _loadSeq);
-
-        _isLoading = true;
-        _apiError = null;
-        _unexpectedError = null;
-        StateHasChanged();
-
-        try
-        {
-            var req = new SearchTicketsRequest(
-                Page: page,
-                PageSize: _pageSize,
-                SortField: _sortField,
-                SortDirection: _sortDirection);
-
-            var result = await TicketsApi.SearchAsync(req, _cts.Token);
-
-            if (seq != _loadSeq)
-                return; // ignore outdated result
-
-            if (result.IsSuccess)
-            {
-                _paged = result.Value!;
-                if (_paged.TotalPages > 0)
-                    _page = Math.Min(_page, _paged.TotalPages);
-            }
-            else
-            {
-                _paged = null;
-                _apiError = result.Error; 
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
-        catch (Exception ex)
-        {
-            _paged = null;
-            _unexpectedError = ex;
-        }
-        finally
-        {
-            _isLoading = false;
-            StateHasChanged();
-        }
-    }
-    
-    private async Task SortByAsync(TicketSortField field)
-    {
-        if (_sortField == field)
-        {
-            _sortDirection = _sortDirection == SortDirection.Asc
-                ? SortDirection.Desc
-                : SortDirection.Asc;
-        }
-        else
-        {
-            _sortField = field;
-            _sortDirection = SortDirection.Asc;
-        }
-
-        _page = 1;
-        await LoadAsync(_page);
-    }
-    
-    private async Task OnPageSizeChangedAsync(int pageSize)
-    {
-        if (_pageSize == pageSize)
-            return;
-
-        _pageSize = pageSize;
-        _page = 1;
-
-        await LoadAsync(_page);
-    }
-    
-    private void HandleRowClick(TableRowClickEventArgs<TicketListItemResponse> args)
-    {
-        var id = args.Item!.Id;
-        Nav.NavigateTo($"/tickets/{id}");
+        SyncUrl(query);
+        await FeatureState.LoadAsync(query);
     }
 
-
-    private Task ReloadAsync()
-        => LoadAsync(_page);
-    
-    public void Dispose()
+    /// <summary>
+    /// Reads page/pageSize/sortField/sortDir from the current URL query string.
+    /// Falls back to <see cref="TicketQueryParams.Default"/> for any missing parameter.
+    /// </summary>
+    private TicketQueryParams ParseQueryFromUrl()
     {
-        _cts?.Cancel();
-        _cts?.Dispose();
+        var uri = new Uri(Nav.Uri);
+        var qs = QueryHelpers.ParseQuery(uri.Query);
+        var defaults = TicketQueryParams.Default;
+
+        var page = qs.TryGetValue("page", out var p) && int.TryParse(p, out var pi) && pi >= 1
+            ? pi : defaults.Page;
+
+        var pageSize = qs.TryGetValue("pageSize", out var ps) && int.TryParse(ps, out var psi) && psi is >= 1 and <= 200
+            ? psi : defaults.PageSize;
+
+        var sortField = qs.TryGetValue("sort", out var sf) && Enum.TryParse<TicketSortField>(sf, out var sfi)
+            ? sfi : defaults.SortField;
+
+        var sortDir = qs.TryGetValue("dir", out var d) && Enum.TryParse<SortDirection>(d, out var di)
+            ? di : defaults.SortDirection;
+
+        return new TicketQueryParams(page, pageSize, sortField, sortDir);
     }
+
+    /// <summary>
+    /// Pushes the current query parameters into the browser URL without triggering
+    /// a Blazor navigation (replaceHistoryEntry: true keeps the back-button clean).
+    /// </summary>
+    private void SyncUrl(TicketQueryParams query)
+    {
+        var defaults = TicketQueryParams.Default;
+        var qs = new Dictionary<string, string?>();
+
+        if (query.Page != defaults.Page)             qs["page"]     = query.Page.ToString();
+        if (query.PageSize != defaults.PageSize)     qs["pageSize"] = query.PageSize.ToString();
+        if (query.SortField != defaults.SortField)   qs["sort"]     = query.SortField.ToString();
+        if (query.SortDirection != defaults.SortDirection) qs["dir"] = query.SortDirection.ToString();
+
+        var url = QueryHelpers.AddQueryString("/tickets", qs);
+        Nav.NavigateTo(url, forceLoad: false, replace: true);
+    }
+
+    // Invoked by FeatureState when state changes — must marshal to renderer thread.
+    private void HandleStateChanged() => InvokeAsync(StateHasChanged);
 }

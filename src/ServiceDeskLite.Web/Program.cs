@@ -1,6 +1,7 @@
 using MudBlazor.Services;
 using ServiceDeskLite.Web.Components;
 using ServiceDeskLite.Web.Composition;
+using ServiceDeskLite.Web.Features.Tickets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +18,8 @@ builder.Services.AddMudServices(config =>
 });
 
 builder.Services
-    .AddTicketsApiClient(builder.Configuration);
+    .AddTicketsApiClient(builder.Configuration)
+    .AddTicketsFeature();
 
 var app = builder.Build();
 
