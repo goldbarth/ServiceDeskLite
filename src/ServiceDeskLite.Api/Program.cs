@@ -13,11 +13,14 @@ using ServiceDeskLite.Infrastructure.Persistence;
 
 // ──────────── Logging ────────────
 
+const string outputTemplate =
+    "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {TraceId}{NewLine}{Exception}";
+
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .Enrich.WithMachineName()
     .Enrich.WithThreadId()
-    .WriteTo.Console()
+    .WriteTo.Console(outputTemplate: outputTemplate)
     .CreateLogger();
 
 // ──────────── Builder ────────────
@@ -30,7 +33,7 @@ builder.Host.UseSerilog((ctx, services, cfg) =>
         .Enrich.FromLogContext()
         .Enrich.WithMachineName()
         .Enrich.WithThreadId()
-        .WriteTo.Console();
+        .WriteTo.Console(outputTemplate: outputTemplate);
 });
 
 // ──────────── Services ────────────
@@ -75,7 +78,7 @@ if (app.Configuration["Persistence:Provider"] == "Sqlite")
 
 // ─────────── Middleware ───────────
 
-app.UseSerilogRequestLogging();
+app.UseApiRequestLogging();
 
 app.UseApiDocumentation();
 
