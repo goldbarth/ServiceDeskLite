@@ -37,16 +37,31 @@ public sealed class TicketsApiClient : ITicketsApiClient
         SearchTicketsRequest request,
         CancellationToken ct = default)
     {
-        var url = QueryHelpers.AddQueryString(
-            "api/v1/tickets",
-            new Dictionary<string, string?>
-            {
-                ["page"] = request.Page.ToString(),
-                ["pageSize"] = request.PageSize.ToString(),
-                ["sortField"] = request.SortField.ToString(),
-                ["sortDirection"] = request.SortDirection.ToString()
-            });
+        var queryParams = new List<KeyValuePair<string, string?>>
+        {
+            new("page", request.Page.ToString()),
+            new("pageSize", request.PageSize.ToString()),
+        };
 
+        if (request.SortField is not null)
+            queryParams.Add(new("sortField", request.SortField.ToString()));
+
+        if (request.SortDirection is not null)
+            queryParams.Add(new("sortDirection", request.SortDirection.ToString()));
+
+        if (!string.IsNullOrWhiteSpace(request.Q))
+            queryParams.Add(new("q", request.Q));
+
+        if (request.Statuses is { Length: > 0 })
+            queryParams.AddRange(request.Statuses.Select(s => new KeyValuePair<string, string?>("statuses", s.ToString())));
+
+        if (request.Priorities is { Length: > 0 })
+            queryParams.AddRange(request.Priorities.Select(p => new KeyValuePair<string, string?>("priorities", p.ToString())));
+
+        if (!string.IsNullOrWhiteSpace(request.Assignee))
+            queryParams.Add(new("assignee", request.Assignee));
+
+        var url = QueryHelpers.AddQueryString("api/v1/tickets", queryParams);
         var httpRequest = new HttpRequestMessage(HttpMethod.Get, url);
 
         return await SendAsync<PagedResponse<TicketListItemResponse>>(httpRequest, ct);

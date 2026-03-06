@@ -11,7 +11,11 @@ public sealed record TicketQueryParams(
     int Page,
     int PageSize,
     TicketSortField SortField,
-    SortDirection SortDirection)
+    SortDirection SortDirection,
+    string? Q = null,
+    TicketStatus[]? Statuses = null,
+    TicketPriority[]? Priorities = null,
+    string? Assignee = null)
 {
     public static readonly TicketQueryParams Default = new(
         Page: 1,
@@ -28,5 +32,6 @@ public sealed record TicketQueryParams(
     }
 
     public SearchTicketsRequest ToSearchRequest() =>
-        new(Page: Page, PageSize: PageSize, SortField: SortField, SortDirection: SortDirection);
+        new(Page: Page, PageSize: PageSize, SortField: SortField, SortDirection: SortDirection,
+            Q: Q, Statuses: Statuses, Priorities: Priorities, Assignee: Assignee);
 }

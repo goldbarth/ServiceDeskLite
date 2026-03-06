@@ -39,6 +39,12 @@ public class EfTicketRepository : ITicketRepository
         if (criteria.Priorities is { Count: > 0 })
             q = q.Where(t => criteria.Priorities.Contains(t.Priority));
 
+        if (!string.IsNullOrWhiteSpace(criteria.AssigneeName))
+        {
+            var name = criteria.AssigneeName.Trim();
+            q = q.Where(t => t.Assignee != null && t.Assignee.Value.Name.Contains(name));
+        }
+
         if (criteria.CreatedFrom is not null)
             q = q.Where(t => t.CreatedAt >= criteria.CreatedFrom);
         if (criteria.CreatedTo is not null)
