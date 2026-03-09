@@ -1,40 +1,51 @@
 ﻿@using MudBlazor
 @using ServiceDeskLite.Web.Api.V1
 
+@inject IJSRuntime JS
+
 <MudPaper Class="pa-4" Elevation="1">
-    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
-        <MudText Typo="Typo.h6">@_title</MudText>
+    <MudAlert Severity="_severity" Variant="Variant.Outlined">
+        <MudText Typo="Typo.h6" Class="mb-1">@_title</MudText>
         <MudText Typo="Typo.body2">@_message</MudText>
 
-        @if (!string.IsNullOrWhiteSpace(_code) ||
-             !string.IsNullOrWhiteSpace(_errorType) ||
-             !string.IsNullOrWhiteSpace(_traceId))
+        @* TraceId — shown as copyable chip for support purposes *@
+        @if (!string.IsNullOrWhiteSpace(_traceId))
         {
-            <MudDivider Class="my-2" />
-            @if (!string.IsNullOrWhiteSpace(_code))
-            {
-                <MudText Typo="Typo.caption">Code: @_code</MudText>
-            }
-            @if (!string.IsNullOrWhiteSpace(_errorType))
-            {
-                <MudText Typo="Typo.caption">ErrorType: @_errorType</MudText>
-            }
-            @if (!string.IsNullOrWhiteSpace(_traceId))
-            {
-                <MudText Typo="Typo.caption">TraceId: @_traceId</MudText>
-            }
+            <div class="d-flex align-items-center gap-2 mt-3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Trace-ID:</MudText>
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Variant="Variant.Outlined"
+                         Icon="@Icons.Material.Outlined.ContentCopy"
+                         OnClick="CopyTraceIdAsync"
+                         title="In Zwischenablage kopieren">
+                    @_traceId
+                </MudChip>
+            </div>
         }
 
-        @if (_meta is not null && _meta.Count > 0)
+        @* Technical details (error code, type, meta) — collapsed by default *@
+        @if (!string.IsNullOrWhiteSpace(_code) || _meta is { Count: > 0 })
         {
-            <MudExpansionPanels Class="mt-2">
-                <MudExpansionPanel Text="Details (Meta)">
-                    <MudList T="string" Dense="true">
-                        @foreach (var kv in _meta)
-                        {
-                            <MudListItem T="string">@kv.Key: @FormatMetaValue(kv.Value)</MudListItem>
-                        }
-                    </MudList>
+            <MudExpansionPanels Class="mt-3" Elevation="0">
+                <MudExpansionPanel Text="Technische Details">
+                    @if (!string.IsNullOrWhiteSpace(_code))
+                    {
+                        <MudText Typo="Typo.caption">Code: @_code</MudText>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_errorType))
+                    {
+                        <MudText Typo="Typo.caption">Typ: @_errorType</MudText>
+                    }
+                    @if (_meta is { Count: > 0 })
+                    {
+                        <MudList T="string" Dense="true" Class="mt-1">
+                            @foreach (var kv in _meta)
+                            {
+                                <MudListItem T="string">@kv.Key: @FormatMetaValue(kv.Value)</MudListItem>
+                            }
+                        </MudList>
+                    }
                 </MudExpansionPanel>
             </MudExpansionPanels>
         }
@@ -42,8 +53,9 @@
 </MudPaper>
 
 @code {
-    [Parameter, EditorRequired] public object Error { get; set; } = default!;
+    [Parameter, EditorRequired] public ApiError Error { get; set; } = default!;
 
+    private Severity _severity;
     private string _title = "Fehler";
     private string _message = "Ein unerwarteter Fehler ist aufgetreten.";
     private string? _code;
@@ -53,26 +65,24 @@
 
     protected override void OnParametersSet()
     {
-        if (Error is ApiError api)
+        _title = Error.Title ?? "Fehler";
+        _message = Error.Detail ?? "Ein unerwarteter Fehler ist aufgetreten.";
+        _code = Error.Code;
+        _errorType = Error.ErrorType;
+        _traceId = Error.TraceId;
+        _meta = Error.Meta;
+        _severity = Error.Status switch
         {
-            _title = api.Title ?? "API Error";
-            _message = api.Detail ?? "Request failed.";
-            _code = api.Code;
-            _errorType = api.ErrorType;
-            _traceId = api.TraceId;
-            _meta = api.Meta;
-            return;
-        }
+            404 => Severity.Warning,
+            400 => Severity.Warning,
+            _   => Severity.Error
+        };
+    }
 
-        if (Error is Exception ex)
-        {
-            _title = "Unerwarteter Fehler";
-            _message = ex.Message;
-            _code = null;
-            _errorType = null;
-            _traceId = null;
-            _meta = null;
-        }
+    private async Task CopyTraceIdAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(_traceId))
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", _traceId);
     }
 
     private static string FormatMetaValue(object? value)

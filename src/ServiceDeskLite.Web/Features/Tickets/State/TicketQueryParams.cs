@@ -31,6 +31,12 @@ public sealed record TicketQueryParams(
         return this with { SortField = field, SortDirection = SortDirection.Asc, Page = 1 };
     }
 
+    public bool HasActiveFilters() =>
+        !string.IsNullOrWhiteSpace(Q) ||
+        Statuses is { Length: > 0 } ||
+        Priorities is { Length: > 0 } ||
+        !string.IsNullOrWhiteSpace(Assignee);
+
     public SearchTicketsRequest ToSearchRequest() =>
         new(Page: Page, PageSize: PageSize, SortField: SortField, SortDirection: SortDirection,
             Q: Q, Statuses: Statuses, Priorities: Priorities, Assignee: Assignee);
