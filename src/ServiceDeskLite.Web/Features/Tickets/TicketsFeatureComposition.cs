@@ -11,6 +11,7 @@ public static class TicketsFeatureComposition
     public static IServiceCollection AddTicketsFeature(this IServiceCollection services)
     {
         services.AddScoped<TicketsListFeatureState>();
+        services.AddScoped<TicketBoardFeatureState>();
         return services;
     }
 }

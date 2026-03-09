@@ -4,6 +4,7 @@ public static class AppRoutes
 {
     public const string Tickets = "/tickets";
     public const string TicketDetails = "/tickets/{id:guid}";
+    public const string TicketBoard = "/tickets/board";
 
     public static class Admin
     {

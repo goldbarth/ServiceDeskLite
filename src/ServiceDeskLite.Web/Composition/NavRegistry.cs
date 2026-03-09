@@ -9,6 +9,7 @@ public static class NavRegistry
     public static readonly IReadOnlyList<NavItem> Items =
     [
         new("Tickets", AppRoutes.Tickets, Icons.Material.Filled.ConfirmationNumber, 100),
+        new("Board", AppRoutes.TicketBoard, Icons.Material.Filled.ViewKanban, 110),
 
         // Section (no link)
         new("Admin", null, Icons.Material.Filled.AdminPanelSettings, 200, IsSection: true),

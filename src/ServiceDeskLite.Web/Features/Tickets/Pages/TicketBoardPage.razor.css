@@ -1,0 +1,162 @@
+/* -----------------------------------------------------------------------
+   Board container — horizontal Kanban layout
+   ----------------------------------------------------------------------- */
+
+/*
+ * Two-element scroll pattern:
+ *   board-scroll-wrapper  → block-level, overflow-x: auto  (creates the scrollbar)
+ *   board-container       → flex, min-width: max-content   (expands to fit all columns)
+ *
+ * This is required because overflow-x: auto on a flex container itself is
+ * not reliable across browsers — the flex formatting context prevents the
+ * browser from correctly computing the overflow extent.
+ */
+
+.board-scroll-wrapper {
+    overflow-x: auto;
+    padding-bottom: 8px; /* breathing room for the horizontal scrollbar */
+}
+
+.board-container {
+    display: flex;
+    gap: 12px;
+    min-width: max-content;
+    padding-bottom: 8px;
+    align-items: flex-start;
+}
+
+/* When a drag is active, hovering a column highlights it as a drop target. */
+.board-container--dragging .board-column:hover {
+    background-color: var(--mud-palette-primary-lighten);
+    outline: 2px dashed var(--mud-palette-primary);
+}
+
+/* -----------------------------------------------------------------------
+   Column
+   ----------------------------------------------------------------------- */
+
+.board-column {
+    flex: 0 0 260px;
+    min-width: 260px;
+    background: var(--mud-palette-background-grey);
+    border-radius: 8px;
+    padding: 8px;
+    min-height: 200px;
+    transition: background-color 0.15s ease, outline 0.15s ease;
+}
+
+.board-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 4px 8px 4px;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+    margin-bottom: 8px;
+}
+
+.board-column-title {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.board-column-count {
+    background: var(--mud-palette-lines-default);
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 0.75rem;
+}
+
+.board-column-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+    padding-right: 2px; /* prevent scrollbar from overlapping card border */
+}
+
+/* -----------------------------------------------------------------------
+   Ticket card
+   ----------------------------------------------------------------------- */
+
+.board-card {
+    background: var(--mud-palette-surface);
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 6px;
+    padding: 10px 12px;
+    cursor: grab;
+    user-select: none;
+    transition: box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.board-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.board-card:active {
+    cursor: grabbing;
+}
+
+/* The card being dragged fades out to indicate it has been "picked up". */
+.board-card--dragging {
+    opacity: 0.35;
+}
+
+.board-card-title {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--mud-palette-text-primary);
+    text-decoration: none;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.board-card-title:hover {
+    color: var(--mud-palette-primary);
+    text-decoration: underline;
+}
+
+.board-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.board-card-date {
+    font-size: 0.75rem;
+    color: var(--mud-palette-text-secondary);
+}
+
+/* -----------------------------------------------------------------------
+   Priority badge
+   ----------------------------------------------------------------------- */
+
+.board-priority {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.board-priority--low      { background: #e3f2fd; color: #1565c0; }
+.board-priority--medium   { background: #e8f5e9; color: #2e7d32; }
+.board-priority--high     { background: #fff3e0; color: #e65100; }
+.board-priority--critical { background: #ffebee; color: #c62828; }
+
+/* -----------------------------------------------------------------------
+   Loading skeleton
+   ----------------------------------------------------------------------- */
+
+.board-skeleton {
+    display: flex;
+    gap: 12px;
+}
+
+.board-skeleton-col {
+    flex: 0 0 260px;
+    min-width: 260px;
+    border-radius: 8px;
+}
