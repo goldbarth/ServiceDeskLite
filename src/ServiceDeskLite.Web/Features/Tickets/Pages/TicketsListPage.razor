@@ -76,9 +76,31 @@ else if (State is TicketsListState.Error err)
 }
 else if (State is TicketsListState.Loaded { Data.Items.Count: 0 })
 {
-    <MudPaper Class="pa-4" Elevation="1">
-        <MudText Typo="Typo.h6">Keine Tickets</MudText>
-        <MudText Typo="Typo.body2">Es wurden keine Einträge gefunden.</MudText>
+    <MudPaper Class="pa-6 d-flex flex-column align-items-center text-center" Elevation="1">
+        <MudIcon Icon="@Icons.Material.Outlined.ConfirmationNumber"
+                 Color="Color.Default"
+                 Style="font-size: 3rem; opacity: 0.35;"
+                 Class="mb-3" />
+        <MudText Typo="Typo.h6" Class="mb-1">Keine Tickets gefunden</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            @(Query.HasActiveFilters()
+                ? "Die aktiven Filter ergeben keine Treffer. Filter zurücksetzen oder Suchbegriff anpassen."
+                : "Noch keine Tickets vorhanden. Lege das erste Ticket an.")
+        </MudText>
+        @if (Query.HasActiveFilters())
+        {
+            <MudButton Variant="Variant.Outlined" OnClick="ClearFiltersAsync">
+                Filter zurücksetzen
+            </MudButton>
+        }
+        else
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       Href="/tickets/new">
+                Neues Ticket
+            </MudButton>
+        }
     </MudPaper>
 }
 else if (State is TicketsListState.Loaded loaded)

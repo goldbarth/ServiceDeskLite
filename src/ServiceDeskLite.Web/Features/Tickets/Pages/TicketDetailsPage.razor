@@ -5,7 +5,26 @@
 
 @if (_isLoading)
 {
-    <MudProgressLinear Indeterminate="true" />
+    @* Skeleton mirrors the real page structure: title → tabs → detail rows *@
+    <MudSkeleton SkeletonType="SkeletonType.Text" Width="40%" Height="36px" Class="mb-4" />
+
+    <div class="d-flex gap-3 mb-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="28px" />
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="110px" Height="28px" />
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="28px" />
+    </div>
+
+    <MudPaper Elevation="1" Class="pa-4">
+        @for (var i = 0; i < 5; i++)
+        {
+            <div class="d-flex gap-4 mb-3">
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="20px" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="20px" />
+            </div>
+        }
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="20px" Class="mt-4" />
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80%" Height="20px" Class="mt-2" />
+    </MudPaper>
 }
 else if (_error is not null)
 {
@@ -13,7 +32,19 @@ else if (_error is not null)
 }
 else if (_ticket is null)
 {
-    <MudText>Ticket not found.</MudText>
+    <MudPaper Class="pa-6 d-flex flex-column align-items-center text-center" Elevation="1">
+        <MudIcon Icon="@Icons.Material.Outlined.SearchOff"
+                 Color="Color.Default"
+                 Style="font-size: 3rem; opacity: 0.35;"
+                 Class="mb-3" />
+        <MudText Typo="Typo.h6" Class="mb-1">Ticket nicht gefunden</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            Das Ticket mit dieser ID existiert nicht oder wurde gelöscht.
+        </MudText>
+        <MudButton Variant="Variant.Outlined" Href="/tickets">
+            Zurück zur Liste
+        </MudButton>
+    </MudPaper>
 }
 else
 {

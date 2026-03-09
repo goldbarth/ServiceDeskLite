@@ -7,7 +7,12 @@
             </ChildContent>
             <ErrorContent Context="ex">
                 <LayoutView Layout="typeof(MainLayout)">
-                    <AppErrorPanel Error="ex" />
+                    <AppErrorPanel Error="@(new Api.V1.ApiError
+                    {
+                        Status = 500,
+                        Title  = "Unerwarteter Fehler",
+                        Detail = ex.Message
+                    })" />
                 </LayoutView>
             </ErrorContent>
         </ErrorBoundary>
