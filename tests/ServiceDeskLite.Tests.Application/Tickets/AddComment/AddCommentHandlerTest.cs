@@ -7,6 +7,7 @@ using ServiceDeskLite.Application.Tickets.AddComment;
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
+using System.Text.Json;
 
 namespace ServiceDeskLite.Tests.Application.Tickets.AddComment;
 
@@ -85,6 +86,35 @@ public sealed class AddCommentHandlerTest
         result.Value!.Comment.Author.Should().Be("Mr. Wonder");
         uow.SaveCalls.Should().Be(1);
     }
+
+    [Fact]
+    public async Task HandleAsync_ValidComment_WritesReadableAuditPayload()
+    {
+        var ticket = CreateTicket();
+        var uow = new FakeUnitOfWork();
+        var auditRepository = new FakeAuditEventRepository();
+        var handler = CreateHandler(ticket, uow, auditRepository);
+        var cmd = new AddCommentCommand(
+            ticket.Id,
+            Content: "Readable history comment.",
+            Author: "Mr. Wonder",
+            new DateTimeOffset(2026, 03, 09, 10, 30, 00, TimeSpan.Zero));
+
+        var result = await handler.HandleAsync(cmd);
+
+        result.IsSuccess.Should().BeTrue();
+        auditRepository.AddedEvents.Should().ContainSingle();
+
+        var auditEvent = auditRepository.AddedEvents.Single();
+        auditEvent.EventType.Should().Be(AuditEventTypes.CommentAdded);
+        auditEvent.Actor.Should().Be("Mr. Wonder");
+
+        using var payload = JsonDocument.Parse(auditEvent.Payload);
+        payload.RootElement.GetProperty("author").GetString().Should().Be("Mr. Wonder");
+        payload.RootElement.GetProperty("content").GetString().Should().Be("Readable history comment.");
+        payload.RootElement.TryGetProperty("commentId", out _).Should().BeFalse();
+        payload.RootElement.TryGetProperty("contentLength", out _).Should().BeFalse();
+    }
     
     // -----------------------------------------------------------------------
     // Domain violations
@@ -158,10 +188,15 @@ public sealed class AddCommentHandlerTest
     private static AddCommentHandler CreateHandler(
         Ticket? existingTicket,
         FakeUnitOfWork? uow = null,
+        FakeAuditEventRepository? auditRepository = null,
         ICommandValidator<AddCommentCommand>? validator = null)
     {
         var repo = new FakeTicketRepository(existingTicket);
-        return new AddCommentHandler(repo, new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork(), validator ?? new FakeValidator());
+        return new AddCommentHandler(
+            repo,
+            auditRepository ?? new FakeAuditEventRepository(),
+            uow ?? new FakeUnitOfWork(),
+            validator ?? new FakeValidator());
     }
     
     private static Ticket CreateTicket() => 
@@ -197,8 +232,13 @@ public sealed class AddCommentHandlerTest
 
     private sealed class FakeAuditEventRepository : IAuditEventRepository
     {
+        public List<AuditEvent> AddedEvents { get; } = [];
+
         public Task AddAsync(AuditEvent auditEvent, CancellationToken ct = default)
-            => Task.CompletedTask;
+        {
+            AddedEvents.Add(auditEvent);
+            return Task.CompletedTask;
+        }
 
         public Task<IReadOnlyList<AuditEvent>> GetByTicketIdAsync(TicketId ticketId, CancellationToken ct = default)
             => throw new NotImplementedException();
