@@ -21,7 +21,8 @@ public sealed class CreateTicketGetTicketTests
 
     private static readonly JsonSerializerOptions DeserializeOptions = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
     };
 
     [Fact]
@@ -60,8 +61,9 @@ public sealed class CreateTicketGetTicketTests
         ticket!.Id.Should().Be(created.Id);
         ticket.Title.Should().Be(request.Title);
         ticket.Description.Should().Be(request.Description);
-        ticket.Priority.Should().Be("High");
-        ticket.Status.Should().Be("New");
+        ticket.Priority.Should().Be(TicketPriority.High);
+        ticket.Status.Should().Be(TicketStatus.New);
+        ticket.AllowedTransitions.Should().Equal(TicketStatus.Triaged);
         ticket.DueAt.Should().Be(request.DueAt);
         ticket.Assignee.Should().BeNull();
         ticket.Comments.Should().BeEmpty();

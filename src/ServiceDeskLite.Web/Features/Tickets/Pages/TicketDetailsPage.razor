@@ -1,6 +1,6 @@
 @page "/tickets/{Id:guid}"
 @using MudBlazor
-
+@using ServiceDeskLite.Contracts.V1.Tickets
 <PageTitle>Ticket Details</PageTitle>
 
 @if (_isLoading)
@@ -66,17 +66,14 @@ else
 
             <MudText Typo="Typo.body1" Class="mb-4">@_ticket.Description</MudText>
 
-            @{
-                var allowedTransitions = StatusTransitionHelper.GetAllowedTransitions(_ticket.Status);
-            }
             <MudButton Variant="Variant.Filled" Color="Color.Primary"
                        OnClick="OpenChangeStatusDialogAsync"
-                       Disabled="@(allowedTransitions.Count == 0)">
+                       Disabled="@(_ticket.AllowedTransitions.Count == 0)">
                 Change Status
             </MudButton>
             <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2"
                        OnClick="OpenAssignDialogAsync"
-                       Disabled="@(_ticket.Status == "Closed")">
+                       Disabled="@(_ticket.Status == TicketStatus.Closed)">
                 @(_ticket.Assignee is null ? "Assign" : "Reassign")
             </MudButton>
         </MudTabPanel>

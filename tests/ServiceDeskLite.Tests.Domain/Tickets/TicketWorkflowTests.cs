@@ -60,4 +60,15 @@ public sealed class TicketWorkflowTests
         var ex = Record.Exception(() => TicketWorkflow.EnsureCanTransition(from, to));
         ex.Should().BeNull();
     }
+
+    [Fact]
+    public void GetAllowedTransitions_Triaged_ReturnsExpectedOrderedTargets()
+    {
+        var transitions = TicketWorkflow.GetAllowedTransitions(TicketStatus.Triaged);
+
+        transitions.Should().Equal(
+            TicketStatus.InProgress,
+            TicketStatus.Waiting,
+            TicketStatus.Resolved);
+    }
 }

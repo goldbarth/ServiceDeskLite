@@ -66,7 +66,7 @@ else if (BoardState.State is TicketBoardState.Loaded loaded)
                                  @ondragend="OnDragEnd">
                                 <a href="/tickets/@ticket.Id" class="board-card-title">@ticket.Title</a>
                                 <div class="board-card-footer">
-                                    <span class="board-priority board-priority--@ticket.Priority.ToLower()">
+                                    <span class="board-priority board-priority--@ticket.Priority.ToString().ToLowerInvariant()">
                                         @ticket.Priority
                                     </span>
                                     <span class="board-card-date">

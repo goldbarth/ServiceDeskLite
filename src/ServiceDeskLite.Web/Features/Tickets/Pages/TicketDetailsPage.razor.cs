@@ -79,7 +79,7 @@ public partial class TicketDetailsPage
         var parameters = new DialogParameters<ChangeStatusDialog>
         {
             { x => x.TicketId, _ticket!.Id },
-            { x => x.CurrentStatus, _ticket!.Status }
+            { x => x.AllowedStatuses, _ticket!.AllowedTransitions }
         };
 
         var dialog = await DialogService.ShowAsync<ChangeStatusDialog>(

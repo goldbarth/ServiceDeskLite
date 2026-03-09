@@ -42,6 +42,7 @@ public class GetTicketByIdHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value!.Id.Should().Be(id);
         result.Value.Title.Should().Be("Title");
+        result.Value.AllowedTransitions.Should().Equal(TicketStatus.Triaged);
     }
     
     private sealed class FakeTicketRepository : ITicketRepository

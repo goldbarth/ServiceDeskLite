@@ -10,6 +10,15 @@ namespace ServiceDeskLite.Api.Mapping.Tickets;
 
 internal static class TicketEnumMapping
 {
+    public static TicketPriority ToContract(this DomainTicketPriority value) => value switch
+    {
+        DomainTicketPriority.Low => TicketPriority.Low,
+        DomainTicketPriority.Medium => TicketPriority.Medium,
+        DomainTicketPriority.High => TicketPriority.High,
+        DomainTicketPriority.Critical => TicketPriority.Critical,
+        _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unsupported TicketPriority.")
+    };
+
     public static DomainTicketPriority ToDomain(this TicketPriority value) => value switch
     {
         TicketPriority.Low => DomainTicketPriority.Low,
@@ -44,6 +53,17 @@ internal static class TicketEnumMapping
         TicketStatus.Waiting    => DomainTicketStatus.Waiting,
         TicketStatus.Resolved   => DomainTicketStatus.Resolved,
         TicketStatus.Closed     => DomainTicketStatus.Closed,
+        _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unsupported TicketStatus.")
+    };
+
+    public static TicketStatus ToContract(this DomainTicketStatus value) => value switch
+    {
+        DomainTicketStatus.New => TicketStatus.New,
+        DomainTicketStatus.Triaged => TicketStatus.Triaged,
+        DomainTicketStatus.InProgress => TicketStatus.InProgress,
+        DomainTicketStatus.Waiting => TicketStatus.Waiting,
+        DomainTicketStatus.Resolved => TicketStatus.Resolved,
+        DomainTicketStatus.Closed => TicketStatus.Closed,
         _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unsupported TicketStatus.")
     };
 }

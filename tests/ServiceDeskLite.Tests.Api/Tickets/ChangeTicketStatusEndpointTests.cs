@@ -23,7 +23,8 @@ public class ChangeTicketStatusEndpointTests
 
     private static readonly JsonSerializerOptions _deserializeOptions = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
     };
 
     private static HttpClient CreateClient()
@@ -52,7 +53,8 @@ public class ChangeTicketStatusEndpointTests
         statusResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var ticket = await statusResponse.Content.ReadFromJsonAsync<TicketResponse>(_deserializeOptions);
-        ticket!.Status.Should().Be("Triaged");
+        ticket!.Status.Should().Be(TicketStatus.Triaged);
+        ticket.AllowedTransitions.Should().Equal(TicketStatus.InProgress, TicketStatus.Waiting, TicketStatus.Resolved);
         ticket.Id.Should().Be(created.Id);
     }
 

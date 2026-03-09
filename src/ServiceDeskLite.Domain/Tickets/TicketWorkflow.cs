@@ -4,7 +4,7 @@ namespace ServiceDeskLite.Domain.Tickets
 {
     public static class TicketWorkflow
     {
-        private static readonly HashSet<(TicketStatus From, TicketStatus To)> _allowed =
+        private static readonly (TicketStatus From, TicketStatus To)[] _transitions =
         [
             (TicketStatus.New, TicketStatus.Triaged),
 
@@ -22,8 +22,15 @@ namespace ServiceDeskLite.Domain.Tickets
             (TicketStatus.Resolved, TicketStatus.InProgress)
         ];
 
+        private static readonly HashSet<(TicketStatus From, TicketStatus To)> _allowed = [.. _transitions];
+
         public static bool CanTransition(TicketStatus from, TicketStatus to)
             => _allowed.Contains((from, to));
+
+        public static IReadOnlyList<TicketStatus> GetAllowedTransitions(TicketStatus from)
+            => [.. _transitions
+                .Where(transition => transition.From == from)
+                .Select(transition => transition.To)];
 
         public static void EnsureCanTransition(TicketStatus from, TicketStatus to)
         {

@@ -12,4 +12,5 @@ public record TicketDetailsDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset? DueAt,
     Assignee? Assignee,
-    IReadOnlyList<CommentDto> Comments);
+    IReadOnlyList<CommentDto> Comments,
+    IReadOnlyList<TicketStatus> AllowedTransitions);

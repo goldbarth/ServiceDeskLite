@@ -11,13 +11,16 @@ public static class TicketsMapping
             Id: dto.Id.Value,
             Title: dto.Title,
             Description: dto.Description,
-            Priority: dto.Priority.ToString(),
-            Status: dto.Status.ToString(),
+            Priority: dto.Priority.ToContract(),
+            Status: dto.Status.ToContract(),
             CreatedAt: dto.CreatedAt,
             DueAt: dto.DueAt,
             Assignee: dto.Assignee?.Name,
             Comments: dto.Comments
                 .Select(c => new CommentResponse(c.Id.Value, c.Content, c.Author, c.CreatedAt))
+                .ToList(),
+            AllowedTransitions: dto.AllowedTransitions
+                .Select(status => status.ToContract())
                 .ToList()
         );
 
@@ -25,8 +28,8 @@ public static class TicketsMapping
         => new(
             Id: dto.Id.Value,
             Title: dto.Title,
-            Priority: dto.Priority.ToString(),
-            Status: dto.Status.ToString(),
+            Priority: dto.Priority.ToContract(),
+            Status: dto.Status.ToContract(),
             CreatedAt: dto.CreatedAt,
             DueAt: dto.DueAt
         );

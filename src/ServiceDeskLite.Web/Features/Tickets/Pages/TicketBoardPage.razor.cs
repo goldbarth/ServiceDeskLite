@@ -65,7 +65,7 @@ public partial class TicketBoardPage : IDisposable
         if (_draggingTicket is null) return;
 
         // Dropping onto the same column is a no-op.
-        if (_draggingTicket.Status == targetStatus.ToString()) return;
+        if (_draggingTicket.Status == targetStatus) return;
 
         var ticket = _draggingTicket;
         _draggingTicket = null;
@@ -83,7 +83,7 @@ public partial class TicketBoardPage : IDisposable
     private static IReadOnlyList<TicketListItemResponse> TicketsForColumn(
         IReadOnlyList<TicketListItemResponse> tickets,
         TicketStatus status)
-        => [.. tickets.Where(t => t.Status == status.ToString())];
+        => [.. tickets.Where(t => t.Status == status)];
 
     private static string FormatStatus(TicketStatus status) => status switch
     {
