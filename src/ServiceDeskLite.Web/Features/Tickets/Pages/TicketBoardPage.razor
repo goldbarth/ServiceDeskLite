@@ -1,0 +1,84 @@
+@page "/tickets/board"
+
+@using MudBlazor
+
+@implements IDisposable
+
+<PageTitle>Board – ServiceDeskLite</PageTitle>
+
+<div class="d-flex align-items-center gap-3 mb-4">
+    <MudText Typo="Typo.h4" Class="mb-0">Board</MudText>
+    <MudSwitch T="bool"
+               Value="BoardState.HideClosed"
+               ValueChanged="OnHideClosedChanged"
+               Color="Color.Primary"
+               Label="Hide Closed"
+               Class="mb-0" />
+</div>
+
+@if (_moveError is not null)
+{
+    <MudAlert Severity="Severity.Warning"
+              Class="mb-3"
+              ShowCloseIcon="true"
+              CloseIconClicked="@(() => _moveError = null)">
+        <strong>Status change rejected:</strong> @(_moveError.Detail ?? _moveError.Title)
+    </MudAlert>
+}
+
+@if (BoardState.State is TicketBoardState.Error loadError)
+{
+    <AppErrorPanel Error="loadError.ApiError" />
+}
+else if (BoardState.State is TicketBoardState.Idle or TicketBoardState.Loading)
+{
+    <div class="board-skeleton">
+        @foreach (var _ in VisibleColumns)
+        {
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle"
+                         Height="400px"
+                         Class="board-skeleton-col" />
+        }
+    </div>
+}
+else if (BoardState.State is TicketBoardState.Loaded loaded)
+{
+    <div class="board-scroll-wrapper">
+        <div class="board-container @(_isDragging ? "board-container--dragging" : "")">
+            @foreach (var status in VisibleColumns)
+            {
+                var columnTickets = TicketsForColumn(loaded.Tickets, status);
+                <div class="board-column"
+                     @ondragover:preventDefault
+                     @ondrop="() => OnDrop(status)">
+
+                    <div class="board-column-header">
+                        <span class="board-column-title">@FormatStatus(status)</span>
+                        <span class="board-column-count">@columnTickets.Count</span>
+                    </div>
+
+                    <div class="board-column-body">
+                        @foreach (var ticket in columnTickets)
+                        {
+                            <div class="board-card @(_draggingTicket?.Id == ticket.Id ? "board-card--dragging" : "")"
+                                 draggable="true"
+                                 @ondragstart="() => OnDragStart(ticket)"
+                                 @ondragend="OnDragEnd">
+                                <a href="/tickets/@ticket.Id" class="board-card-title">@ticket.Title</a>
+                                <div class="board-card-footer">
+                                    <span class="board-priority board-priority--@ticket.Priority.ToLower()">
+                                        @ticket.Priority
+                                    </span>
+                                    <span class="board-card-date">
+                                        @ticket.CreatedAt.ToString("dd.MM.yy")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                </div>
+            }
+        </div>
+    </div>
+}
