@@ -53,11 +53,7 @@ public sealed class ApiExceptionHandler : IExceptionHandler
         }
 
         var pd = _pdFactory.Create(httpContext, status, title, error);
-
-        httpContext.Response.StatusCode = status;
-        httpContext.Response.ContentType = "application/problem+json";
-
-        await httpContext.Response.WriteAsJsonAsync(pd, cancellationToken);
+        await Results.Problem(pd).ExecuteAsync(httpContext);
         return true;
     }
 
