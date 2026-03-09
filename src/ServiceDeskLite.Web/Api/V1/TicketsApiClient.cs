@@ -15,7 +15,8 @@ public sealed class TicketsApiClient : ITicketsApiClient
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
     };
 
     private static readonly JsonSerializerOptions _sendOptions = new()

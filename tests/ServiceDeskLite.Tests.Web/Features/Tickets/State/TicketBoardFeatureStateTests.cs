@@ -25,7 +25,7 @@ public sealed class TicketBoardFeatureStateTests
     [Fact]
     public async Task LoadAsync_OnSuccess_TransitionsToLoaded_WithTickets()
     {
-        var tickets = new[] { MakeTicket("New"), MakeTicket("Triaged") };
+        var tickets = new[] { MakeTicket(TicketStatus.New), MakeTicket(TicketStatus.Triaged) };
         var sut = new TicketBoardFeatureState(FakeApi.SearchReturnsSuccess(tickets));
 
         await sut.LoadAsync();
@@ -190,8 +190,8 @@ public sealed class TicketBoardFeatureStateTests
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static TicketListItemResponse MakeTicket(string status = "New") =>
-        new(Guid.NewGuid(), "Test ticket", "Low", status, DateTimeOffset.UtcNow, null);
+    private static TicketListItemResponse MakeTicket(TicketStatus status = TicketStatus.New) =>
+        new(Guid.NewGuid(), "Test ticket", TicketPriority.Low, status, DateTimeOffset.UtcNow, null);
 
     // ── Fakes ────────────────────────────────────────────────────────────────
 
@@ -242,8 +242,17 @@ public sealed class TicketBoardFeatureStateTests
 
             var changeStatusResult = changeStatusError is null
                 ? ApiResult<TicketResponse>.Success(
-                    new TicketResponse(Guid.NewGuid(), "T", "D", "Low", "New",
-                        DateTimeOffset.UtcNow, null, null, []))
+                    new TicketResponse(
+                        Guid.NewGuid(),
+                        "T",
+                        "D",
+                        TicketPriority.Low,
+                        TicketStatus.New,
+                        DateTimeOffset.UtcNow,
+                        null,
+                        null,
+                        [],
+                        [TicketStatus.Triaged]))
                 : ApiResult<TicketResponse>.Failure(changeStatusError);
 
             return new(

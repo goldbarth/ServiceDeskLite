@@ -21,7 +21,8 @@ public sealed class ChangeTicketStatusIntegrationTests
 
     private static readonly JsonSerializerOptions DeserializeOptions = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
     };
 
     [Fact]
@@ -43,7 +44,8 @@ public sealed class ChangeTicketStatusIntegrationTests
         var updated = await changeResponse.Content.ReadFromJsonAsync<TicketResponse>(DeserializeOptions);
         updated.Should().NotBeNull();
         updated!.Id.Should().Be(ticketId);
-        updated.Status.Should().Be("Triaged");
+        updated.Status.Should().Be(TicketStatus.Triaged);
+        updated.AllowedTransitions.Should().Equal(TicketStatus.InProgress, TicketStatus.Waiting, TicketStatus.Resolved);
 
         var getResponse = await client.GetAsync($"/api/v1/tickets/{ticketId}");
 
@@ -52,7 +54,8 @@ public sealed class ChangeTicketStatusIntegrationTests
         var ticket = await getResponse.Content.ReadFromJsonAsync<TicketResponse>(DeserializeOptions);
         ticket.Should().NotBeNull();
         ticket!.Id.Should().Be(ticketId);
-        ticket.Status.Should().Be("Triaged");
+        ticket.Status.Should().Be(TicketStatus.Triaged);
+        ticket.AllowedTransitions.Should().Equal(TicketStatus.InProgress, TicketStatus.Waiting, TicketStatus.Resolved);
     }
 
     [Fact]
@@ -84,7 +87,8 @@ public sealed class ChangeTicketStatusIntegrationTests
         var ticket = await getResponse.Content.ReadFromJsonAsync<TicketResponse>(DeserializeOptions);
         ticket.Should().NotBeNull();
         ticket!.Id.Should().Be(ticketId);
-        ticket.Status.Should().Be("New");
+        ticket.Status.Should().Be(TicketStatus.New);
+        ticket.AllowedTransitions.Should().Equal(TicketStatus.Triaged);
     }
 
     private static async Task<Guid> CreateTicketAsync(HttpClient client)

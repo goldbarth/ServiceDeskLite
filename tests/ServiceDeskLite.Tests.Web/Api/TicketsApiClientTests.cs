@@ -27,8 +27,16 @@ public class TicketsApiClientTests
     {
         var ticketId = Guid.NewGuid();
         var body = new TicketResponse(
-            ticketId, "Test", "Desc", "Low", "Open",
-            DateTimeOffset.UtcNow, null, null, []);
+            ticketId,
+            "Test",
+            "Desc",
+            TicketPriority.Low,
+            TicketStatus.New,
+            DateTimeOffset.UtcNow,
+            null,
+            null,
+            [],
+            [TicketStatus.Triaged]);
 
         var handler = FakeHttpMessageHandler.WithJson(HttpStatusCode.OK, body);
         var client = CreateClient(handler);

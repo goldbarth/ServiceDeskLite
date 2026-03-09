@@ -4,9 +4,10 @@ public sealed record TicketResponse(
     Guid Id,
     string Title,
     string Description,
-    string Priority,
-    string Status,
+    TicketPriority Priority,
+    TicketStatus Status,
     DateTimeOffset CreatedAt,
     DateTimeOffset? DueAt,
     string? Assignee,
-    IReadOnlyList<CommentResponse> Comments);
+    IReadOnlyList<CommentResponse> Comments,
+    IReadOnlyList<TicketStatus> AllowedTransitions);

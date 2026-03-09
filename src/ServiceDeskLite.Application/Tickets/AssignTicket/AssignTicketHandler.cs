@@ -69,19 +69,7 @@ public sealed class AssignTicketHandler
 
             await _unitOfWork.SaveChangesAsync(ct);
 
-            return Result<TicketDetailsDto>.Success(new TicketDetailsDto(
-                ticket.Id,
-                ticket.Title,
-                ticket.Description,
-                ticket.Status,
-                ticket.Priority,
-                ticket.CreatedAt,
-                ticket.DueAt,
-                ticket.Assignee,
-                ticket.Comments
-                    .OrderBy(c => c.CreatedAt)
-                    .Select(c => new CommentDto(c.Id, c.Content, c.Author, c.CreatedAt))
-                    .ToList()));
+            return Result<TicketDetailsDto>.Success(ticket.ToDetailsDto());
         }
         catch (DomainException ex) when (ex.Error.Code == TicketErrors.CannotAssignClosedCode)
         {
