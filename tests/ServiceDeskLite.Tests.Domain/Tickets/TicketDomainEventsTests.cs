@@ -145,7 +145,7 @@ public sealed class TicketDomainEventsTests
         var e = ticket.DomainEvents.OfType<CommentAddedDomainEvent>().Single();
         e.TicketId.Should().Be(ticket.Id);
         e.Author.Should().Be("Bob");
-        e.ContentLength.Should().Be(content.Length);
+        e.Content.Should().Be(content);
     }
 
     // -----------------------------------------------------------------------

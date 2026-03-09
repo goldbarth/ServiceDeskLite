@@ -13,6 +13,14 @@ namespace ServiceDeskLite.Web.Features.Tickets.Pages;
 
 public partial class TicketDetailsPage
 {
+    private sealed record HistoryEventViewModel(
+        string? Summary,
+        string? CommentAuthor = null,
+        string? CommentContent = null)
+    {
+        public bool IsComment => CommentContent is not null;
+    }
+
     [Inject] private ITicketsApiClient TicketsApi { get; set; } = default!;
     [Inject] private IDialogService DialogService { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
@@ -157,6 +165,19 @@ public partial class TicketDetailsPage
     private static string GetStr(Dictionary<string, JsonElement> p, string key)
         => p.TryGetValue(key, out var v) ? v.GetString() ?? string.Empty : string.Empty;
 
+    private static bool HasText(string? value) => !string.IsNullOrWhiteSpace(value);
+
+    private static string? FirstNonEmpty(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (HasText(value))
+                return value;
+        }
+
+        return null;
+    }
+
     private static string FormatEventType(string eventType) => eventType switch
     {
         "ticket.created"          => "Ticket created",
@@ -175,37 +196,59 @@ public partial class TicketDetailsPage
         _                         => Color.Default
     };
 
-    private static string FormatPayload(string eventType, string payload)
+    private HistoryEventViewModel BuildHistoryEventViewModel(AuditEventResponse auditEvent)
     {
         try
         {
-            var p = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(payload);
-            if (p is null) return payload;
+            var p = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(auditEvent.Payload);
+            if (p is null)
+                return new(auditEvent.Payload);
 
-            return eventType switch
+            return auditEvent.EventType switch
             {
-                "ticket.created" =>
-                    $"{GetStr(p, "title")} · Priority: {GetStr(p, "priority")}",
+                "ticket.created" => new(
+                    $"{GetStr(p, "title")} · Priority: {GetStr(p, "priority")}"),
 
-                "ticket.status_changed" =>
-                    $"{GetStr(p, "fromStatus")} → {GetStr(p, "toStatus")}",
+                "ticket.status_changed" => new(
+                    $"{GetStr(p, "fromStatus")} → {GetStr(p, "toStatus")}"),
 
-                "ticket.assignee_changed" =>
+                "ticket.assignee_changed" => new(
                     GetStr(p, "newAssignee") is { Length: > 0 } next
                         ? $"Assigned to {next}"
-                        : $"Unassigned from {GetStr(p, "previousAssignee")}",
+                        : $"Unassigned from {GetStr(p, "previousAssignee")}"),
 
-                "ticket.comment_added" =>
-                    GetStr(p, "author") is { Length: > 0 } author
-                        ? $"By {author} ({GetStr(p, "contentLength")} chars)"
-                        : $"Anonymous ({GetStr(p, "contentLength")} chars)",
+                "ticket.comment_added" => BuildCommentHistoryViewModel(p),
 
-                _ => payload
+                _ => new(auditEvent.Payload)
             };
         }
         catch
         {
-            return payload;
+            return new(auditEvent.Payload);
         }
     }
+
+    private HistoryEventViewModel BuildCommentHistoryViewModel(Dictionary<string, JsonElement> payload)
+    {
+        var legacyComment = FindCommentById(GetStr(payload, "commentId"));
+        var author = FirstNonEmpty(GetStr(payload, "author"), legacyComment?.Author) ?? "Anonymous";
+        var content = FirstNonEmpty(GetStr(payload, "content"), legacyComment?.Content)
+                      ?? "Comment content unavailable.";
+
+        return new(
+            Summary: null,
+            CommentAuthor: author,
+            CommentContent: content);
+    }
+
+    private CommentResponse? FindCommentById(string commentId)
+    {
+        if (_ticket is null || !Guid.TryParse(commentId, out var parsedCommentId))
+            return null;
+
+        return _ticket.Comments.FirstOrDefault(comment => comment.Id == parsedCommentId);
+    }
+
+    private static bool ShouldShowActor(string? actor, HistoryEventViewModel historyEvent)
+        => !historyEvent.IsComment && HasText(actor);
 }
