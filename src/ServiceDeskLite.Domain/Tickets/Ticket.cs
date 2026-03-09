@@ -81,7 +81,7 @@ public sealed class Ticket
         var comment = new Comment(CommentId.New(), content, createdAt, author);
         _comments.Add(comment);
 
-        _domainEvents.Add(new CommentAddedDomainEvent(Id, comment.Id, author, content.Length));
+        _domainEvents.Add(new CommentAddedDomainEvent(Id, comment.Author, comment.Content));
         return comment;
     }
 }

@@ -138,13 +138,25 @@ else
                 <MudTimeline TimelineAlign="TimelineAlign.Start">
                     @foreach (var e in _auditEvents)
                     {
+                        var historyEvent = BuildHistoryEventViewModel(e);
+
                         <MudTimelineItem Color="EventTypeColor(e.EventType)" Size="Size.Small">
                             <ItemContent>
                                 <MudText Typo="Typo.body1"><b>@FormatEventType(e.EventType)</b></MudText>
-                                <MudText Typo="Typo.body2">@FormatPayload(e.EventType, e.Payload)</MudText>
+                                @if (historyEvent.IsComment)
+                                {
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">By @historyEvent.CommentAuthor</MudText>
+                                    <div class="history-comment-preview mud-typography mud-typography-body2">
+                                        @historyEvent.CommentContent
+                                    </div>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.body2">@historyEvent.Summary</MudText>
+                                }
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">
                                     @e.OccurredAt.ToString("u")
-                                    @if (e.Actor is not null)
+                                    @if (ShouldShowActor(e.Actor, historyEvent))
                                     {
                                         <span> · @e.Actor</span>
                                     }

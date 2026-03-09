@@ -56,16 +56,16 @@ internal static class AuditEventFactory
     public static AuditEvent FromCommentAdded(
         CommentAddedDomainEvent e, DateTimeOffset occurredAt)
     {
+        var actor = string.IsNullOrWhiteSpace(e.Author) ? null : e.Author;
         var payload = JsonSerializer.Serialize(new
         {
-            commentId = e.CommentId.Value.ToString(),
-            author = e.Author,
-            contentLength = e.ContentLength
+            author = actor,
+            content = e.Content
         });
 
         // For comments, the author IS the actor — no separate actor parameter.
         return new AuditEvent(
             AuditEventId.New(), e.TicketId,
-            AuditEventTypes.CommentAdded, e.Author, occurredAt, payload);
+            AuditEventTypes.CommentAdded, actor, occurredAt, payload);
     }
 }
