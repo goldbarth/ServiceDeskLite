@@ -261,10 +261,10 @@
             "type": "string"
           },
           "priority": {
-            "type": "string"
+            "$ref": "#/components/schemas/TicketPriority"
           },
           "status": {
-            "type": "string"
+            "$ref": "#/components/schemas/TicketStatus"
           },
           "title": {
             "type": "string"
@@ -291,6 +291,12 @@
       },
       "TicketResponse": {
         "properties": {
+          "allowedTransitions": {
+            "items": {
+              "$ref": "#/components/schemas/TicketStatus"
+            },
+            "type": "array"
+          },
           "assignee": {
             "type": [
               "null",
@@ -322,10 +328,10 @@
             "type": "string"
           },
           "priority": {
-            "type": "string"
+            "$ref": "#/components/schemas/TicketPriority"
           },
           "status": {
-            "type": "string"
+            "$ref": "#/components/schemas/TicketStatus"
           },
           "title": {
             "type": "string"
@@ -340,7 +346,8 @@
           "createdAt",
           "dueAt",
           "assignee",
-          "comments"
+          "comments",
+          "allowedTransitions"
         ],
         "type": "object"
       },
