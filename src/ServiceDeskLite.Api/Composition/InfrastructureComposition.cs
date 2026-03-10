@@ -19,13 +19,13 @@ public static class InfrastructureComposition
                 services.AddScoped<ITicketSeeder, TicketSeeder>();
                 break;
 
-            case "Sqlite":
+            case "Postgres":
                 services.AddInfrastructure(configuration);
                 break;
 
             default:
                 throw new InvalidOperationException(
-                    $"Unknown Persistence:Provider '{provider}'. Expected 'InMemory' or 'Sqlite'.");
+                    $"Unknown Persistence:Provider '{provider}'. Expected 'InMemory' or 'Postgres'.");
         }
 
         return services;

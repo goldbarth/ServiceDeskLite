@@ -8,7 +8,7 @@ public class ServiceDeskLiteDbContextFactory : IDesignTimeDbContextFactory<Servi
     public ServiceDeskLiteDbContext CreateDbContext(string[] args)
     {
         var options = new DbContextOptionsBuilder<ServiceDeskLiteDbContext>()
-            .UseSqlite("Data Source=servicedesklite.db")
+            .UseNpgsql("Host=localhost;Port=5432;Database=servicedesklite;Username=postgres;Password=postgres")
             .Options;
 
         return new ServiceDeskLiteDbContext(options);

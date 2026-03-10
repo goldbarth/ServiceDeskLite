@@ -47,11 +47,15 @@ builder.Services
     .AddApplication() // Application Layer
     .AddApiInfrastructure(builder.Configuration); // Infrastructure Provider Switch
 
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? ["https://localhost:7023"];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("WebDev",
         p => p
-            .WithOrigins("https://localhost:7023")
+            .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -68,7 +72,7 @@ var app = builder.Build();
 
 // ──────────── Database Migration ────────────
 
-if (app.Configuration["Persistence:Provider"] == "Sqlite")
+if (app.Configuration["Persistence:Provider"] == "Postgres")
 {
     using var scope = app.Services.CreateScope();
     await scope.ServiceProvider
