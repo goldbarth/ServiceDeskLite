@@ -98,6 +98,41 @@ Chosen option: **Option B — ICommandValidator\<TCommand\>**.
 }
 ```
 
+## Validator Applicability Rule
+
+Not every command needs a validator. The rule is:
+
+> **Create an `ICommandValidator<TCommand>` when the command contains at least one
+> field that can be syntactically valid but violate an application-layer constraint
+> (required, max-length, format). Strongly-typed fields that cannot represent an
+> invalid value after deserialization do not need a validator.**
+
+### Field type classification
+
+| Field type | Needs validator? | Reason |
+|---|---|---|
+| `string` | **Yes** (if required or bounded) | Can be empty, whitespace, or too long |
+| `string?` | **Yes** (if bounded when provided) | Can be whitespace or too long when not null |
+| `TicketId` / `Guid` | No | Cannot be invalid after binding |
+| `TicketStatus` / enum | No | Deserialization rejects unknown values |
+| `DateTimeOffset?` | No | Parsed by the runtime or rejected |
+
+### Examples
+
+| Command | Validator? | Why |
+|---|---|---|
+| `CreateTicketCommand` | Yes | `Title`, `Description` are required strings with max length |
+| `AssignTicketCommand` | Yes | `AssigneeName` is an optional string with max length |
+| `AddCommentCommand` | Yes | `Content` is required, `Author` is bounded |
+| `ChangeTicketStatusCommand` | **No** | Only `TicketId` + `TicketStatus` – both strongly typed |
+
+### Transition logic is not input validation
+
+The `TicketStatus` transition check (`CanTransition`) is **domain logic**, not
+input validation. It is enforced by `TicketWorkflow` inside the domain aggregate
+and mapped to `Result<T>.Conflict` in the handler. It must not be placed in an
+`ICommandValidator`.
+
 ## Consequences
 
 ### Positive Consequences
