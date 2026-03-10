@@ -2,4 +2,4 @@
 
 namespace ServiceDeskLite.Application.Tickets.SearchTickets;
 
-public sealed record SearchTickesResult(PagedResult<TicketListItemDto> Page);
+public sealed record SearchTicketsResult(PagedResult<TicketListItemDto> Page);
