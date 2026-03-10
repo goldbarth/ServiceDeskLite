@@ -6,29 +6,29 @@
 @if (_isLoading)
 {
     @* Skeleton mirrors the real page structure: title → tabs → detail rows *@
-    <MudSkeleton SkeletonType="SkeletonType.Text" Width="40%" Height="36px" Class="mb-4" />
+    <MudSkeleton SkeletonType="SkeletonType.Text" Width="40%" Height="36px" Class="mb-4"/>
 
     <div class="d-flex gap-3 mb-4">
-        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="28px" />
-        <MudSkeleton SkeletonType="SkeletonType.Text" Width="110px" Height="28px" />
-        <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="28px" />
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="28px"/>
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="110px" Height="28px"/>
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="28px"/>
     </div>
 
     <MudPaper Elevation="1" Class="pa-4">
         @for (var i = 0; i < 5; i++)
         {
             <div class="d-flex gap-4 mb-3">
-                <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="20px" />
-                <MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="20px" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="20px"/>
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="20px"/>
             </div>
         }
-        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="20px" Class="mt-4" />
-        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80%" Height="20px" Class="mt-2" />
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="20px" Class="mt-4"/>
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80%" Height="20px" Class="mt-2"/>
     </MudPaper>
 }
 else if (_error is not null)
 {
-    <AppErrorPanel Error="_error" />
+    <AppErrorPanel Error="_error"/>
 }
 else if (_ticket is null)
 {
@@ -36,7 +36,7 @@ else if (_ticket is null)
         <MudIcon Icon="@Icons.Material.Outlined.SearchOff"
                  Color="Color.Default"
                  Style="font-size: 3rem; opacity: 0.35;"
-                 Class="mb-3" />
+                 Class="mb-3"/>
         <MudText Typo="Typo.h6" Class="mb-1">Ticket nicht gefunden</MudText>
         <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
             Das Ticket mit dieser ID existiert nicht oder wurde gelöscht.
@@ -56,11 +56,36 @@ else
         <MudTabPanel Text="Details">
             <MudSimpleTable Hover="false" Striped="false" Dense="true" Class="mb-4" Style="max-width:480px">
                 <tbody>
-                    <tr><td><MudText Typo="Typo.body2" Color="Color.Secondary">Status</MudText></td><td>@_ticket.Status</td></tr>
-                    <tr><td><MudText Typo="Typo.body2" Color="Color.Secondary">Priority</MudText></td><td>@_ticket.Priority</td></tr>
-                    <tr><td><MudText Typo="Typo.body2" Color="Color.Secondary">Assignee</MudText></td><td>@(_ticket.Assignee ?? "-")</td></tr>
-                    <tr><td><MudText Typo="Typo.body2" Color="Color.Secondary">Created</MudText></td><td>@_ticket.CreatedAt.ToString("u")</td></tr>
-                    <tr><td><MudText Typo="Typo.body2" Color="Color.Secondary">Due</MudText></td><td>@(_ticket.DueAt is null ? "-" : _ticket.DueAt.Value.ToString("u"))</td></tr>
+                <tr>
+                    <td>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Status</MudText>
+                    </td>
+                    <td>@_ticket.Status</td>
+                </tr>
+                <tr>
+                    <td>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Priority</MudText>
+                    </td>
+                    <td>@_ticket.Priority</td>
+                </tr>
+                <tr>
+                    <td>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Assignee</MudText>
+                    </td>
+                    <td>@(_ticket.Assignee ?? "-")</td>
+                </tr>
+                <tr>
+                    <td>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Created</MudText>
+                    </td>
+                    <td>@_ticket.CreatedAt.ToString("u")</td>
+                </tr>
+                <tr>
+                    <td>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Due</MudText>
+                    </td>
+                    <td>@(_ticket.DueAt is null ? "-" : _ticket.DueAt.Value.ToString("u"))</td>
+                </tr>
                 </tbody>
             </MudSimpleTable>
 
@@ -97,16 +122,16 @@ else
                 }
             }
 
-            <MudDivider Class="my-4" />
+            <MudDivider Class="my-4"/>
 
             <MudTextField T="string" Label="Author (optional)" @bind-Value="_commentAuthor"
-                          MaxLength="100" Class="mb-2" Disabled="_isSubmittingComment" />
+                          MaxLength="100" Class="mb-2" Disabled="_isSubmittingComment"/>
             <MudTextField T="string" Label="Comment" @bind-Value="_commentContent"
-                          Lines="3" MaxLength="2000" Class="mb-2" Disabled="_isSubmittingComment" />
+                          Lines="3" MaxLength="2000" Class="mb-2" Disabled="_isSubmittingComment"/>
 
             @if (_commentError is not null)
             {
-                <AppErrorPanel Error="_commentError" />
+                <AppErrorPanel Error="_commentError"/>
             }
 
             <MudButton Variant="Variant.Filled" Color="Color.Primary"
@@ -114,7 +139,7 @@ else
                        Disabled="@(_isSubmittingComment || string.IsNullOrWhiteSpace(_commentContent))">
                 @if (_isSubmittingComment)
                 {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
                 }
                 Add Comment
             </MudButton>
@@ -124,7 +149,7 @@ else
         <MudTabPanel Text=@($"History ({_auditEvents?.Count ?? 0})")>
             @if (_auditEventsError is not null)
             {
-                <AppErrorPanel Error="_auditEventsError" />
+                <AppErrorPanel Error="_auditEventsError"/>
             }
             else if (_auditEvents is null || _auditEvents.Count == 0)
             {
@@ -135,25 +160,40 @@ else
                 <MudTimeline TimelineAlign="TimelineAlign.Start">
                     @foreach (var e in _auditEvents)
                     {
-                        var historyEvent = BuildHistoryEventViewModel(e);
-
-                        <MudTimelineItem Color="EventTypeColor(e.EventType)" Size="Size.Small">
+                        <MudTimelineItem Color="EventTypeColor(e.Payload)" Size="Size.Small">
                             <ItemContent>
-                                <MudText Typo="Typo.body1"><b>@FormatEventType(e.EventType)</b></MudText>
-                                @if (historyEvent.IsComment)
+                                <MudText Typo="Typo.body1"><b>@FormatEventType(e.Payload)</b></MudText>
+                                @if (e.Payload is TicketCommentAddedPayload comment)
                                 {
-                                    <MudText Typo="Typo.body2" Color="Color.Secondary">By @historyEvent.CommentAuthor</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">By @comment.Author</MudText>
                                     <div class="history-comment-preview mud-typography mud-typography-body2">
-                                        @historyEvent.CommentContent
+                                        @comment.Content
                                     </div>
                                 }
-                                else
+                                else if (e.Payload is TicketCreatedPayload created)
                                 {
-                                    <MudText Typo="Typo.body2">@historyEvent.Summary</MudText>
+                                    <MudText Typo="Typo.body2">@created.Title · Priority: @created.Priority</MudText>
+                                }
+                                else if (e.Payload is TicketStatusChangedPayload statusChanged)
+                                {
+                                    <MudText
+                                        Typo="Typo.body2">@statusChanged.FromStatus → @statusChanged.ToStatus</MudText>
+                                }
+                                else if (e.Payload is TicketAssigneeChangedPayload assigneeChanged)
+                                {
+                                    <MudText Typo="Typo.body2">
+                                        @(assigneeChanged.NewAssignee is not null
+                                            ? $"Assigned to {assigneeChanged.NewAssignee}"
+                                            : $"Unassigned from {assigneeChanged.PreviousAssignee}")
+                                    </MudText>
+                                }
+                                else if (e.Payload is RawAuditEventPayload raw)
+                                {
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">@raw.RawJson</MudText>
                                 }
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">
                                     @e.OccurredAt.ToString("u")
-                                    @if (ShouldShowActor(e.Actor, historyEvent))
+                                    @if (e.Payload is not TicketCommentAddedPayload && !string.IsNullOrWhiteSpace(e.Actor))
                                     {
                                         <span> · @e.Actor</span>
                                     }

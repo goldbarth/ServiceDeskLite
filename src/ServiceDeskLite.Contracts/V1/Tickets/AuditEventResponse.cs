@@ -5,4 +5,4 @@ public sealed record AuditEventResponse(
     string EventType,
     string? Actor,
     DateTimeOffset OccurredAt,
-    string Payload);
+    AuditEventPayload Payload);
