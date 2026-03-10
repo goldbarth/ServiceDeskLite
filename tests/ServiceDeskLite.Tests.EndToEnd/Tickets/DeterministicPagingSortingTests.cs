@@ -16,7 +16,7 @@ public sealed class DeterministicPagingSortingTests
     [ProviderMatrix]
     public async Task Default_sort_returns_newest_first_with_id_tiebreaker(PersistenceProvider provider)
     {
-        using var host = TestServiceProvider.Create(provider);
+        await using var host = await TestServiceProvider.CreateAsync(provider);
         var sameTime = DateTimeOffset.UtcNow;
 
         // Create 3 tickets with identical CreatedAt — ordering must be deterministic via Id tiebreaker
@@ -54,7 +54,7 @@ public sealed class DeterministicPagingSortingTests
     [ProviderMatrix]
     public async Task Paging_returns_stable_pages_across_scopes(PersistenceProvider provider)
     {
-        using var host = TestServiceProvider.Create(provider);
+        await using var host = await TestServiceProvider.CreateAsync(provider);
         var baseTime = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
         // Create 5 tickets with distinct CreatedAt
@@ -98,7 +98,7 @@ public sealed class DeterministicPagingSortingTests
     [ProviderMatrix]
     public async Task Sort_by_priority_asc_returns_low_before_high(PersistenceProvider provider)
     {
-        using var host = TestServiceProvider.Create(provider);
+        await using var host = await TestServiceProvider.CreateAsync(provider);
 
         using (var scope = host.CreateScope())
         {

@@ -16,7 +16,7 @@ public sealed class ReadIsolationTests
     [ProviderMatrix]
     public async Task Search_does_not_return_staged_but_uncommitted_tickets(PersistenceProvider provider)
     {
-        using var host = TestServiceProvider.Create(provider);
+        await using var host = await TestServiceProvider.CreateAsync(provider);
 
         // Scope 1: Stage a ticket without committing
         using (var scope = host.CreateScope())
@@ -44,7 +44,7 @@ public sealed class ReadIsolationTests
     [ProviderMatrix]
     public async Task Search_returns_committed_tickets_from_prior_scope(PersistenceProvider provider)
     {
-        using var host = TestServiceProvider.Create(provider);
+        await using var host = await TestServiceProvider.CreateAsync(provider);
 
         // Scope 1: Create and commit
         using (var scope = host.CreateScope())

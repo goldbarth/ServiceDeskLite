@@ -13,5 +13,9 @@ public sealed class ProviderMatrixAttribute : DataAttribute
     public override IEnumerable<object[]> GetData(MethodInfo testMethod)
     {
         yield return [PersistenceProvider.InMemory];
+
+        // Testcontainers requires a Linux Docker daemon — skip Postgres on Windows/macOS CI runners
+        if (OperatingSystem.IsLinux())
+            yield return [PersistenceProvider.Postgres];
     }
 }
