@@ -34,7 +34,7 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
         return Task.FromResult(_store.ContainsTicket(id));
     }
 
-    public Task<PagedResult<Ticket>> SearchAsync(TicketSearchCriteria criteria, Paging paging, SortSpec sort, CancellationToken ct = default)
+    public Task<PagedResult<TicketListItemDto>> SearchAsync(TicketSearchCriteria criteria, Paging paging, SortSpec sort, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -90,9 +90,9 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
         var items = enumerable
             .Skip(paging.Skip)
             .Take(paging.PageSize)
+            .Select(t => new TicketListItemDto(t.Id, t.Title, t.Status, t.Priority, t.CreatedAt, t.DueAt))
             .ToList();
 
-        var result = new PagedResult<Ticket>(items, total, paging);
-        return Task.FromResult(result);
+        return Task.FromResult(new PagedResult<TicketListItemDto>(items, total, paging));
     }
 }
