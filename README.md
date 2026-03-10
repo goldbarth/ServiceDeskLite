@@ -61,9 +61,15 @@ The `/docs` folder is the source of truth.
 
 **Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine + Compose plugin)
 
-```bash
-docker compose up --build
-```
+1. Start Docker Desktop and wait until it shows **"Engine running"**
+2. Open a terminal (PowerShell, CMD, or bash) and navigate to the repository root:
+   ```bash
+   cd path/to/ServiceDeskLite
+   ```
+3. Run:
+   ```bash
+   docker compose up --build
+   ```
 
 This starts:
 - **PostgreSQL 17** — database with a persistent named volume
@@ -72,8 +78,8 @@ This starts:
 | Endpoint | URL |
 |---|---|
 | API (Tickets) | `http://localhost:8080/api/v1/tickets` |
-| Swagger UI | `http://localhost:8080/swagger` |
-| OpenAPI JSON | `http://localhost:8080/swagger/v1/swagger.json` |
+
+> Swagger UI and OpenAPI JSON are only available in `Development` mode, not in the Docker container.
 
 **Stop and keep data:**
 ```bash
