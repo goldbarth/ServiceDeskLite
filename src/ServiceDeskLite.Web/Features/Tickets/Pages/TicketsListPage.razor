@@ -106,25 +106,18 @@ else if (State is TicketsListState.Loaded loaded)
 {
     var data = loaded.Data;
 
-    <div class="d-flex align-items-center justify-content-between mb-2">
+    <div class="d-flex align-items-center mb-2">
         <MudText Typo="Typo.caption">@data.TotalCount Gesamt</MudText>
 
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2 ms-3">
             <MudIconButton Icon="@Icons.Material.Filled.Refresh"
                            OnClick="ReloadAsync"
                            title="Reload" />
 
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.Add"
-                       Href="/tickets/new"
-                       Size="Size.Small">
-                Neues Ticket
-            </MudButton>
-
             <MudSelect T="int"
                        Dense="true"
                        Label="Page size"
+                       Style="min-width: 80px"
                        Value="Query.PageSize"
                        ValueChanged="OnPageSizeChangedAsync"
                        AnchorOrigin="Origin.BottomCenter">
@@ -134,6 +127,15 @@ else if (State is TicketsListState.Loaded loaded)
                 <MudSelectItem Value="100">100</MudSelectItem>
             </MudSelect>
         </div>
+
+        <MudButton Class="ms-auto"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Href="/tickets/new"
+                   Size="Size.Small">
+            Neues Ticket
+        </MudButton>
     </div>
 
     <MudPaper Elevation="1" Class="pa-2">
