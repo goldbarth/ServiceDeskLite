@@ -1,7 +1,6 @@
-﻿using ServiceDeskLite.Application.Abstractions.Persistence;
+using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.Shared;
-using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Application.Tickets.SearchTickets;
 
@@ -29,19 +28,6 @@ public class SearchTicketsHandler
 
         var page = await _repository.SearchAsync(criteria, paging, sort, ct);
 
-        var dtoPage = new PagedResult<TicketListItemDto>(
-            Items: page.Items.Select(ToDto).ToList(),
-            TotalCount: page.TotalCount,
-            Paging: page.Paging);
-
-        return Result<SearchTicketsResult>.Success(new SearchTicketsResult(dtoPage));
+        return Result<SearchTicketsResult>.Success(new SearchTicketsResult(page));
     }
-
-    private static TicketListItemDto ToDto(Ticket ticket) => new(
-        Id: ticket.Id,
-        Title: ticket.Title,
-        Status: ticket.Status,
-        Priority: ticket.Priority,
-        CreatedAt: ticket.CreatedAt,
-        DueAt: ticket.DueAt);
 }

@@ -125,10 +125,10 @@ public class ChangeTicketStatusHandlerTests
         public Task<bool> ExistsAsync(TicketId id, CancellationToken ct = default)
             => Task.FromResult(ticket is not null);
 
-        public Task<PagedResult<Ticket>> SearchAsync(
+        public Task<PagedResult<TicketListItemDto>> SearchAsync(
             TicketSearchCriteria criteria, Paging paging, SortSpec sort,
             CancellationToken ct = default)
-            => Task.FromResult(new PagedResult<Ticket>([], 0, paging));
+            => Task.FromResult(new PagedResult<TicketListItemDto>([], 0, paging));
     }
 
     private sealed class FakeUnitOfWork : IUnitOfWork

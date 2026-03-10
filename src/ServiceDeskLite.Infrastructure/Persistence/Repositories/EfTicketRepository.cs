@@ -23,7 +23,7 @@ public class EfTicketRepository : ITicketRepository
     public Task<bool> ExistsAsync(TicketId id, CancellationToken ct)
         => _dbContext.Tickets.AnyAsync(t => t.Id == id, ct);
 
-    public async Task<PagedResult<Ticket>> SearchAsync(TicketSearchCriteria criteria, Paging paging, SortSpec sort, CancellationToken ct = default)
+    public async Task<PagedResult<TicketListItemDto>> SearchAsync(TicketSearchCriteria criteria, Paging paging, SortSpec sort, CancellationToken ct = default)
     {
         IQueryable<Ticket> q = _dbContext.Tickets.AsNoTracking();
 
@@ -75,8 +75,9 @@ public class EfTicketRepository : ITicketRepository
         var items = await q
             .Skip(paging.Skip)
             .Take(paging.PageSize)
+            .Select(t => new TicketListItemDto(t.Id, t.Title, t.Status, t.Priority, t.CreatedAt, t.DueAt))
             .ToListAsync(ct);
 
-        return new PagedResult<Ticket>(items, total, paging);
+        return new PagedResult<TicketListItemDto>(items, total, paging);
     }
 }

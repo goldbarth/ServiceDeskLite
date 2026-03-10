@@ -91,15 +91,12 @@ public class CreateTicketHandlerTests
         public Task<bool> ExistsAsync(TicketId id, CancellationToken ct)
             => Task.FromResult(false);
 
-        public Task<PagedResult<Ticket>> SearchAsync(
+        public Task<PagedResult<TicketListItemDto>> SearchAsync(
             TicketSearchCriteria criteria,
             Paging paging,
             SortSpec sort,
             CancellationToken ct = default)
-            => Task.FromResult(new PagedResult<Ticket>(
-                Items: [],
-                TotalCount: 0,
-                Paging: paging));
+            => Task.FromResult(new PagedResult<TicketListItemDto>([], 0, paging));
     }
     
     private sealed class FakeUnitOfWork : IUnitOfWork
