@@ -68,7 +68,7 @@ var app = builder.Build();
 
 // ──────────── Database Migration ────────────
 
-if (app.Configuration["Persistence:Provider"] == "Sqlite")
+if (app.Configuration["Persistence:Provider"] == "Postgres")
 {
     using var scope = app.Services.CreateScope();
     await scope.ServiceProvider

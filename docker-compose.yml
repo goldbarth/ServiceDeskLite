@@ -1,0 +1,36 @@
+services:
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: servicedesklite
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"   # optional: expose for local DB tooling (DBeaver, psql, etc.)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d servicedesklite"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Persistence__Provider: Postgres
+      ConnectionStrings__ServiceDeskLite: "Host=db;Port=5432;Database=servicedesklite;Username=postgres;Password=postgres"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+volumes:
+  postgres_data:

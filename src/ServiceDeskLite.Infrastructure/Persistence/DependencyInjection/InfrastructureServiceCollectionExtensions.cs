@@ -13,7 +13,7 @@ public static class InfrastructureServiceCollectionExtensions
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<ServiceDeskLiteDbContext>(opt =>
-            opt.UseSqlite(configuration.GetConnectionString("ServiceDeskLite")));
+            opt.UseNpgsql(configuration.GetConnectionString("ServiceDeskLite")));
         
         services.AddScoped<ITicketRepository, EfTicketRepository>();
         services.AddScoped<IAuditEventRepository, EfAuditEventRepository>();
