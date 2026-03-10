@@ -1,7 +1,7 @@
 ﻿@using MudBlazor
 @using ServiceDeskLite.Web.Composition
 
-<MudNavMenu Dense="true">
+<MudNavMenu Dense="false">
     @foreach (var item in NavRegistry.Items.OrderBy(i => i.Order))
     {
         if (item.IsSection)

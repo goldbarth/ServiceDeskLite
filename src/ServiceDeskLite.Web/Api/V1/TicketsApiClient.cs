@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.WebUtilities;
 
 using ServiceDeskLite.Contracts.V1.Common;
+using ServiceDeskLite.Contracts.V1.Dashboard;
 using ServiceDeskLite.Contracts.V1.Tickets;
 
 namespace ServiceDeskLite.Web.Api.V1;
@@ -147,6 +148,13 @@ public sealed class TicketsApiClient : ITicketsApiClient
             $"api/v1/tickets/{id}/audit-events");
 
         return await SendAsync<IReadOnlyList<AuditEventResponse>>(httpRequest, ct);
+    }
+
+    public async Task<ApiResult<DashboardSummaryResponse>> GetDashboardSummaryAsync(
+        CancellationToken ct = default)
+    {
+        var httpRequest = new HttpRequestMessage(HttpMethod.Get, "api/v1/dashboard/summary");
+        return await SendAsync<DashboardSummaryResponse>(httpRequest, ct);
     }
 
     // -----------------------------

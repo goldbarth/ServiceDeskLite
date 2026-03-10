@@ -39,4 +39,7 @@ internal sealed class InMemoryStore
             .Where(e => e.TicketId == ticketId)
             .OrderBy(e => e.OccurredAt)
             .ToList();
+
+    public IReadOnlyCollection<AuditEvent> SnapshotAuditEvents()
+        => _auditEvents.ToArray();
 }

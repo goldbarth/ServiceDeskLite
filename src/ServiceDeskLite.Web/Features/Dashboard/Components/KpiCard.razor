@@ -1,0 +1,14 @@
+@using MudBlazor
+
+<MudPaper Elevation="2" Class="pa-4 d-flex flex-column align-items-center text-center" Style="min-height: 110px;">
+    <MudIcon Icon="@Icon" Color="@Color" Size="Size.Large" Class="mb-2" />
+    <MudText Typo="Typo.h4" Style="font-weight: 600; line-height: 1;">@Value</MudText>
+    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">@Title</MudText>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = default!;
+    [Parameter, EditorRequired] public int Value { get; set; }
+    [Parameter, EditorRequired] public string Icon { get; set; } = default!;
+    [Parameter] public Color Color { get; set; } = Color.Default;
+}
