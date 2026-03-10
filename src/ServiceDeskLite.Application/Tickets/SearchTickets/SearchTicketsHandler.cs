@@ -23,21 +23,9 @@ public class SearchTicketsHandler
                 "search_tickets.query.null",
                 "Query must not be null.");
 
-        // Defensive defaults
         var criteria = query.Criteria ?? new TicketSearchCriteria();
         var paging = query.Paging;
-        var sort =  query.Sort ?? SortSpec.Default;
-        
-        // Transport-Validation
-        if (paging.Page <= 0)
-            return Result<SearchTicketsResult>.Validation(
-                "search_tickets.paging.page.invalid",
-                "Page must be 1 or greater.");
-        
-        if (paging.PageSize is <= 0 or > 200)
-            return Result<SearchTicketsResult>.Validation(
-                "search_tickets.paging.pageSize.invalid",
-                "PageSize must be between 1 and 200.");
+        var sort = query.Sort ?? SortSpec.Default;
 
         var page = await _repository.SearchAsync(criteria, paging, sort, ct);
 

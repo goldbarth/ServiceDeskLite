@@ -23,23 +23,6 @@ public class SearchTicketsHandlerTests
         repo.LastSort.Should().Be(SortSpec.Default);
     }
 
-    [Fact]
-    public async Task Returns_validation_error_for_invalid_page()
-    {
-        var repo = new FakeTicketRepository();
-        var handler = new SearchTicketsHandler(repo);
-        
-        var query = new SearchTicketsQuery(
-            Criteria: new TicketSearchCriteria(),
-            Paging: new Paging(Page: 0, PageSize: 25),
-            Sort: SortSpec.Default);
-        
-        var result = await handler.HandleAsync(query);
-        
-        result.IsFailure.Should().BeTrue();
-        result.Error!.Code.Should().Be("search_tickets.paging.page.invalid");
-    }
-    
     private sealed class FakeTicketRepository :  ITicketRepository
     {
         public Paging? LastPaging { get; private set; }
