@@ -20,16 +20,25 @@
 
 ![Middleware Pipeline](../assets/diagrams/middleware-pipeline.svg)
 
-#### Endpoints (`TicketsEndpoints.cs`)
+#### Endpoints
 
-Base route group: `/api/v1/tickets`
+**Tickets** (`TicketsEndpoints.cs`) — base route group: `/api/v1/tickets`
 
-| HTTP | Route                            | Handler                  | Returns                                          |
-|------|----------------------------------|--------------------------|--------------------------------------------------|
-| POST | /api/v1/tickets                  | CreateTicketAsync        | 201 Created + CreateTicketResponse               |
-| GET  | /api/v1/tickets/{id:guid}        | GetTicketByIdAsync       | 200 OK + TicketResponse                          |
-| GET  | /api/v1/tickets                  | SearchTicketsAsync       | 200 OK + PagedResponse\<TicketListItemResponse\> |
-| POST | /api/v1/tickets/{id:guid}/status | ChangeTicketStatusAsync  | 200 OK + TicketResponse                          |
+| HTTP | Route                                  | Handler                 | Returns                                          |
+|------|----------------------------------------|-------------------------|--------------------------------------------------|
+| GET  | /api/v1/tickets                        | SearchTicketsAsync      | 200 OK + PagedResponse\<TicketListItemResponse\> |
+| POST | /api/v1/tickets                        | CreateTicketAsync       | 201 Created + CreateTicketResponse               |
+| GET  | /api/v1/tickets/{id:guid}              | GetTicketByIdAsync      | 200 OK + TicketResponse                          |
+| POST | /api/v1/tickets/{id:guid}/status       | ChangeTicketStatusAsync | 200 OK + TicketResponse                          |
+| POST | /api/v1/tickets/{id:guid}/comments     | AddCommentAsync         | 201 Created + CommentResponse                    |
+| POST | /api/v1/tickets/{id:guid}/assign       | AssignTicketAsync       | 200 OK + TicketResponse                          |
+| GET  | /api/v1/tickets/{id:guid}/audit-events | GetAuditEventsAsync     | 200 OK + AuditEventResponse[]                    |
+
+**Dashboard** (`DashboardEndpoints.cs`) — base route group: `/api/v1/dashboard`
+
+| HTTP | Route                     | Handler                  | Returns                           |
+|------|---------------------------|--------------------------|-----------------------------------|
+| GET  | /api/v1/dashboard/summary | GetDashboardSummaryAsync | 200 OK + DashboardSummaryResponse |
 
 All errors return RFC 9457 ProblemDetails via `ResultToProblemDetailsMapper`.
 
