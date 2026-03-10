@@ -9,7 +9,7 @@
       AddApiErrorHandling        → ProblemDetails + ExceptionHandler + Mapper
       AddApplication             → use-case handlers (Scoped)
       AddApiInfrastructure       → persistence provider switch
-3.  EF Core auto-migration (Sqlite only)
+3.  EF Core auto-migration (Postgres only)
 4.  app.UseSerilogRequestLogging()
 5.  app.UseApiDocumentation()
 6.  app.UseApiErrorHandling()     → UseExceptionHandler()
@@ -107,8 +107,8 @@ public static PagedResponse<TicketListItemResponse>
 ```json
 {
     "Logging": { "LogLevel": { "Default": "Information", "Microsoft.AspNetCore": "Warning" } },
-    "Persistence": { "Provider": "Sqlite" },
-    "ConnectionStrings": { "ServiceDeskLite": "Data Source=servicedesklite.db" },
+    "Persistence": { "Provider": "Postgres" },
+    "ConnectionStrings": { "ServiceDeskLite": "Host=localhost;Port=5432;Database=servicedesklite;Username=postgres;Password=postgres" },
     "AllowedHosts": "*"
 }
 ```
