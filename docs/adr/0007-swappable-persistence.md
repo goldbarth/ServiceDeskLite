@@ -76,7 +76,7 @@ Chosen option: **Option A — Hand-rolled InMemory provider with runtime config 
   boundary without any ORM overhead.
 - **Fail-fast on unknown provider.** `InfrastructureComposition` throws
   `InvalidOperationException` for any value other than `"InMemory"` or
-  `"Sqlite"`. A misconfigured deployment fails at startup with a clear
+  `"Postgres"`. A misconfigured deployment fails at startup with a clear
   message rather than silently falling back to an unintended state.
 
 ### DI lifetime rules
@@ -93,7 +93,7 @@ Chosen option: **Option A — Hand-rolled InMemory provider with runtime config 
 
 ```json lines
 // appsettings.json (production)
-{ "Persistence": { "Provider": "Sqlite" } }
+{ "Persistence": { "Provider": "Postgres" } }
 
 // appsettings.Development.json
 { "Persistence": { "Provider": "InMemory" } }

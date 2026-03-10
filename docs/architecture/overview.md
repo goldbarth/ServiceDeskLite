@@ -17,7 +17,7 @@ The goal is a portfolio-grade reference for Clean Architecture with explicit dom
 - ASP.NET Core Minimal API + OpenAPI
 - Blazor Interactive Server (MudBlazor, Bootstrap 5)
 - EF Core 10
-- SQLite (production) + InMemory provider (dev/test)
+- PostgreSQL / Npgsql (production) + InMemory provider (dev/test)
 - xUnit + FluentAssertions + Microsoft.AspNetCore.Mvc.Testing
 - Serilog
 

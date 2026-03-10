@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted (Milestone 1 & 2) — see Re-evaluation Triggers for Milestone 3.
+Superseded (Milestone 3) — all re-evaluation triggers fired in M3-02 (Docker Compose + PostgreSQL).
+SQLite has been replaced by PostgreSQL / Npgsql. This ADR is retained for historical context.
 
 ## Context and Problem Statement
 
