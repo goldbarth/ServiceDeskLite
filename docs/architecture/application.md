@@ -109,8 +109,11 @@ public sealed record CreateTicketCommand(
 
 public sealed record CreateTicketResult(TicketId Id);
 
-// Handler: validates null, catches DomainException, checks duplicate (ExistsAsync),
-//          AddAsync + SaveChangesAsync
+// Handler: validates null (command + field-level), catches DomainException,
+//          AddAsync + audit record + SaveChangesAsync (atomic).
+//          Duplicate IDs are not checked via ExistsAsync; uniqueness is enforced
+//          by the persistence layer and mapped to Result<T>.Conflict by
+//          PersistenceExceptionMapper.
 public sealed class CreateTicketHandler
 {
     public async Task<Result<CreateTicketResult>> HandleAsync(
