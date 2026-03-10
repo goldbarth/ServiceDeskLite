@@ -14,16 +14,7 @@
         "resolved": "8.15.0",
         "contentHash": "iOJEnQ6tYGQPfPJaUazyC8H6pcczgaMX7vhUzrJPpB0WqEXNozwMfSzoOe2/JZmVWJcUfYZgKBeBU2Z27XY7Sw=="
       },
-      "servicedesklite.application": {
-        "type": "Project",
-        "dependencies": {
-          "ServiceDeskLite.Domain": "[1.0.0, )"
-        }
-      },
       "servicedesklite.contracts": {
-        "type": "Project"
-      },
-      "servicedesklite.domain": {
         "type": "Project"
       }
     }

@@ -105,8 +105,8 @@
       },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "Transitive",
-        "resolved": "10.0.3",
-        "contentHash": "bwGMrRcAMWx2s/RDgja97p27rxSz2pEQW0+rX5cWAUWVETVJ/eyxGfjAl8vuG5a+lckWmPIE+vcuaZNVB5YDdw=="
+        "resolved": "9.0.1",
+        "contentHash": "Tr74eP0oQ3AyC24ch17N8PuEkrPbD0JqIfENCYqmgKYNOmL8wQKzLJu3ObxTUDrjnn4rHoR1qKa37/eQyHmCDA=="
       },
       "Microsoft.Extensions.Localization": {
         "type": "Transitive",
@@ -220,24 +220,13 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
-      "servicedesklite.application": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.3, )",
-          "ServiceDeskLite.Domain": "[1.0.0, )"
-        }
-      },
       "servicedesklite.contracts": {
-        "type": "Project"
-      },
-      "servicedesklite.domain": {
         "type": "Project"
       },
       "servicedesklite.web": {
         "type": "Project",
         "dependencies": {
           "MudBlazor": "[8.15.0, )",
-          "ServiceDeskLite.Application": "[1.0.0, )",
           "ServiceDeskLite.Contracts": "[1.0.0, )"
         }
       }

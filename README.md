@@ -55,6 +55,40 @@ The `/docs` folder is the source of truth.
 
 ---
 
+## Run with Docker
+
+> One-command demo start — no local .NET SDK or database required.
+
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine + Compose plugin)
+
+```bash
+docker compose up --build
+```
+
+This starts:
+- **PostgreSQL 17** — database with a persistent named volume
+- **API** — waits for the database to be healthy, then runs migrations automatically
+
+| Endpoint | URL |
+|---|---|
+| API (Tickets) | `http://localhost:8080/api/v1/tickets` |
+| Swagger UI | `http://localhost:8080/swagger` |
+| OpenAPI JSON | `http://localhost:8080/swagger/v1/swagger.json` |
+
+**Stop and keep data:**
+```bash
+docker compose down
+```
+
+**Stop and reset data:**
+```bash
+docker compose down -v
+```
+
+The `postgres_data` volume persists between restarts. Use `-v` for a clean slate.
+
+---
+
 ## Architectural Characteristics
 
 - Domain layer without external dependencies
@@ -72,9 +106,9 @@ The `/docs` folder is the source of truth.
 
 ### Persistence Strategy
 
-- EF Core (SQLite)
-- InMemory provider for test scenarios
-- Provider switch via configuration
+- EF Core with PostgreSQL (production and Docker)
+- InMemory provider for development and test scenarios
+- Provider switch via configuration (`Persistence:Provider`)
 - Explicit UnitOfWork commit boundary
 
 ### Testing Strategy

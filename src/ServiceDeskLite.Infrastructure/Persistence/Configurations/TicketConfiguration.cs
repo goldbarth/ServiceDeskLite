@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 using ServiceDeskLite.Domain.Tickets;
 
@@ -32,17 +31,10 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
         builder.Property(t => t.Status)
             .IsRequired();
 
-        // SQLite does not support DateTimeOffset in ORDER BY — store as ticks (long)
-        var dtoConverter = new DateTimeOffsetToBinaryConverter();
-
         builder.Property(t => t.CreatedAt)
-            .HasConversion(dtoConverter)
             .IsRequired();
 
         builder.Property(t => t.DueAt)
-            .HasConversion(new ValueConverter<DateTimeOffset?, long?>(
-                v => v.HasValue ? v.Value.ToUniversalTime().Ticks : null,
-                v => v.HasValue ? new DateTimeOffset(v.Value, TimeSpan.Zero) : null))
             .IsRequired(false);
 
         builder.Property(t => t.Assignee)
@@ -78,7 +70,6 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
                 .IsRequired(false);
 
             comment.Property(c => c.CreatedAt)
-                .HasConversion(dtoConverter)
                 .IsRequired();
 
             comment.HasIndex(c => c.CreatedAt);
