@@ -33,6 +33,141 @@
         ],
         "type": "object"
       },
+      "AuditEventPayload": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/AuditEventPayloadTicketCreatedPayload"
+          },
+          {
+            "$ref": "#/components/schemas/AuditEventPayloadTicketStatusChangedPayload"
+          },
+          {
+            "$ref": "#/components/schemas/AuditEventPayloadTicketAssigneeChangedPayload"
+          },
+          {
+            "$ref": "#/components/schemas/AuditEventPayloadTicketCommentAddedPayload"
+          },
+          {
+            "$ref": "#/components/schemas/AuditEventPayloadRawAuditEventPayload"
+          }
+        ],
+        "discriminator": {
+          "mapping": {
+            "ticket.assignee_changed": "#/components/schemas/AuditEventPayloadTicketAssigneeChangedPayload",
+            "ticket.comment_added": "#/components/schemas/AuditEventPayloadTicketCommentAddedPayload",
+            "ticket.created": "#/components/schemas/AuditEventPayloadTicketCreatedPayload",
+            "ticket.status_changed": "#/components/schemas/AuditEventPayloadTicketStatusChangedPayload",
+            "unknown": "#/components/schemas/AuditEventPayloadRawAuditEventPayload"
+          },
+          "propertyName": "$type"
+        },
+        "required": [
+          "$type"
+        ],
+        "type": "object"
+      },
+      "AuditEventPayloadRawAuditEventPayload": {
+        "properties": {
+          "$type": {
+            "enum": [
+              "unknown"
+            ],
+            "type": "string"
+          },
+          "rawJson": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "rawJson"
+        ]
+      },
+      "AuditEventPayloadTicketAssigneeChangedPayload": {
+        "properties": {
+          "$type": {
+            "enum": [
+              "ticket.assignee_changed"
+            ],
+            "type": "string"
+          },
+          "newAssignee": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "previousAssignee": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "previousAssignee",
+          "newAssignee"
+        ]
+      },
+      "AuditEventPayloadTicketCommentAddedPayload": {
+        "properties": {
+          "$type": {
+            "enum": [
+              "ticket.comment_added"
+            ],
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "author",
+          "content"
+        ]
+      },
+      "AuditEventPayloadTicketCreatedPayload": {
+        "properties": {
+          "$type": {
+            "enum": [
+              "ticket.created"
+            ],
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "priority"
+        ]
+      },
+      "AuditEventPayloadTicketStatusChangedPayload": {
+        "properties": {
+          "$type": {
+            "enum": [
+              "ticket.status_changed"
+            ],
+            "type": "string"
+          },
+          "fromStatus": {
+            "type": "string"
+          },
+          "toStatus": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fromStatus",
+          "toStatus"
+        ]
+      },
       "AuditEventResponse": {
         "properties": {
           "actor": {
@@ -53,7 +188,7 @@
             "type": "string"
           },
           "payload": {
-            "type": "string"
+            "$ref": "#/components/schemas/AuditEventPayload"
           }
         },
         "required": [
