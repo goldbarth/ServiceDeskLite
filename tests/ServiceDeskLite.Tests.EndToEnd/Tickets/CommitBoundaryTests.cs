@@ -17,7 +17,7 @@ public sealed class CommitBoundaryTests
     [ProviderMatrix]
     public async Task Created_ticket_is_visible_after_commit_in_new_scope(PersistenceProvider provider)
     {
-        using var host = TestServiceProvider.Create(provider);
+        await using var host = await TestServiceProvider.CreateAsync(provider);
 
         TicketId ticketId;
 
@@ -46,7 +46,7 @@ public sealed class CommitBoundaryTests
     [ProviderMatrix]
     public async Task Add_without_commit_is_not_visible_in_other_scope(PersistenceProvider provider)
     {
-        using var host = TestServiceProvider.Create(provider);
+        await using var host = await TestServiceProvider.CreateAsync(provider);
 
         TicketId ticketId;
 
@@ -78,7 +78,7 @@ public sealed class CommitBoundaryTests
     [ProviderMatrix]
     public async Task Add_with_commit_is_visible_in_other_scope(PersistenceProvider provider)
     {
-        using var host = TestServiceProvider.Create(provider);
+        await using var host = await TestServiceProvider.CreateAsync(provider);
 
         TicketId ticketId;
 

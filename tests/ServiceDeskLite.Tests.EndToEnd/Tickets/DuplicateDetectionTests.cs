@@ -16,7 +16,7 @@ public sealed class DuplicateDetectionTests
     [Fact]
     public async Task InMemory_staged_duplicate_id_causes_commit_failure()
     {
-        using var host = TestServiceProvider.Create(PersistenceProvider.InMemory);
+        await using var host = await TestServiceProvider.CreateAsync(PersistenceProvider.InMemory);
 
         var id = TicketId.New();
 
@@ -39,7 +39,7 @@ public sealed class DuplicateDetectionTests
     [Fact]
     public async Task InMemory_committed_state_remains_consistent_after_duplicate_failure()
     {
-        using var host = TestServiceProvider.Create(PersistenceProvider.InMemory);
+        await using var host = await TestServiceProvider.CreateAsync(PersistenceProvider.InMemory);
 
         var sharedId = TicketId.New();
 
@@ -86,7 +86,7 @@ public sealed class DuplicateDetectionTests
     [Fact]
     public async Task InMemory_search_count_unaffected_by_failed_duplicate_commit()
     {
-        using var host = TestServiceProvider.Create(PersistenceProvider.InMemory);
+        await using var host = await TestServiceProvider.CreateAsync(PersistenceProvider.InMemory);
 
         var id = TicketId.New();
 

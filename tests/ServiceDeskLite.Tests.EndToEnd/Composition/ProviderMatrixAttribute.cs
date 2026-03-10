@@ -13,5 +13,6 @@ public sealed class ProviderMatrixAttribute : DataAttribute
     public override IEnumerable<object[]> GetData(MethodInfo testMethod)
     {
         yield return [PersistenceProvider.InMemory];
+        yield return [PersistenceProvider.Postgres];
     }
 }

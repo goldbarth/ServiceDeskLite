@@ -17,7 +17,7 @@ public sealed class ChangeTicketStatusTests
     [ProviderMatrix]
     public async Task ChangeStatus_ValidTransition_StatusPersistedAcrossScopes(PersistenceProvider provider)
     {
-        using var host = TestServiceProvider.Create(provider);
+        await using var host = await TestServiceProvider.CreateAsync(provider);
 
         TicketId ticketId;
 
@@ -57,7 +57,7 @@ public sealed class ChangeTicketStatusTests
     [ProviderMatrix]
     public async Task ChangeStatus_InvalidTransition_ReturnsConflict(PersistenceProvider provider)
     {
-        using var host = TestServiceProvider.Create(provider);
+        await using var host = await TestServiceProvider.CreateAsync(provider);
 
         TicketId ticketId;
 
@@ -85,7 +85,7 @@ public sealed class ChangeTicketStatusTests
     [ProviderMatrix]
     public async Task ChangeStatus_InvalidTransition_OriginalStatusUnchanged(PersistenceProvider provider)
     {
-        using var host = TestServiceProvider.Create(provider);
+        await using var host = await TestServiceProvider.CreateAsync(provider);
 
         TicketId ticketId;
 
