@@ -162,12 +162,14 @@ public class SearchTicketsHandler
 #### `ChangeTicketStatus`
 
 ```csharp
-public sealed record ChangeTicketStatusCommand(TicketId Id, TicketStatus NewStatus);
+public sealed record ChangeTicketStatusCommand(TicketId Id, TicketStatus NewStatus, string? Actor = null);
 
 // Handler: validates null, loads ticket (NotFound if missing),
-//          calls ticket.ChangeStatus, saves via UnitOfWork.
+//          calls ticket.ChangeStatus, records audit event, saves via UnitOfWork.
 //          invalid_transition → Result<T>.Conflict (409)
 //          other DomainException → Result<T>.DomainViolation (400)
+// No ICommandValidator – all fields are strongly typed (TicketId, TicketStatus).
+// Transition logic is domain behaviour, not input validation (see ADR 0019).
 public sealed class ChangeTicketStatusHandler
 {
     public async Task<Result<TicketDetailsDto>> HandleAsync(
