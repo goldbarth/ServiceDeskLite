@@ -14,12 +14,12 @@ public class SearchTicketsHandler
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     }
 
-    public async Task<Result<SearchTickesResult>> HandleAsync(
+    public async Task<Result<SearchTicketsResult>> HandleAsync(
         SearchTicketsQuery? query,
         CancellationToken ct = default)
     {
         if (query is null)
-            return Result<SearchTickesResult>.Validation(
+            return Result<SearchTicketsResult>.Validation(
                 "search_tickets.query.null",
                 "Query must not be null.");
 
@@ -30,12 +30,12 @@ public class SearchTicketsHandler
         
         // Transport-Validation
         if (paging.Page <= 0)
-            return Result<SearchTickesResult>.Validation(
+            return Result<SearchTicketsResult>.Validation(
                 "search_tickets.paging.page.invalid",
                 "Page must be 1 or greater.");
         
         if (paging.PageSize is <= 0 or > 200)
-            return Result<SearchTickesResult>.Validation(
+            return Result<SearchTicketsResult>.Validation(
                 "search_tickets.paging.pageSize.invalid",
                 "PageSize must be between 1 and 200.");
 
@@ -46,7 +46,7 @@ public class SearchTicketsHandler
             TotalCount: page.TotalCount,
             Paging: page.Paging);
 
-        return Result<SearchTickesResult>.Success(new SearchTickesResult(dtoPage));
+        return Result<SearchTicketsResult>.Success(new SearchTicketsResult(dtoPage));
     }
 
     private static TicketListItemDto ToDto(Ticket ticket) => new(
