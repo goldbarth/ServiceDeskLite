@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using ServiceDeskLite.Application.Abstractions.Persistence;
+using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets;
 using ServiceDeskLite.Application.Tickets.Seeding;
 using ServiceDeskLite.Application.Tickets.Shared;
@@ -14,11 +15,13 @@ public sealed class TicketSeeder : ITicketSeeder
 {
     private readonly ITicketRepository _tickets;
     private readonly IUnitOfWork _uow;
+    private readonly IClock _clock;
 
-    public TicketSeeder(ITicketRepository tickets, IUnitOfWork uow)
+    public TicketSeeder(ITicketRepository tickets, IUnitOfWork uow, IClock clock)
     {
         _tickets = tickets;
         _uow = uow;
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     private static readonly string[] Titles =
@@ -61,7 +64,7 @@ public sealed class TicketSeeder : ITicketSeeder
         if (existing.TotalCount > 0)
             return;
 
-        var now = DateTimeOffset.UtcNow;
+        var now = _clock.UtcNow;
         const int count = 100;
 
         for (var i = 0; i < count; i++)

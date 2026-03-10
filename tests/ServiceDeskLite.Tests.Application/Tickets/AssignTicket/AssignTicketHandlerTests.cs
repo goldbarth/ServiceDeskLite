@@ -150,7 +150,7 @@ public sealed class AssignTicketHandlerTests
         ICommandValidator<AssignTicketCommand>? validator = null)
     {
         var repo = new FakeTicketRepository(existingTicket);
-        return new AssignTicketHandler(repo, new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork(), validator ?? new FakeValidator());
+        return new AssignTicketHandler(repo, new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork(), validator ?? new FakeValidator(), new FakeClock());
     }
 
     private static Ticket CreateTicket() =>
@@ -205,5 +205,10 @@ public sealed class AssignTicketHandlerTests
     private sealed class FakeValidator : ICommandValidator<AssignTicketCommand>
     {
         public FieldValidationResult Validate(AssignTicketCommand command) => FieldValidationResult.Ok;
+    }
+
+    private sealed class FakeClock : IClock
+    {
+        public DateTimeOffset UtcNow { get; set; } = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
     }
 }

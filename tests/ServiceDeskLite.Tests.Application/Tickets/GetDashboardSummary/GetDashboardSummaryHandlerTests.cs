@@ -11,7 +11,7 @@ public class GetDashboardSummaryHandlerTests
     [Fact]
     public async Task HandleAsync_NullQuery_ReturnsValidationFailure()
     {
-        var handler = new GetDashboardSummaryHandler(new FakeDashboardRepository());
+        var handler = new GetDashboardSummaryHandler(new FakeDashboardRepository(), new FakeClock());
 
         var result = await handler.HandleAsync(null);
 
@@ -30,7 +30,7 @@ public class GetDashboardSummaryHandlerTests
             OverdueCount: 4,
             ResolvedLast7DaysCount: 5);
         var repo = new FakeDashboardRepository(expected);
-        var handler = new GetDashboardSummaryHandler(repo);
+        var handler = new GetDashboardSummaryHandler(repo, new FakeClock());
 
         var result = await handler.HandleAsync(new GetDashboardSummaryQuery());
 
@@ -39,17 +39,16 @@ public class GetDashboardSummaryHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_ValidQuery_PassesCurrentTimeToRepository()
+    public async Task HandleAsync_ValidQuery_PassesClockTimeToRepository()
     {
-        var before = DateTimeOffset.UtcNow;
+        var fixedNow = new DateTimeOffset(2026, 3, 10, 9, 0, 0, TimeSpan.Zero);
+        var clock = new FakeClock { UtcNow = fixedNow };
         var repo = new FakeDashboardRepository();
-        var handler = new GetDashboardSummaryHandler(repo);
+        var handler = new GetDashboardSummaryHandler(repo, clock);
 
         await handler.HandleAsync(new GetDashboardSummaryQuery());
 
-        var after = DateTimeOffset.UtcNow;
-        repo.CapturedNow.Should().NotBeNull();
-        repo.CapturedNow!.Value.Should().BeOnOrAfter(before).And.BeOnOrBefore(after);
+        repo.CapturedNow.Should().Be(fixedNow);
     }
 
     // ── Fake ──────────────────────────────────────────────────────────────────
@@ -65,5 +64,10 @@ public class GetDashboardSummaryHandlerTests
             CapturedNow = now;
             return Task.FromResult(result ?? _empty);
         }
+    }
+
+    private sealed class FakeClock : IClock
+    {
+        public DateTimeOffset UtcNow { get; set; } = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
     }
 }

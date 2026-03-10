@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
+using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Common.Validation;
 using ServiceDeskLite.Application.Tickets.AddComment;
 using ServiceDeskLite.Application.Tickets.AssignTicket;
@@ -16,6 +17,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        services.AddSingleton<IClock, SystemClock>();
+
         // Validators
         services.AddScoped<ICommandValidator<CreateTicketCommand>, CreateTicketValidator>();
         services.AddScoped<ICommandValidator<AddCommentCommand>, AddCommentValidator>();

@@ -14,15 +14,18 @@ public sealed class ChangeTicketStatusHandler
     private readonly ITicketRepository _repository;
     private readonly IAuditEventRepository _auditRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IClock _clock;
 
     public ChangeTicketStatusHandler(
         ITicketRepository repository,
         IAuditEventRepository auditRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IClock clock)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     public async Task<Result<TicketDetailsDto>> HandleAsync(
@@ -48,7 +51,7 @@ public sealed class ChangeTicketStatusHandler
 
             var domainEvent = ticket.DomainEvents.OfType<StatusChangedDomainEvent>().Single();
             await _auditRepository.AddAsync(
-                AuditEventFactory.FromStatusChanged(domainEvent, command.Actor, DateTimeOffset.UtcNow), ct);
+                AuditEventFactory.FromStatusChanged(domainEvent, command.Actor, _clock.UtcNow), ct);
             ticket.ClearDomainEvents();
 
             await _unitOfWork.SaveChangesAsync(ct);
