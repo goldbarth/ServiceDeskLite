@@ -198,8 +198,7 @@ public static class TicketsEndpoints
         var result = await handler.HandleAsync(query, ct);
 
         return result.ToHttpResult(ctx, mapper, dtos =>
-            Results.Ok(dtos.Select(d => new AuditEventResponse(
-                d.Id, d.EventType, d.Actor, d.OccurredAt, d.Payload)).ToList()));
+            Results.Ok(dtos.Select(d => d.ToResponse()).ToList()));
     }
 
     private static async Task<IResult> SearchTicketsAsync(
