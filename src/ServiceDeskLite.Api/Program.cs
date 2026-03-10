@@ -111,6 +111,10 @@ api.MapGroup("/tickets")
     .WithTags("Tickets")
     .MapTicketsEndpoints();
 
+api.MapGroup("/dashboard")
+    .WithTags("Dashboard")
+    .MapDashboardEndpoints();
+
 app.Run();
 
 

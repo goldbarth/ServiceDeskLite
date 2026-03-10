@@ -1,4 +1,5 @@
 ﻿using ServiceDeskLite.Contracts.V1.Common;
+using ServiceDeskLite.Contracts.V1.Dashboard;
 using ServiceDeskLite.Contracts.V1.Tickets;
 
 namespace ServiceDeskLite.Web.Api.V1;
@@ -34,5 +35,8 @@ public interface ITicketsApiClient
 
     Task<ApiResult<IReadOnlyList<AuditEventResponse>>> GetAuditEventsAsync(
         Guid id,
+        CancellationToken ct = default);
+
+    Task<ApiResult<DashboardSummaryResponse>> GetDashboardSummaryAsync(
         CancellationToken ct = default);
 }

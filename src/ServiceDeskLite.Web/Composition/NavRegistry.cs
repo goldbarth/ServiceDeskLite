@@ -8,6 +8,7 @@ public static class NavRegistry
 {
     public static readonly IReadOnlyList<NavItem> Items =
     [
+        new("Dashboard", AppRoutes.Dashboard, Icons.Material.Filled.Dashboard, 50),
         new("Tickets", AppRoutes.Tickets, Icons.Material.Filled.ConfirmationNumber, 100),
         new("Board", AppRoutes.TicketBoard, Icons.Material.Filled.ViewKanban, 110),
 

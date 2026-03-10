@@ -1,6 +1,7 @@
 using FluentAssertions;
 
 using ServiceDeskLite.Contracts.V1.Common;
+using ServiceDeskLite.Contracts.V1.Dashboard;
 using ServiceDeskLite.Contracts.V1.Tickets;
 using ServiceDeskLite.Web.Api.V1;
 using ServiceDeskLite.Web.Features.Tickets.State;
@@ -291,6 +292,9 @@ public sealed class TicketBoardFeatureStateTests
             => throw new NotImplementedException();
 
         public Task<ApiResult<IReadOnlyList<AuditEventResponse>>> GetAuditEventsAsync(Guid id, CancellationToken ct = default)
+            => throw new NotImplementedException();
+
+        public Task<ApiResult<DashboardSummaryResponse>> GetDashboardSummaryAsync(CancellationToken ct = default)
             => throw new NotImplementedException();
     }
 }
