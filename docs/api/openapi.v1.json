@@ -278,6 +278,58 @@
         ],
         "type": "object"
       },
+      "DashboardSummaryResponse": {
+        "properties": {
+          "inProgressCount": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "newCount": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "overdueCount": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "resolvedLast7DaysCount": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "triagedCount": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "newCount",
+          "triagedCount",
+          "inProgressCount",
+          "overdueCount",
+          "resolvedLast7DaysCount"
+        ],
+        "type": "object"
+      },
       "PagedResponseOfTicketListItemResponse": {
         "properties": {
           "hasNextPage": {
@@ -515,6 +567,38 @@
   },
   "openapi": "3.1.1",
   "paths": {
+    "/api/v1/dashboard/summary": {
+      "get": {
+        "description": "Returns aggregated KPI counts: active tickets by status, overdue tickets, and tickets resolved in the last 7 days.",
+        "operationId": "Dashboard_GetSummary",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummaryResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Get dashboard KPI summary",
+        "tags": [
+          "Dashboard"
+        ]
+      }
+    },
     "/api/v1/tickets": {
       "get": {
         "description": "Returns a paged list of tickets with deterministic sorting (CreatedAt + Id).",
@@ -1056,6 +1140,9 @@
   "tags": [
     {
       "name": "Tickets"
+    },
+    {
+      "name": "Dashboard"
     }
   ]
 }
