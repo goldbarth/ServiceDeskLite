@@ -14,17 +14,20 @@ public sealed class CreateTicketHandler
     private readonly IAuditEventRepository _auditRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICommandValidator<CreateTicketCommand> _validator;
+    private readonly IClock _clock;
 
     public CreateTicketHandler(
         ITicketRepository repo,
         IAuditEventRepository auditRepository,
         IUnitOfWork unitOfWork,
-        ICommandValidator<CreateTicketCommand> validator)
+        ICommandValidator<CreateTicketCommand> validator,
+        IClock clock)
     {
         _repository = repo ?? throw new ArgumentNullException(nameof(repo));
         _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     public async Task<Result<CreateTicketResult>> HandleAsync(
@@ -61,7 +64,7 @@ public sealed class CreateTicketHandler
             // Both are queued before SaveChangesAsync so they are persisted atomically.
             var domainEvent = ticket.DomainEvents.OfType<TicketCreatedDomainEvent>().Single();
             await _auditRepository.AddAsync(
-                AuditEventFactory.FromTicketCreated(domainEvent, command.Actor, command.CreatedAt), ct);
+                AuditEventFactory.FromTicketCreated(domainEvent, command.Actor, _clock.UtcNow), ct);
             ticket.ClearDomainEvents();
 
             await _unitOfWork.SaveChangesAsync(ct);

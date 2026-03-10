@@ -17,7 +17,7 @@ public class CreateTicketHandlerTests
     {
         var repo = new FakeTicketRepository();
         var uow = new FakeUnitOfWork();
-        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow, new CreateTicketValidator());
+        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow, new CreateTicketValidator(), new FakeClock());
 
         var cmd = new CreateTicketCommand(
             Title: " ",
@@ -40,7 +40,7 @@ public class CreateTicketHandlerTests
         var repo = new FakeTicketRepository();
         var uow = new FakeUnitOfWork(
             new InvalidOperationException("Ticket already exists: 123"));
-        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow, new FakeValidator());
+        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow, new FakeValidator(), new FakeClock());
 
         var cmd = new CreateTicketCommand(
             Title: "Test",
@@ -60,7 +60,7 @@ public class CreateTicketHandlerTests
     {
         var repo = new FakeTicketRepository();
         var uow = new FakeUnitOfWork(new IOException("disk full"));
-        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow, new FakeValidator());
+        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow, new FakeValidator(), new FakeClock());
 
         var cmd = new CreateTicketCommand(
             Title: "Test",
@@ -134,5 +134,10 @@ public class CreateTicketHandlerTests
     private sealed class FakeValidator : ICommandValidator<CreateTicketCommand>
     {
         public FieldValidationResult Validate(CreateTicketCommand command) => FieldValidationResult.Ok;
+    }
+
+    private sealed class FakeClock : IClock
+    {
+        public DateTimeOffset UtcNow { get; set; } = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
     }
 }

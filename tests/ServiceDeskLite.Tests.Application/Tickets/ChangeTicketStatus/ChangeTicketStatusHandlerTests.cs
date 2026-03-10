@@ -88,7 +88,7 @@ public class ChangeTicketStatusHandlerTests
         FakeUnitOfWork? uow = null)
     {
         var repo = new FakeTicketRepository(existingTicket);
-        return new ChangeTicketStatusHandler(repo, new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork());
+        return new ChangeTicketStatusHandler(repo, new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork(), new FakeClock());
     }
 
     private static Ticket CreateTicket(TicketStatus status)
@@ -149,5 +149,10 @@ public class ChangeTicketStatusHandlerTests
 
         public Task<IReadOnlyList<AuditEvent>> GetByTicketIdAsync(TicketId ticketId, CancellationToken ct = default)
             => throw new NotImplementedException();
+    }
+
+    private sealed class FakeClock : IClock
+    {
+        public DateTimeOffset UtcNow { get; set; } = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
     }
 }

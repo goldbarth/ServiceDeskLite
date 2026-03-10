@@ -14,17 +14,20 @@ public sealed class AddCommentHandler
     private readonly IAuditEventRepository _auditRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICommandValidator<AddCommentCommand> _validator;
+    private readonly IClock _clock;
 
     public AddCommentHandler(
         ITicketRepository repository,
         IAuditEventRepository auditRepository,
         IUnitOfWork unitOfWork,
-        ICommandValidator<AddCommentCommand> validator)
+        ICommandValidator<AddCommentCommand> validator,
+        IClock clock)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     public async Task<Result<AddCommentResult>> HandleAsync(
@@ -57,7 +60,7 @@ public sealed class AddCommentHandler
 
             var domainEvent = ticket.DomainEvents.OfType<CommentAddedDomainEvent>().Single();
             await _auditRepository.AddAsync(
-                AuditEventFactory.FromCommentAdded(domainEvent, command.CreatedAt), ct);
+                AuditEventFactory.FromCommentAdded(domainEvent, _clock.UtcNow), ct);
             ticket.ClearDomainEvents();
 
             await _unitOfWork.SaveChangesAsync(ct);

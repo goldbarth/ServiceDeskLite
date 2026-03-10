@@ -96,13 +96,14 @@ public static class TicketsEndpoints
         [FromBody] CreateTicketRequest request,
         CreateTicketHandler handler,
         ResultToProblemDetailsMapper mapper,
+        IClock clock,
         CancellationToken ct)
     {
         var cmd = new CreateTicketCommand(
             Title: request.Title,
             Description: request.Description,
             Priority: request.Priority.ToDomain(),
-            CreatedAt: DateTimeOffset.UtcNow,
+            CreatedAt: clock.UtcNow,
             DueAt: request.DueAt);
 
         var result = await handler.HandleAsync(cmd, ct);
@@ -152,13 +153,14 @@ public static class TicketsEndpoints
         [FromBody] AddCommentRequest request,
         AddCommentHandler handler,
         ResultToProblemDetailsMapper mapper,
+        IClock clock,
         CancellationToken ct)
     {
         var cmd = new AddCommentCommand(
             TicketId: new TicketId(id),
             Content: request.Content,
             Author: request.Author,
-            CreatedAt: DateTimeOffset.UtcNow);
+            CreatedAt: clock.UtcNow);
 
         var result = await handler.HandleAsync(cmd, ct);
 
