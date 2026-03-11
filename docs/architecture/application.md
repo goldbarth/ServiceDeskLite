@@ -86,6 +86,36 @@ Each use case lives in its own folder under `Application/Tickets/<UseCase>/`. St
 - `<UseCase>Handler.cs` – handler with `HandleAsync` method
 - `<UseCase>Result.cs` or `<UseCase>Dto.cs` – output record/DTO
 
+#### CQRS in This Project (lightweight)
+
+This solution uses **lightweight CQRS** as an application-structure pattern, not
+as a distributed systems pattern.
+
+| Topic | Current project scope |
+|---|---|
+| Command / query split | Commands and queries are modeled as separate request types with dedicated handlers. |
+| Write side | State-changing use cases (`CreateTicket`, `ChangeTicketStatus`, `AssignTicket`, `AddComment`) execute through command handlers. |
+| Read side | Read use cases (`GetTicketById`, `SearchTickets`, `GetAuditEvents`, `GetDashboardSummary`) execute through query handlers and return read-oriented DTOs. |
+| Endpoint dispatch | ASP.NET Core Minimal API endpoints inject handlers directly from DI and call `HandleAsync(...)` explicitly. |
+| Persistence model | The separation is logical inside one application and one persistence boundary, not separate write and read databases. |
+
+Deliberately **not** included in the current scope:
+
+- No `MediatR` / `ISender` dispatch layer between endpoints and handlers.
+- No `IPipelineBehavior<,>` pipeline for validation, logging, or transactions.
+- No separate read store, projection daemon, or eventual consistency workflow.
+- No asynchronous command bus or out-of-process message dispatch for request handling.
+
+This boundary is intentional. The project is positioned as a reference/showcase,
+so the current design favors explicit request flow and low ceremony over maximum
+pattern coverage.
+
+Extension paths if the scope changes later:
+
+- Introduce MediatR when cross-cutting handler concerns need one uniform request pipeline.
+- Introduce pipeline behaviors when validation, logging, auth, or transaction policies must apply consistently to every handler call.
+- Introduce dedicated read models or a separate read store only when query complexity, performance, or projection needs justify that extra operational cost.
+
 #### Handler signature contract:
 
 ```csharp
