@@ -1,4 +1,4 @@
-﻿# ADR 0004: Minimal API Host; MediatR and Controller Stack Deferred
+# ADR 0004: Minimal API Host; MediatR and Controller Stack Deferred
 
 ## Status
 
@@ -75,6 +75,27 @@ Chosen option: **Option A — Minimal API with handlers injected directly**.
   layers (Domain / Application / Adapters) are non-negotiable. Framework
   layers inside the adapter are deferred until complexity demands them.
 
+### CQRS scope clarification
+
+This project applies **lightweight CQRS**:
+
+- Commands and queries are modeled separately in the Application layer.
+- Each use case has a dedicated handler with an explicit `HandleAsync(...)` call site.
+- Minimal API endpoints map HTTP requests to commands or queries and inject the
+  concrete handler directly from DI.
+
+This project does **not** currently apply the heavier CQRS variants often seen
+in larger systems:
+
+- no MediatR request dispatch layer
+- no `IPipelineBehavior<,>` request pipeline
+- no separate read database or projection process
+- no eventual consistency between independent read and write models
+
+That omission is intentional. For a reference/showcase project, the current
+scope makes the read/write boundary visible without adding infrastructure that
+solves no current problem.
+
 ## Consequences
 
 ### Positive Consequences
@@ -94,6 +115,8 @@ Chosen option: **Option A — Minimal API with handlers injected directly**.
 - Cross-cutting concerns (e.g. per-request validation logging) must be
   repeated per handler or pushed into middleware rather than expressed
   as a single pipeline behaviour.
+- Readers looking specifically for a MediatR-based CQRS sample will not find
+  that style in the mainline architecture.
 
 ## Re-evaluation Triggers
 
