@@ -10,8 +10,8 @@
 <MudPaper Elevation="1" Class="pa-3 mb-3">
     <div class="d-flex flex-wrap gap-3 align-items-end">
         <MudTextField T="string"
-                      Label="Suche"
-                      Placeholder="Titel oder Beschreibung..."
+                      Label="Search"
+                      Placeholder="Title or description..."
                       @bind-Value="_filterQ"
                       Adornment="Adornment.End"
                       AdornmentIcon="@Icons.Material.Filled.Search"
@@ -53,13 +53,13 @@
                    Color="Color.Primary"
                    OnClick="ApplyFiltersAsync"
                    Disabled="@(State is TicketsListState.Loading)">
-            Suchen
+            Search
         </MudButton>
 
         <MudButton Variant="Variant.Text"
                    OnClick="ClearFiltersAsync"
                    Disabled="@(State is TicketsListState.Loading)">
-            Zurücksetzen
+            Reset
         </MudButton>
     </div>
 </MudPaper>
@@ -80,16 +80,16 @@ else if (State is TicketsListState.Loaded { Data.Items.Count: 0 })
                  Color="Color.Default"
                  Style="font-size: 3rem; opacity: 0.35;"
                  Class="mb-3" />
-        <MudText Typo="Typo.h6" Class="mb-1">Keine Tickets gefunden</MudText>
+        <MudText Typo="Typo.h6" Class="mb-1">No Tickets Found</MudText>
         <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
             @(Query.HasActiveFilters()
-                ? "Die aktiven Filter ergeben keine Treffer. Filter zurücksetzen oder Suchbegriff anpassen."
-                : "Noch keine Tickets vorhanden. Lege das erste Ticket an.")
+                ? "No results match the active filters. Try clearing the filters or adjusting your search."
+                : "No tickets yet. Create the first one.")
         </MudText>
         @if (Query.HasActiveFilters())
         {
             <MudButton Variant="Variant.Outlined" OnClick="ClearFiltersAsync">
-                Filter zurücksetzen
+                Clear Filters
             </MudButton>
         }
         else
@@ -97,7 +97,7 @@ else if (State is TicketsListState.Loaded { Data.Items.Count: 0 })
             <MudButton Variant="Variant.Filled" Color="Color.Primary"
                        StartIcon="@Icons.Material.Filled.Add"
                        Href="/tickets/new">
-                Neues Ticket
+                New Ticket
             </MudButton>
         }
     </MudPaper>
@@ -107,7 +107,7 @@ else if (State is TicketsListState.Loaded loaded)
     var data = loaded.Data;
 
     <div class="d-flex align-items-center mb-2">
-        <MudText Typo="Typo.caption">@data.TotalCount Gesamt</MudText>
+        <MudText Typo="Typo.caption">@data.TotalCount total</MudText>
 
         <div class="d-flex align-items-center gap-2 ms-3">
             <MudIconButton Icon="@Icons.Material.Filled.Refresh"
@@ -134,7 +134,7 @@ else if (State is TicketsListState.Loaded loaded)
                    StartIcon="@Icons.Material.Filled.Add"
                    Href="/tickets/new"
                    Size="Size.Small">
-            Neues Ticket
+            New Ticket
         </MudButton>
     </div>
 
@@ -149,7 +149,7 @@ else if (State is TicketsListState.Loaded loaded)
                 <MudTh>
                     <MudButton Variant="Variant.Text" Size="Size.Small"
                                OnClick="() => SortByAsync(TicketSortField.Title)">
-                        Titel
+                        Title
                         @if (Query.SortField == TicketSortField.Title)
                         {
                             <MudIcon Icon="@SortIcon(TicketSortField.Title)" Class="ms-1" />
@@ -200,7 +200,7 @@ else if (State is TicketsListState.Loaded loaded)
 
             <RowTemplate>
                 <MudTd DataLabel="Id">@context.Id</MudTd>
-                <MudTd DataLabel="Titel">@context.Title</MudTd>
+                <MudTd DataLabel="Title">@context.Title</MudTd>
                 <MudTd DataLabel="Status">@context.Status</MudTd>
                 <MudTd DataLabel="Priority">@context.Priority</MudTd>
                 <MudTd DataLabel="DueAt">@(context.DueAt is null ? "-" : context.DueAt.Value.ToString("u"))</MudTd>
@@ -211,7 +211,7 @@ else if (State is TicketsListState.Loaded loaded)
 
     <div class="d-flex align-items-center justify-content-between mt-3">
         <MudText Typo="Typo.caption">
-            Seite @Query.Page von @data.TotalPages — @data.TotalCount Gesamt (je @Query.PageSize)
+            Page @Query.Page of @data.TotalPages — @data.TotalCount total (@Query.PageSize per page)
         </MudText>
 
         <MudPagination Selected="Query.Page"

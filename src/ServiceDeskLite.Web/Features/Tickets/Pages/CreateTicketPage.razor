@@ -1,37 +1,37 @@
 @page "/tickets/new"
 @using MudBlazor
 
-<PageTitle>Neues Ticket</PageTitle>
+<PageTitle>New Ticket</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Neues Ticket</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">New Ticket</MudText>
 
 <MudPaper Class="pa-4" Elevation="1" Style="max-width: 640px;">
     <MudForm @ref="_form" @bind-IsValid="_isFormValid">
 
         <MudTextField T="string"
-                      Label="Titel"
+                      Label="Title"
                       @bind-Value="_title"
                       Required="true"
-                      RequiredError="Titel ist erforderlich."
+                      RequiredError="Title is required."
                       MaxLength="200"
                       Disabled="_isLoading"
                       Class="mb-4" />
 
         <MudTextField T="string"
-                      Label="Beschreibung"
+                      Label="Description"
                       @bind-Value="_description"
                       Required="true"
-                      RequiredError="Beschreibung ist erforderlich."
+                      RequiredError="Description is required."
                       MaxLength="2000"
                       Lines="4"
                       Disabled="_isLoading"
                       Class="mb-4" />
 
         <MudSelect T="TicketPriority"
-                   Label="Priorität"
+                   Label="Priority"
                    @bind-Value="_priority"
                    Required="true"
-                   RequiredError="Priorität ist erforderlich."
+                   RequiredError="Priority is required."
                    Disabled="_isLoading"
                    Class="mb-4">
             @foreach (var p in Enum.GetValues<TicketPriority>())
@@ -40,7 +40,7 @@
             }
         </MudSelect>
 
-        <MudDatePicker Label="Fälligkeitsdatum (optional)"
+        <MudDatePicker Label="Due Date (optional)"
                        @bind-Date="_dueAt"
                        Disabled="_isLoading"
                        Class="mb-6" />
@@ -58,18 +58,18 @@
                 @if (_isLoading)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
-                    <span>Wird erstellt…</span>
+                    <span>Creating…</span>
                 }
                 else
                 {
-                    <span>Erstellen</span>
+                    <span>Create</span>
                 }
             </MudButton>
 
             <MudButton Variant="Variant.Text"
                        Disabled="_isLoading"
                        Href="/tickets">
-                Abbrechen
+                Cancel
             </MudButton>
         </div>
 
