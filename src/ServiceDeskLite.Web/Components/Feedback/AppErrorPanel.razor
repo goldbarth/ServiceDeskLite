@@ -12,13 +12,13 @@
         @if (!string.IsNullOrWhiteSpace(_traceId))
         {
             <div class="d-flex align-items-center gap-2 mt-3">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Trace-ID:</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Trace ID:</MudText>
                 <MudChip T="string"
                          Size="Size.Small"
                          Variant="Variant.Outlined"
                          Icon="@Icons.Material.Outlined.ContentCopy"
                          OnClick="CopyTraceIdAsync"
-                         title="In Zwischenablage kopieren">
+                         title="Copy to clipboard">
                     @_traceId
                 </MudChip>
             </div>
@@ -28,14 +28,14 @@
         @if (!string.IsNullOrWhiteSpace(_code) || _meta is { Count: > 0 })
         {
             <MudExpansionPanels Class="mt-3" Elevation="0">
-                <MudExpansionPanel Text="Technische Details">
+                <MudExpansionPanel Text="Technical Details">
                     @if (!string.IsNullOrWhiteSpace(_code))
                     {
                         <MudText Typo="Typo.caption">Code: @_code</MudText>
                     }
                     @if (!string.IsNullOrWhiteSpace(_errorType))
                     {
-                        <MudText Typo="Typo.caption">Typ: @_errorType</MudText>
+                        <MudText Typo="Typo.caption">Type: @_errorType</MudText>
                     }
                     @if (_meta is { Count: > 0 })
                     {
@@ -56,8 +56,8 @@
     [Parameter, EditorRequired] public ApiError Error { get; set; } = default!;
 
     private Severity _severity;
-    private string _title = "Fehler";
-    private string _message = "Ein unerwarteter Fehler ist aufgetreten.";
+    private string _title = "Error";
+    private string _message = "An unexpected error has occurred.";
     private string? _code;
     private string? _errorType;
     private string? _traceId;
@@ -65,8 +65,8 @@
 
     protected override void OnParametersSet()
     {
-        _title = Error.Title ?? "Fehler";
-        _message = Error.Detail ?? "Ein unerwarteter Fehler ist aufgetreten.";
+        _title = Error.Title ?? "Error";
+        _message = Error.Detail ?? "An unexpected error has occurred.";
         _code = Error.Code;
         _errorType = Error.ErrorType;
         _traceId = Error.TraceId;
