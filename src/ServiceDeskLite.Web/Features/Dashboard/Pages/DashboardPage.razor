@@ -6,55 +6,63 @@
 
 <PageTitle>Dashboard</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Dashboard</MudText>
+<div class="dashboard-page">
+    <h1 class="u-screen-reader-only">Dashboard</h1>
 
-@if (_isLoading)
-{
-    <MudGrid>
-        @for (var i = 0; i < 5; i++)
-        {
-            <MudItem xs="12" sm="6" md="4" lg="2">
-                <MudSkeleton Height="120px" />
-            </MudItem>
-        }
-    </MudGrid>
-}
-else if (_error is not null)
-{
-    <AppErrorPanel Error="_error" />
-}
-else if (_summary is not null)
-{
-    <MudGrid>
-        <MudItem xs="12" sm="6" md="4" lg="2">
-            <KpiCard Title="New"
-                     Value="_summary.NewCount"
+    @if (_isLoading)
+    {
+        <MudSkeleton Height="214px" Class="dashboard-page__hero-skeleton" />
+
+        <div class="dashboard-page__grid">
+            @for (var i = 0; i < 5; i++)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Class="dashboard-page__card-skeleton" />
+            }
+        </div>
+    }
+    else if (_error is not null)
+    {
+        <AppErrorPanel Error="_error" />
+    }
+    else if (_summary is not null)
+    {
+        <DashboardHero Badge="Operations overview"
+                       Title="Service desk dashboard"
+                       Description="Monitor incoming demand, active case handling, and overdue pressure across the workspace."
+                       Stats="HeroStats" />
+
+        <div class="dashboard-page__grid">
+            <KpiCard Label="New"
+                     Value="@_summary.NewCount.ToString()"
                      Icon="@Icons.Material.Filled.FiberNew"
-                     Color="Color.Info" />
-        </MudItem>
-        <MudItem xs="12" sm="6" md="4" lg="2">
-            <KpiCard Title="Triaged"
-                     Value="_summary.TriagedCount"
+                     Accent="blue"
+                     ChipText="Live"
+                     SupportingText="Awaiting first review" />
+
+            <KpiCard Label="Triaged"
+                     Value="@_summary.TriagedCount.ToString()"
                      Icon="@Icons.Material.Filled.Label"
-                     Color="Color.Secondary" />
-        </MudItem>
-        <MudItem xs="12" sm="6" md="4" lg="2">
-            <KpiCard Title="In Progress"
-                     Value="_summary.InProgressCount"
+                     Accent="violet"
+                     SupportingText="Ready for assignment" />
+
+            <KpiCard Label="In Progress"
+                     Value="@_summary.InProgressCount.ToString()"
                      Icon="@Icons.Material.Filled.Work"
-                     Color="Color.Warning" />
-        </MudItem>
-        <MudItem xs="12" sm="6" md="4" lg="2">
-            <KpiCard Title="Overdue"
-                     Value="_summary.OverdueCount"
+                     Accent="amber"
+                     SupportingText="Owned by active agents" />
+
+            <KpiCard Label="Overdue"
+                     Value="@_summary.OverdueCount.ToString()"
                      Icon="@Icons.Material.Filled.Alarm"
-                     Color="Color.Error" />
-        </MudItem>
-        <MudItem xs="12" sm="6" md="4" lg="2">
-            <KpiCard Title="Resolved (7d)"
-                     Value="_summary.ResolvedLast7DaysCount"
+                     Accent="rose"
+                     ChipText="Priority"
+                     SupportingText="Needs immediate attention" />
+
+            <KpiCard Label="Resolved (7d)"
+                     Value="@_summary.ResolvedLast7DaysCount.ToString()"
                      Icon="@Icons.Material.Filled.CheckCircle"
-                     Color="Color.Success" />
-        </MudItem>
-    </MudGrid>
-}
+                     Accent="green"
+                     SupportingText="Closed during the last week" />
+        </div>
+    }
+</div>

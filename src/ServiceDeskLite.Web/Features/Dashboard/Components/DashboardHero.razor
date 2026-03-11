@@ -1,0 +1,33 @@
+@using MudBlazor
+
+<section class="dashboard-hero">
+    <MudPaper Class="dashboard-hero__paper" Elevation="0">
+        <div class="dashboard-hero__content">
+            <div class="dashboard-hero__intro">
+                <span class="dashboard-hero__badge">@Badge</span>
+                <div class="dashboard-hero__title">@Title</div>
+                <p class="dashboard-hero__description">@Description</p>
+            </div>
+
+            @if (Stats.Count > 0)
+            {
+                <div class="dashboard-hero__stats" aria-label="Supplementary dashboard statistics">
+                    @foreach (var stat in Stats)
+                    {
+                        <div class="dashboard-hero__stat">
+                            <span class="dashboard-hero__stat-value">@stat.Value</span>
+                            <span class="dashboard-hero__stat-label">@stat.Label</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </MudPaper>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Badge { get; set; } = default!;
+    [Parameter, EditorRequired] public string Title { get; set; } = default!;
+    [Parameter, EditorRequired] public string Description { get; set; } = default!;
+    [Parameter] public IReadOnlyList<DashboardHeroStat> Stats { get; set; } = Array.Empty<DashboardHeroStat>();
+}

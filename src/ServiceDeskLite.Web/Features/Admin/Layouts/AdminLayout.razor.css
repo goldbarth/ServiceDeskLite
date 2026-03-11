@@ -1,0 +1,39 @@
+.admin-layout {
+    display: grid;
+    gap: 1.25rem;
+}
+
+::deep .admin-layout__tabs {
+    border-radius: var(--shell-radius-md);
+    border: 1px solid rgba(221, 228, 236, 0.95);
+    background: rgba(247, 249, 251, 0.92);
+    box-shadow: var(--shell-shadow-soft);
+}
+
+::deep .admin-layout__tabs .mud-tabs-toolbar {
+    padding: 0.35rem;
+    min-height: auto;
+}
+
+::deep .admin-layout__tabs .mud-tabs-tabbar {
+    box-shadow: none;
+    background: transparent;
+}
+
+::deep .admin-layout__tabs .mud-tab {
+    min-height: 2.5rem;
+    padding-inline: 1rem;
+    border-radius: 13px;
+    color: var(--shell-text-muted);
+    font-weight: 600;
+    text-transform: none;
+}
+
+::deep .admin-layout__tabs .mud-tab.mud-tab-active {
+    color: var(--shell-text);
+    background: #ffffff;
+}
+
+::deep .admin-layout__tabs .mud-tabs-slider {
+    display: none;
+}

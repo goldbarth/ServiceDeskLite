@@ -1,0 +1,104 @@
+.kpi-card-shell {
+    --kpi-accent: #66768c;
+    --kpi-accent-soft: #f1f4f7;
+    height: 100%;
+}
+
+.kpi-card-shell--blue {
+    --kpi-accent: #2f6eca;
+    --kpi-accent-soft: #e9f1ff;
+}
+
+.kpi-card-shell--violet {
+    --kpi-accent: #7a63c6;
+    --kpi-accent-soft: #f0edff;
+}
+
+.kpi-card-shell--amber {
+    --kpi-accent: #b87822;
+    --kpi-accent-soft: #fff4e3;
+}
+
+.kpi-card-shell--rose {
+    --kpi-accent: #b85a69;
+    --kpi-accent-soft: #fdecef;
+}
+
+.kpi-card-shell--green {
+    --kpi-accent: #2d7d5b;
+    --kpi-accent-soft: #e8f6ef;
+}
+
+.kpi-card-shell--slate {
+    --kpi-accent: #5f6d80;
+    --kpi-accent-soft: #eef2f6;
+}
+
+::deep .kpi-card {
+    display: grid;
+    gap: 1.15rem;
+    height: 100%;
+    min-height: 232px;
+    padding: 1.45rem 1.5rem 1.35rem;
+    border-radius: var(--shell-radius-md);
+    border: 1px solid rgba(221, 228, 236, 0.95);
+    background: #ffffff;
+    box-shadow: var(--shell-shadow-card);
+}
+
+.kpi-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.kpi-card__icon-surface {
+    display: inline-grid;
+    place-items: center;
+    width: 3.35rem;
+    height: 3.35rem;
+    border-radius: 17px;
+    background: var(--kpi-accent-soft);
+    color: var(--kpi-accent);
+}
+
+::deep .kpi-card__icon {
+    color: inherit;
+    font-size: 1.4rem;
+}
+
+::deep .kpi-card__chip {
+    min-height: 1.95rem;
+    color: var(--kpi-accent);
+    background: var(--kpi-accent-soft);
+    border: 0;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.kpi-card__body {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.kpi-card__value {
+    color: var(--shell-text);
+    font-size: clamp(2.2rem, 1.95vw, 2.7rem);
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+}
+
+.kpi-card__label {
+    color: var(--shell-text);
+    font-size: 0.98rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.kpi-card__support {
+    color: var(--shell-text-muted);
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
