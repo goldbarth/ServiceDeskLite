@@ -19,6 +19,10 @@
     align-items: center;
 }
 
+.dashboard-hero__content--single {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .dashboard-hero__intro {
     display: grid;
     gap: 1rem;

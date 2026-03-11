@@ -2,7 +2,7 @@
 
 <section class="dashboard-hero">
     <MudPaper Class="dashboard-hero__paper" Elevation="0">
-        <div class="dashboard-hero__content">
+        <div class="@(Stats.Count > 0 ? "dashboard-hero__content" : "dashboard-hero__content dashboard-hero__content--single")">
             <div class="dashboard-hero__intro">
                 <span class="dashboard-hero__badge">@Badge</span>
                 <div class="dashboard-hero__title">@Title</div>
