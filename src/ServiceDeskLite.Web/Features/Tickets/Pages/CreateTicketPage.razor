@@ -1,85 +1,108 @@
 @page "/tickets/new"
+
 @using MudBlazor
 
 <PageTitle>New Ticket</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">New Ticket</MudText>
+<div class="create-ticket-page">
+    <div class="create-ticket-page__header">
+        <span class="create-ticket-page__eyebrow">Ticket intake</span>
+        <h1 class="create-ticket-page__title">New Ticket</h1>
+        <p class="create-ticket-page__description">
+            Capture the request clearly so it enters the service desk workflow with the right level of context.
+        </p>
+    </div>
 
-<MudPaper Class="pa-4" Elevation="1" Style="max-width: 640px;">
-    <MudForm @ref="_form" @bind-IsValid="_isFormValid">
+    <MudPaper Class="create-ticket-card" Elevation="0">
+        <MudForm @ref="_form" @bind-IsValid="_isFormValid" Class="create-ticket-form">
+            <MudTextField T="string"
+                          Label="Title"
+                          Placeholder="Short, specific request summary"
+                          @bind-Value="_title"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.None"
+                          Required="true"
+                          RequiredError="Title is required."
+                          MaxLength="200"
+                          Disabled="_isLoading"
+                          Class="create-ticket-field create-ticket-field--title" />
 
-        <MudTextField T="string"
-                      Label="Title"
-                      @bind-Value="_title"
-                      Required="true"
-                      RequiredError="Title is required."
-                      MaxLength="200"
-                      Disabled="_isLoading"
-                      Class="mb-4" />
+            <MudTextField T="string"
+                          Label="Description"
+                          Placeholder="Describe the issue, impact, and any relevant operational context."
+                          @bind-Value="_description"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.None"
+                          Required="true"
+                          RequiredError="Description is required."
+                          MaxLength="2000"
+                          Lines="7"
+                          Disabled="_isLoading"
+                          Class="create-ticket-field create-ticket-field--description" />
 
-        <MudTextField T="string"
-                      Label="Description"
-                      @bind-Value="_description"
-                      Required="true"
-                      RequiredError="Description is required."
-                      MaxLength="2000"
-                      Lines="4"
-                      Disabled="_isLoading"
-                      Class="mb-4" />
+            <div class="create-ticket-form__meta">
+                <MudSelect T="TicketPriority"
+                           Label="Priority"
+                           @bind-Value="_priority"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.None"
+                           Required="true"
+                           RequiredError="Priority is required."
+                           Disabled="_isLoading"
+                           Class="create-ticket-field create-ticket-field--meta">
+                    @foreach (var p in Enum.GetValues<TicketPriority>())
+                    {
+                        <MudSelectItem Value="@p">@p</MudSelectItem>
+                    }
+                </MudSelect>
 
-        <MudSelect T="TicketPriority"
-                   Label="Priority"
-                   @bind-Value="_priority"
-                   Required="true"
-                   RequiredError="Priority is required."
-                   Disabled="_isLoading"
-                   Class="mb-4">
-            @foreach (var p in Enum.GetValues<TicketPriority>())
+                <MudDatePicker Label="Due Date"
+                               @bind-Date="_dueAt"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.None"
+                               Editable="true"
+                               Placeholder="Optional"
+                               Disabled="_isLoading"
+                               Class="create-ticket-field create-ticket-field--meta" />
+            </div>
+
+            @if (_apiError is not null)
             {
-                <MudSelectItem Value="@p">@p</MudSelectItem>
+                <AppErrorPanel Error="_apiError" />
             }
-        </MudSelect>
 
-        <MudDatePicker Label="Due Date (optional)"
-                       @bind-Date="_dueAt"
-                       Disabled="_isLoading"
-                       Class="mb-6" />
+            <div class="create-ticket-actions">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Disabled="_isLoading"
+                           Class="create-ticket-actions__create"
+                           OnClick="SubmitAsync">
+                    @if (_isLoading)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                        <span>Creating...</span>
+                    }
+                    else
+                    {
+                        <span>Create</span>
+                    }
+                </MudButton>
 
-        @if (_apiError is not null)
-        {
-            <AppErrorPanel Error="_apiError" />
-        }
-
-        <div class="d-flex gap-3 mt-4">
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       Disabled="_isLoading"
-                       OnClick="SubmitAsync">
-                @if (_isLoading)
-                {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
-                    <span>Creating…</span>
-                }
-                else
-                {
-                    <span>Create</span>
-                }
-            </MudButton>
-
-            <MudButton Variant="Variant.Text"
-                       Disabled="_isLoading"
-                       Href="/tickets">
-                Cancel
-            </MudButton>
-        </div>
-
-    </MudForm>
-</MudPaper>
+                <MudButton Variant="Variant.Text"
+                           Disabled="_isLoading"
+                           Href="/tickets"
+                           Class="create-ticket-actions__cancel">
+                    Cancel
+                </MudButton>
+            </div>
+        </MudForm>
+    </MudPaper>
+</div>
 
 @code {
     [Inject] private ITicketsApiClient TicketsApiClient { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
-    
+
     private MudForm _form = default!;
 
     private string _title = string.Empty;
