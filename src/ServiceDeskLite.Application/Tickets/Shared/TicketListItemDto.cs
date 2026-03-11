@@ -5,7 +5,6 @@ namespace ServiceDeskLite.Application.Tickets.Shared;
 public record TicketListItemDto(
     TicketId Id,
     string Title,
-    string Description,
     TicketStatus Status,
     TicketPriority Priority,
     DateTimeOffset CreatedAt,

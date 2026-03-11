@@ -78,7 +78,6 @@ public class EfTicketRepository : ITicketRepository
             .Select(t => new TicketListItemDto(
                 t.Id,
                 t.Title,
-                t.Description,
                 t.Status,
                 t.Priority,
                 t.CreatedAt,
