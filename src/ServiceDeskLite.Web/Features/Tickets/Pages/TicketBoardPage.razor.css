@@ -1,22 +1,22 @@
 .board-page {
     display: grid;
-    gap: 1.7rem;
+    gap: 1.2rem;
     width: 100%;
 }
 
 .board-toolbar {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 0.9rem;
 }
 
 .board-flow-surface {
     display: grid;
-    gap: 0.85rem;
+    gap: 0.7rem;
     flex: 1 1 auto;
     min-width: 0;
-    padding: 1rem 1.15rem;
+    padding: 0.85rem 1rem;
     border: 1px solid rgba(216, 223, 232, 0.96);
     border-radius: 22px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.98) 100%);
@@ -34,7 +34,7 @@
 .board-flow {
     display: flex;
     align-items: center;
-    gap: 0.7rem;
+    gap: 0.55rem;
     overflow-x: auto;
     scrollbar-width: thin;
 }
@@ -42,8 +42,8 @@
 .board-flow__step {
     display: grid;
     gap: 0.16rem;
-    min-width: 108px;
-    padding: 0.72rem 0.9rem;
+    min-width: 92px;
+    padding: 0.6rem 0.78rem;
     border: 1px solid rgba(221, 228, 236, 0.96);
     border-radius: 18px;
     background: rgba(247, 249, 251, 0.94);
@@ -51,52 +51,36 @@
 
 .board-flow__step-label {
     color: #223041;
-    font-size: 0.86rem;
+    font-size: 0.8rem;
     font-weight: 700;
     line-height: 1.25;
 }
 
 .board-flow__step-caption {
     color: #7a8799;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     line-height: 1.35;
 }
 
 ::deep .board-flow__arrow {
     flex: 0 0 auto;
     color: #8b97a8;
-    font-size: 1rem;
+    font-size: 0.92rem;
 }
 
 .board-toolbar__actions {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.8rem;
+    gap: 0.6rem;
     flex-wrap: wrap;
-}
-
-::deep .board-toolbar__switch {
-    margin: 0;
-    padding: 0.3rem 0.8rem 0.3rem 0.3rem;
-    border: 1px solid rgba(216, 223, 232, 0.96);
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.92);
-}
-
-::deep .board-toolbar__switch .mud-switch {
-    margin: 0;
-}
-
-::deep .board-toolbar__switch .mud-switch-label {
-    color: #344254;
-    font-size: 0.88rem;
-    font-weight: 600;
+    align-self: flex-start;
+    padding-top: 0.35rem;
 }
 
 ::deep .board-toolbar__new-ticket.mud-button-root {
-    min-height: 42px;
-    padding-inline: 1rem 1.08rem;
+    min-height: 40px;
+    padding-inline: 0.95rem 1rem;
     border-radius: 14px;
     box-shadow: none;
 }
@@ -109,7 +93,7 @@
 }
 
 ::deep .board-surface {
-    padding: 1.05rem;
+    padding: 0.85rem;
     border: 1px solid rgba(216, 223, 232, 0.96);
     border-radius: 28px;
     background: linear-gradient(180deg, rgba(244, 246, 249, 0.98) 0%, rgba(241, 244, 247, 0.98) 100%);
@@ -117,26 +101,29 @@
 }
 
 .board-scroll-wrapper {
+    display: flex;
+    justify-content: center;
     overflow-x: auto;
-    padding-bottom: 0.55rem;
+    padding-bottom: 0.45rem;
     scrollbar-width: thin;
 }
 
 .board-container {
     display: flex;
-    gap: 1rem;
+    gap: 0.75rem;
     min-width: max-content;
+    margin-inline: auto;
     align-items: flex-start;
 }
 
 .board-column {
     display: grid;
     grid-template-rows: auto auto minmax(0, 1fr);
-    gap: 0.85rem;
-    flex: 0 0 340px;
-    width: 340px;
-    min-width: 340px;
-    padding: 0.95rem;
+    gap: 0.72rem;
+    flex: 0 0 232px;
+    width: 232px;
+    min-width: 232px;
+    padding: 0.8rem;
     border: 1px solid rgba(217, 224, 232, 0.96);
     border-radius: 24px;
     background: rgba(249, 250, 252, 0.96);
@@ -146,7 +133,7 @@
 
 .board-column__header {
     display: grid;
-    gap: 0.85rem;
+    gap: 0.72rem;
 }
 
 .board-column__heading {
@@ -156,7 +143,7 @@
 
 .board-column__eyebrow {
     color: #6a788c;
-    font-size: 0.7rem;
+    font-size: 0.66rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -172,7 +159,7 @@
 .board-column__title {
     margin: 0;
     color: #1a2433;
-    font-size: 1.08rem;
+    font-size: 1rem;
     font-weight: 700;
     line-height: 1.15;
     letter-spacing: -0.02em;
@@ -182,28 +169,28 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 2rem;
-    height: 2rem;
-    padding-inline: 0.55rem;
+    min-width: 1.7rem;
+    height: 1.7rem;
+    padding-inline: 0.45rem;
     border-radius: 999px;
     background: rgba(234, 239, 245, 0.98);
     border: 1px solid rgba(216, 223, 232, 0.92);
     color: #425163;
-    font-size: 0.82rem;
+    font-size: 0.76rem;
     font-weight: 700;
 }
 
 .board-column__description {
     margin: 0;
     color: #6c7b90;
-    font-size: 0.83rem;
-    line-height: 1.5;
+    font-size: 0.76rem;
+    line-height: 1.45;
 }
 
 .board-column__allowed {
     display: grid;
     gap: 0.18rem;
-    padding: 0.75rem 0.8rem;
+    padding: 0.62rem 0.72rem;
     border-radius: 18px;
     background: rgba(243, 246, 249, 0.92);
     border: 1px solid rgba(221, 228, 236, 0.92);
@@ -211,7 +198,7 @@
 
 .board-column__allowed-label {
     color: #7a8798;
-    font-size: 0.7rem;
+    font-size: 0.64rem;
     font-weight: 700;
     letter-spacing: 0.07em;
     text-transform: uppercase;
@@ -219,17 +206,17 @@
 
 .board-column__allowed-value {
     color: #314052;
-    font-size: 0.82rem;
+    font-size: 0.74rem;
     font-weight: 600;
-    line-height: 1.45;
+    line-height: 1.4;
 }
 
 .board-column__body {
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
-    min-height: 18rem;
-    max-height: calc(100vh - 24rem);
+    gap: 0.72rem;
+    min-height: 16rem;
+    max-height: calc(100vh - 21.5rem);
     overflow-y: auto;
     padding-right: 0.15rem;
 }
@@ -237,7 +224,7 @@
 .board-column__empty {
     display: grid;
     gap: 0.3rem;
-    padding: 1.15rem 1rem;
+    padding: 0.95rem 0.85rem;
     border: 1px dashed rgba(211, 219, 228, 0.96);
     border-radius: 18px;
     background: rgba(251, 252, 253, 0.92);
@@ -245,14 +232,14 @@
 
 .board-column__empty-label {
     color: #425163;
-    font-size: 0.82rem;
+    font-size: 0.76rem;
     font-weight: 700;
 }
 
 .board-column__empty-text {
     margin: 0;
     color: #7b8797;
-    font-size: 0.79rem;
+    font-size: 0.73rem;
     line-height: 1.5;
 }
 
@@ -316,9 +303,9 @@
 
 .board-card {
     display: grid;
-    gap: 0.72rem;
-    min-height: 10.25rem;
-    padding: 0.95rem 1rem 1rem;
+    gap: 0.56rem;
+    min-height: 8.6rem;
+    padding: 0.78rem 0.82rem 0.82rem;
     border: 1px solid rgba(221, 228, 236, 0.96);
     border-radius: 20px;
     background: rgba(255, 255, 255, 0.98);
@@ -347,7 +334,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: 0.55rem;
 }
 
 .board-card__ref-row {
@@ -361,8 +348,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.9rem;
-    height: 1.9rem;
+    width: 1.65rem;
+    height: 1.65rem;
     border-radius: 12px;
     background: rgba(243, 246, 249, 0.98);
     border: 1px solid rgba(220, 227, 235, 0.96);
@@ -370,13 +357,13 @@
 }
 
 ::deep .board-card__drag-handle .mud-icon-root {
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 .board-card__ref {
     color: #7c8898;
     font-family: Consolas, "SFMono-Regular", "Cascadia Mono", monospace;
-    font-size: 0.77rem;
+    font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.03em;
 }
@@ -385,9 +372,9 @@
     display: -webkit-box;
     overflow: hidden;
     color: #182230;
-    font-size: 1rem;
+    font-size: 0.88rem;
     font-weight: 700;
-    line-height: 1.38;
+    line-height: 1.34;
     text-decoration: none;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
@@ -404,8 +391,8 @@
     overflow: hidden;
     margin: 0;
     color: #748295;
-    font-size: 0.83rem;
-    line-height: 1.55;
+    font-size: 0.73rem;
+    line-height: 1.45;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
 }
@@ -413,7 +400,7 @@
 .board-card__meta {
     display: flex;
     align-items: center;
-    gap: 0.55rem;
+    gap: 0.45rem;
     flex-wrap: wrap;
     margin-top: auto;
 }
@@ -422,13 +409,13 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    min-height: 1.9rem;
-    padding-inline: 0.62rem;
+    min-height: 1.65rem;
+    padding-inline: 0.52rem;
     border-radius: 999px;
     background: rgba(245, 247, 250, 0.96);
     border: 1px solid rgba(224, 230, 237, 0.96);
     color: #627084;
-    font-size: 0.76rem;
+    font-size: 0.69rem;
     font-weight: 600;
 }
 
@@ -439,7 +426,7 @@
 }
 
 ::deep .board-card__meta-icon {
-    font-size: 0.92rem;
+    font-size: 0.84rem;
     color: inherit;
 }
 
@@ -447,11 +434,11 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 1.9rem;
-    padding-inline: 0.7rem;
+    min-height: 1.55rem;
+    padding-inline: 0.58rem;
     border: 1px solid transparent;
     border-radius: 999px;
-    font-size: 0.74rem;
+    font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0.03em;
     white-space: nowrap;
@@ -488,8 +475,8 @@
 }
 
 ::deep .board-skeleton__column {
-    flex: 0 0 340px;
-    min-width: 340px;
+    flex: 0 0 232px;
+    min-width: 232px;
     border-radius: 24px;
 }
 
@@ -500,7 +487,8 @@
     }
 
     .board-toolbar__actions {
-        justify-content: space-between;
+        justify-content: flex-end;
+        padding-top: 0;
     }
 }
 
@@ -512,9 +500,5 @@
     .board-toolbar__actions {
         flex-direction: column;
         align-items: stretch;
-    }
-
-    ::deep .board-toolbar__switch {
-        justify-content: center;
     }
 }

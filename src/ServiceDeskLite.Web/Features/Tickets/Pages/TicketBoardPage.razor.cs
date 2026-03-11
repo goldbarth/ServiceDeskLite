@@ -64,18 +64,15 @@ public partial class TicketBoardPage : IDisposable
     private bool _isDragging;
     private ApiError? _moveError;
 
-    private IEnumerable<TicketStatus> VisibleColumns =>
-        BoardState.HideClosed
-            ? AllColumns.Where(status => status != TicketStatus.Closed)
-            : AllColumns;
+    private IEnumerable<TicketStatus> VisibleColumns => AllColumns;
 
     private IReadOnlyList<DashboardHeroStat> HeroStats =>
         BoardState.State is TicketBoardState.Loaded loaded
             ?
             [
-                new("Visible lanes", VisibleColumns.Count().ToString()),
-                new("Board cards", VisibleTicketCount(loaded.Tickets).ToString()),
-                new("Closed hidden", BoardState.HideClosed ? "Yes" : "No")
+                new("Workflow lanes", VisibleColumns.Count().ToString()),
+                new("Board cards", loaded.Tickets.Count.ToString()),
+                new("Closed lane", "Visible")
             ]
             : [];
 
@@ -87,9 +84,6 @@ public partial class TicketBoardPage : IDisposable
 
     public void Dispose()
         => BoardState.OnChanged -= HandleStateChanged;
-
-    private void OnHideClosedChanged(bool _)
-        => BoardState.ToggleHideClosed();
 
     private void OnDragStart(TicketListItemResponse ticket)
     {
@@ -283,7 +277,7 @@ public partial class TicketBoardPage : IDisposable
             TicketStatus.InProgress => "No tickets are actively owned right now.",
             TicketStatus.Waiting => "Nothing is currently blocked externally.",
             TicketStatus.Resolved => "No tickets are awaiting confirmation.",
-            TicketStatus.Closed => "No closed tickets are shown in this view.",
+            TicketStatus.Closed => "No archived tickets are currently visible in this lane.",
             _ => "No tickets in this lane."
         };
 
@@ -301,11 +295,6 @@ public partial class TicketBoardPage : IDisposable
         => _draggingTicket is not null
             && _draggingTicket.Status != targetStatus
             && ColumnSpecs[_draggingTicket.Status].AllowedNext.Contains(targetStatus);
-
-    private int VisibleTicketCount(IReadOnlyList<TicketListItemResponse> tickets)
-        => BoardState.HideClosed
-            ? tickets.Count(ticket => ticket.Status != TicketStatus.Closed)
-            : tickets.Count;
 
     private static string Truncate(string value, int maxLength)
     {
