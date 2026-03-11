@@ -13,6 +13,8 @@ namespace ServiceDeskLite.Tests.Integration.Tickets;
 
 public class ApiFactory : WebApplicationFactory<Program>
 {
+    private const string TestApiKey = "test-api-key";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -21,7 +23,8 @@ public class ApiFactory : WebApplicationFactory<Program>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Persistence:Provider"] = "InMemory"
+                ["Persistence:Provider"] = "InMemory",
+                ["Auth:ApiKey"] = TestApiKey
             });
         });
 
@@ -34,5 +37,10 @@ public class ApiFactory : WebApplicationFactory<Program>
 
             services.AddInfrastructureInMemory();
         });
+    }
+
+    protected override void ConfigureClient(HttpClient client)
+    {
+        client.DefaultRequestHeaders.Add("X-Api-Key", TestApiKey);
     }
 }

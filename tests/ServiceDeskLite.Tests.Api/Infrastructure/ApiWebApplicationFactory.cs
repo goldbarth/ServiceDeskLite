@@ -9,6 +9,8 @@ namespace ServiceDeskLite.Tests.Api.Infrastructure;
 
 public class ApiWebApplicationFactory : WebApplicationFactory<Program>
 {
+    private const string TestApiKey = "test-api-key";
+
     public InMemorySink Sink { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -20,7 +22,8 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Persistence:Provider"] = "InMemory"
+                ["Persistence:Provider"] = "InMemory",
+                ["Auth:ApiKey"] = TestApiKey
             });
         });
 
@@ -34,5 +37,10 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>
 
             services.AddSerilog(logger, dispose: true);
         });
+    }
+
+    protected override void ConfigureClient(HttpClient client)
+    {
+        client.DefaultRequestHeaders.Add("X-Api-Key", TestApiKey);
     }
 }
