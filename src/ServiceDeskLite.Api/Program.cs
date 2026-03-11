@@ -47,11 +47,15 @@ builder.Services
     .AddApplication() // Application Layer
     .AddApiInfrastructure(builder.Configuration); // Infrastructure Provider Switch
 
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? [];
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("WebDev",
+    options.AddPolicy("WebFrontend",
         p => p
-            .WithOrigins("https://localhost:7023")
+            .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -83,6 +87,7 @@ app.UseApiRequestLogging();
 app.UseApiDocumentation();
 
 app.UseApiErrorHandling();
+app.UseApiSecurity();
 app.UseHttpsRedirection();
 
 if (app.Environment.IsDevelopment())
@@ -101,7 +106,7 @@ if (app.Environment.IsDevelopment())
     await seeder.SeedAsync();
 }
 
-app.UseCors("WebDev");
+app.UseCors("WebFrontend");
 
 // ─────────── Endpoints ────────────
 

@@ -14,6 +14,8 @@ public static class ApiClientComposition
         services.Configure<ApiClientOptions>(
             configuration.GetSection("ApiClient"));
 
+        services.AddTransient<ApiKeyDelegatingHandler>();
+
         services.AddHttpClient<ITicketsApiClient, TicketsApiClient>((sp, http) =>
         {
             var opt = sp.GetRequiredService<IOptions<ApiClientOptions>>().Value;
@@ -26,7 +28,8 @@ public static class ApiClientComposition
 
             http.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
-        });
+        })
+        .AddHttpMessageHandler<ApiKeyDelegatingHandler>();
 
         return services;
     }
