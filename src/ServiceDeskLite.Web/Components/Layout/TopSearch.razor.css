@@ -1,0 +1,46 @@
+.top-search {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+::deep .top-search__field {
+    margin: 0;
+}
+
+::deep .top-search__field .mud-input-control-input-container {
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 16px;
+}
+
+::deep .top-search__field .mud-input-outlined-border {
+    border-color: rgba(212, 220, 230, 0.92);
+}
+
+::deep .top-search__field .mud-input-slot {
+    font-size: 0.92rem;
+}
+
+::deep .top-search__field .mud-input-adornment {
+    color: #6c7788;
+}
+
+::deep .top-search__field .mud-input.mud-input-outlined:hover .mud-input-outlined-border,
+::deep .top-search__field .mud-input.mud-input-outlined.mud-input-focused .mud-input-outlined-border {
+    border-color: rgba(102, 125, 156, 0.75);
+}
+
+::deep .top-search__submit.mud-icon-button {
+    width: 2.5rem;
+    height: 2.5rem;
+    color: #445264;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(212, 220, 230, 0.92);
+    border-radius: 14px;
+}
+
+::deep .top-search__submit.mud-icon-button:hover {
+    background: #ffffff;
+}

@@ -6,5 +6,6 @@ public sealed record TicketListItemResponse(
     TicketPriority Priority,
     TicketStatus Status,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? DueAt);
+    DateTimeOffset? DueAt,
+    string? Assignee);
 

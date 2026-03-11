@@ -90,7 +90,14 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
         var items = enumerable
             .Skip(paging.Skip)
             .Take(paging.PageSize)
-            .Select(t => new TicketListItemDto(t.Id, t.Title, t.Status, t.Priority, t.CreatedAt, t.DueAt))
+            .Select(t => new TicketListItemDto(
+                t.Id,
+                t.Title,
+                t.Status,
+                t.Priority,
+                t.CreatedAt,
+                t.DueAt,
+                t.Assignee?.Name))
             .ToList();
 
         return Task.FromResult(new PagedResult<TicketListItemDto>(items, total, paging));

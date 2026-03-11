@@ -1,0 +1,41 @@
+@using MudBlazor
+
+@inject NavigationManager Navigation
+
+<div class="top-search">
+    <MudTextField T="string"
+                  @bind-Value="_query"
+                  Placeholder="Search tickets"
+                  Variant="Variant.Outlined"
+                  Margin="Margin.Dense"
+                  Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Outlined.Search"
+                  Clearable="true"
+                  Class="top-search__field"
+                  OnKeyDown="HandleKeyDown" />
+
+    <MudIconButton Icon="@Icons.Material.Outlined.ArrowForward"
+                   Color="Color.Default"
+                   Class="top-search__submit"
+                   OnClick="SubmitSearch"
+                   aria-label="Search tickets" />
+</div>
+
+@code {
+    private string? _query;
+
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key is "Enter")
+            SubmitSearch();
+    }
+
+    private void SubmitSearch()
+    {
+        var target = string.IsNullOrWhiteSpace(_query)
+            ? AppRoutes.Tickets
+            : $"{AppRoutes.Tickets}?q={Uri.EscapeDataString(_query.Trim())}";
+
+        Navigation.NavigateTo(target);
+    }
+}

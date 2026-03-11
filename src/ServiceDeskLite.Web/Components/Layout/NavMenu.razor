@@ -1,21 +1,49 @@
-﻿@using MudBlazor
+@using MudBlazor
 @using ServiceDeskLite.Web.Composition
 
-<MudNavMenu Dense="false">
-    @foreach (var item in NavRegistry.Items.OrderBy(i => i.Order))
+@{
+    var orderedItems = NavRegistry.Items.OrderBy(item => item.Order).ToList();
+    var sectionIndex = orderedItems.FindIndex(item => item.IsSection);
+    var workspaceItems = sectionIndex >= 0
+        ? orderedItems.Take(sectionIndex).ToList()
+        : orderedItems;
+    var adminLabel = sectionIndex >= 0 ? orderedItems[sectionIndex].Title : string.Empty;
+    var adminItems = sectionIndex >= 0
+        ? orderedItems.Skip(sectionIndex + 1).ToList()
+        : [];
+}
+
+<div class="navmenu">
+    <div class="navmenu__group">
+        <div class="navmenu__label">Workspace</div>
+        <MudNavMenu Dense="false" Class="navmenu__list">
+            @foreach (var item in workspaceItems)
+            {
+                <MudNavLink Href="@item.Href"
+                            Icon="@item.Icon"
+                            Match="@item.Match"
+                            Class="navmenu__link">
+                    @item.Title
+                </MudNavLink>
+            }
+        </MudNavMenu>
+    </div>
+
+    @if (adminItems.Count > 0)
     {
-        if (item.IsSection)
-        {
-            <MudDivider Class="my-2" />
-            <MudText Typo="Typo.overline" Class="px-4">@item.Title</MudText>
-        }
-        else
-        {
-            <MudNavLink Href="@item.Href"
-                        Icon="@item.Icon"
-                        Match="@item.Match">
-                @item.Title
-            </MudNavLink>
-        }
+        <div class="navmenu__group navmenu__group--secondary">
+            <div class="navmenu__label">@adminLabel</div>
+            <MudNavMenu Dense="false" Class="navmenu__list">
+                @foreach (var item in adminItems)
+                {
+                    <MudNavLink Href="@item.Href"
+                                Icon="@item.Icon"
+                                Match="@item.Match"
+                                Class="navmenu__link">
+                        @item.Title
+                    </MudNavLink>
+                }
+            </MudNavMenu>
+        </div>
     }
-</MudNavMenu>
+</div>

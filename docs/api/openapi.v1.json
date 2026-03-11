@@ -432,6 +432,12 @@
       },
       "TicketListItemResponse": {
         "properties": {
+          "assignee": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -463,7 +469,8 @@
           "priority",
           "status",
           "createdAt",
-          "dueAt"
+          "dueAt",
+          "assignee"
         ],
         "type": "object"
       },

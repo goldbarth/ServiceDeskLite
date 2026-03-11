@@ -1,46 +1,65 @@
 @page "/tickets/{Id:guid}"
+
 @using MudBlazor
 @using ServiceDeskLite.Contracts.V1.Tickets
+
 <PageTitle>Ticket Details</PageTitle>
 
 @if (_isLoading)
 {
-    @* Skeleton mirrors the real page structure: title → tabs → detail rows *@
-    <MudSkeleton SkeletonType="SkeletonType.Text" Width="40%" Height="36px" Class="mb-4"/>
+    <div class="ticket-detail-page">
+        <MudPaper Class="ticket-detail-surface ticket-detail-skeleton__header" Elevation="0">
+            <MudSkeleton Width="96px" Height="24px" />
+            <MudSkeleton Width="48%" Height="46px" />
+            <MudSkeleton Width="72%" Height="20px" />
 
-    <div class="d-flex gap-3 mb-4">
-        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="28px"/>
-        <MudSkeleton SkeletonType="SkeletonType.Text" Width="110px" Height="28px"/>
-        <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="28px"/>
-    </div>
-
-    <MudPaper Elevation="1" Class="pa-4">
-        @for (var i = 0; i < 5; i++)
-        {
-            <div class="d-flex gap-4 mb-3">
-                <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="20px"/>
-                <MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="20px"/>
+            <div class="ticket-detail-skeleton__signals">
+                <MudSkeleton Width="112px" Height="30px" />
+                <MudSkeleton Width="102px" Height="30px" />
             </div>
-        }
-        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="20px" Class="mt-4"/>
-        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80%" Height="20px" Class="mt-2"/>
-    </MudPaper>
+        </MudPaper>
+
+        <div class="ticket-detail-layout">
+            <div class="ticket-detail-main">
+                <div class="ticket-tabs ticket-tabs--skeleton">
+                    <MudSkeleton Width="120px" Height="42px" />
+                    <MudSkeleton Width="148px" Height="42px" />
+                    <MudSkeleton Width="132px" Height="42px" />
+                </div>
+
+                <MudPaper Class="ticket-detail-surface ticket-detail-skeleton__panel" Elevation="0">
+                    @for (var i = 0; i < 4; i++)
+                    {
+                        <MudSkeleton Width="100%" Height="20px" Class="mb-2" />
+                    }
+                </MudPaper>
+            </div>
+
+            <div class="ticket-detail-sidebar">
+                <MudPaper Class="ticket-detail-surface ticket-detail-skeleton__sidebar" Elevation="0">
+                    @for (var i = 0; i < 5; i++)
+                    {
+                        <MudSkeleton Width="100%" Height="18px" Class="mb-3" />
+                    }
+                </MudPaper>
+            </div>
+        </div>
+    </div>
 }
 else if (_error is not null)
 {
-    <AppErrorPanel Error="_error"/>
+    <AppErrorPanel Error="_error" />
 }
 else if (_ticket is null)
 {
-    <MudPaper Class="pa-6 d-flex flex-column align-items-center text-center" Elevation="1">
+    <MudPaper Class="ticket-detail-surface ticket-detail-empty" Elevation="0">
         <MudIcon Icon="@Icons.Material.Outlined.SearchOff"
-                 Color="Color.Default"
-                 Style="font-size: 3rem; opacity: 0.35;"
-                 Class="mb-3"/>
-        <MudText Typo="Typo.h6" Class="mb-1">Ticket Not Found</MudText>
-        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-            No ticket with this ID exists or it has been deleted.
-        </MudText>
+                 Class="ticket-detail-empty__icon"
+                 aria-hidden="true" />
+        <h1 class="ticket-detail-empty__title">Ticket not found</h1>
+        <p class="ticket-detail-empty__description">
+            No ticket with this ID exists or it is no longer available.
+        </p>
         <MudButton Variant="Variant.Outlined" Href="/tickets">
             Back to List
         </MudButton>
@@ -48,162 +67,359 @@ else if (_ticket is null)
 }
 else
 {
-    <MudText Typo="Typo.h5" Class="mb-4">@_ticket.Title</MudText>
+    <div class="ticket-detail-page">
+        <MudPaper Class="ticket-detail-surface ticket-detail-header" Elevation="0">
+            <div class="ticket-detail-header__content">
+                <span class="ticket-detail-header__ref">@FormatTicketRef(_ticket.Id)</span>
+                <h1 class="ticket-detail-header__title">@_ticket.Title</h1>
+                <p class="ticket-detail-header__summary">@BuildHeaderSummary(_ticket.Description)</p>
 
-    <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
+                <div class="ticket-detail-header__signals">
+                    <span class="@($"ticket-detail-badge ticket-detail-badge--status {StatusBadgeClass(_ticket.Status)}")">
+                        @FormatStatus(_ticket.Status)
+                    </span>
+                    <span class="@($"ticket-detail-badge ticket-detail-badge--priority {PriorityBadgeClass(_ticket.Priority)}")">
+                        @FormatPriority(_ticket.Priority)
+                    </span>
+                </div>
+            </div>
 
-        @* ── Tab 1: Details ── *@
-        <MudTabPanel Text="Details">
-            <MudSimpleTable Hover="false" Striped="false" Dense="true" Class="mb-4" Style="max-width:480px">
-                <tbody>
-                <tr>
-                    <td>
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">Status</MudText>
-                    </td>
-                    <td>@_ticket.Status</td>
-                </tr>
-                <tr>
-                    <td>
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">Priority</MudText>
-                    </td>
-                    <td>@_ticket.Priority</td>
-                </tr>
-                <tr>
-                    <td>
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">Assignee</MudText>
-                    </td>
-                    <td>@(_ticket.Assignee ?? "-")</td>
-                </tr>
-                <tr>
-                    <td>
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">Created</MudText>
-                    </td>
-                    <td>@_ticket.CreatedAt.ToString("u")</td>
-                </tr>
-                <tr>
-                    <td>
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">Due</MudText>
-                    </td>
-                    <td>@(_ticket.DueAt is null ? "-" : _ticket.DueAt.Value.ToString("u"))</td>
-                </tr>
-                </tbody>
-            </MudSimpleTable>
+            <div class="ticket-detail-header__actions">
+                <div class="ticket-detail-header__actions-copy">
+                    <span class="ticket-detail-header__actions-label">Workflow actions</span>
+                    <p class="ticket-detail-header__actions-note">@WorkflowActionNote</p>
+                </div>
 
-            <MudText Typo="Typo.body1" Class="mb-4">@_ticket.Description</MudText>
+                <div class="ticket-detail-header__buttons">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Default"
+                               Class="ticket-detail-header__button ticket-detail-header__button--primary"
+                               OnClick="OpenChangeStatusDialogAsync"
+                               Disabled="@(_ticket.AllowedTransitions.Count == 0)">
+                        Change Status
+                    </MudButton>
 
-            <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                       OnClick="OpenChangeStatusDialogAsync"
-                       Disabled="@(_ticket.AllowedTransitions.Count == 0)">
-                Change Status
-            </MudButton>
-            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2"
-                       OnClick="OpenAssignDialogAsync"
-                       Disabled="@(_ticket.Status == TicketStatus.Closed)">
-                @(_ticket.Assignee is null ? "Assign" : "Reassign")
-            </MudButton>
-        </MudTabPanel>
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Default"
+                               Class="ticket-detail-header__button"
+                               OnClick="OpenAssignDialogAsync"
+                               Disabled="@(_ticket.Status == TicketStatus.Closed)">
+                        @(_ticket.Assignee is null ? "Assign" : "Reassign")
+                    </MudButton>
+                </div>
+            </div>
+        </MudPaper>
 
-        @* ── Tab 2: Comments ── *@
-        <MudTabPanel Text=@($"Comments ({_ticket.Comments.Count})")>
-            @if (_ticket.Comments.Count == 0)
-            {
-                <MudText Color="Color.Secondary">No comments yet.</MudText>
-            }
-            else
-            {
-                @foreach (var comment in _ticket.Comments)
-                {
-                    <MudPaper Outlined="true" Class="pa-3 mb-2">
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">
-                            @(comment.Author ?? "Anonymous") · @comment.CreatedAt.ToString("u")
-                        </MudText>
-                        <MudText Class="mt-1">@comment.Content</MudText>
-                    </MudPaper>
-                }
-            }
+        <div class="ticket-detail-layout">
+            <div class="ticket-detail-main">
+                <nav class="ticket-tabs" aria-label="Ticket work areas">
+                    <button type="button"
+                            class="@TabClass(TicketDetailsTab.Details)"
+                            @onclick="() => SelectTab(TicketDetailsTab.Details)"
+                            aria-selected="@(_activeTab == TicketDetailsTab.Details)">
+                        <span>Details</span>
+                    </button>
 
-            <MudDivider Class="my-4"/>
+                    <button type="button"
+                            class="@TabClass(TicketDetailsTab.Comments)"
+                            @onclick="() => SelectTab(TicketDetailsTab.Comments)"
+                            aria-selected="@(_activeTab == TicketDetailsTab.Comments)">
+                        <span>Comments</span>
+                        <span class="ticket-tabs__count">@CommentCount</span>
+                    </button>
 
-            <MudTextField T="string" Label="Author (optional)" @bind-Value="_commentAuthor"
-                          MaxLength="100" Class="mb-2" Disabled="_isSubmittingComment"/>
-            <MudTextField T="string" Label="Comment" @bind-Value="_commentContent"
-                          Lines="3" MaxLength="2000" Class="mb-2" Disabled="_isSubmittingComment"/>
+                    <button type="button"
+                            class="@TabClass(TicketDetailsTab.History)"
+                            @onclick="() => SelectTab(TicketDetailsTab.History)"
+                            aria-selected="@(_activeTab == TicketDetailsTab.History)">
+                        <span>History</span>
+                        <span class="ticket-tabs__count">@HistoryCount</span>
+                    </button>
+                </nav>
 
-            @if (_commentError is not null)
-            {
-                <AppErrorPanel Error="_commentError"/>
-            }
-
-            <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                       OnClick="SubmitCommentAsync"
-                       Disabled="@(_isSubmittingComment || string.IsNullOrWhiteSpace(_commentContent))">
-                @if (_isSubmittingComment)
-                {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
-                }
-                Add Comment
-            </MudButton>
-        </MudTabPanel>
-
-        @* ── Tab 3: History ── *@
-        <MudTabPanel Text=@($"History ({_auditEvents?.Count ?? 0})")>
-            @if (_auditEventsError is not null)
-            {
-                <AppErrorPanel Error="_auditEventsError"/>
-            }
-            else if (_auditEvents is null || _auditEvents.Count == 0)
-            {
-                <MudText Color="Color.Secondary">No history yet.</MudText>
-            }
-            else
-            {
-                <MudTimeline TimelineAlign="TimelineAlign.Start">
-                    @foreach (var e in _auditEvents)
+                <MudPaper Class="ticket-detail-surface ticket-panel" Elevation="0">
+                    @if (_activeTab == TicketDetailsTab.Details)
                     {
-                        <MudTimelineItem Color="EventTypeColor(e.Payload)" Size="Size.Small">
-                            <ItemContent>
-                                <MudText Typo="Typo.body1"><b>@FormatEventType(e.Payload)</b></MudText>
-                                @if (e.Payload is TicketCommentAddedPayload comment)
+                        <div class="ticket-panel__section">
+                            <span class="ticket-panel__eyebrow">Description</span>
+                            <div class="ticket-description">
+                                @_ticket.Description
+                            </div>
+                        </div>
+
+                        <div class="ticket-panel__section">
+                            <span class="ticket-panel__eyebrow">Operational focus</span>
+                            <p class="ticket-panel__text">@DetailsSummaryText</p>
+                        </div>
+                    }
+                    else if (_activeTab == TicketDetailsTab.Comments)
+                    {
+                        <div class="ticket-conversation">
+                            @if (_auditEventsError is not null)
+                            {
+                                <div class="ticket-panel__notice">
+                                    Workflow events are temporarily unavailable. Comments remain visible below.
+                                </div>
+                            }
+
+                            <div class="ticket-conversation__list">
+                                @if (ConversationItems.Count == 0)
                                 {
-                                    <MudText Typo="Typo.body2" Color="Color.Secondary">By @comment.Author</MudText>
-                                    <div class="history-comment-preview mud-typography mud-typography-body2">
-                                        @comment.Content
+                                    <div class="ticket-conversation__empty">
+                                        <span class="ticket-conversation__empty-title">No conversation yet</span>
+                                        <p class="ticket-conversation__empty-copy">
+                                            Use the reply area below to add the first internal note to this ticket.
+                                        </p>
                                     </div>
                                 }
-                                else if (e.Payload is TicketCreatedPayload created)
+                                else
                                 {
-                                    <MudText Typo="Typo.body2">@created.Title · Priority: @created.Priority</MudText>
-                                }
-                                else if (e.Payload is TicketStatusChangedPayload statusChanged)
-                                {
-                                    <MudText
-                                        Typo="Typo.body2">@statusChanged.FromStatus → @statusChanged.ToStatus</MudText>
-                                }
-                                else if (e.Payload is TicketAssigneeChangedPayload assigneeChanged)
-                                {
-                                    <MudText Typo="Typo.body2">
-                                        @(assigneeChanged.NewAssignee is not null
-                                            ? $"Assigned to {assigneeChanged.NewAssignee}"
-                                            : $"Unassigned from {assigneeChanged.PreviousAssignee}")
-                                    </MudText>
-                                }
-                                else if (e.Payload is RawAuditEventPayload raw)
-                                {
-                                    <MudText Typo="Typo.body2" Color="Color.Secondary">@raw.RawJson</MudText>
-                                }
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                    @e.OccurredAt.ToString("u")
-                                    @if (e.Payload is not TicketCommentAddedPayload && !string.IsNullOrWhiteSpace(e.Actor))
+                                    @foreach (var item in ConversationItems)
                                     {
-                                        <span> · @e.Actor</span>
-                                    }
-                                </MudText>
-                            </ItemContent>
-                        </MudTimelineItem>
-                    }
-                </MudTimeline>
-            }
-        </MudTabPanel>
+                                        if (item.Kind == ConversationItemKind.Comment && item.Comment is not null)
+                                        {
+                                            <article class="ticket-message">
+                                                <div class="ticket-message__avatar">@CommentInitials(item.Comment.Author)</div>
 
-    </MudTabs>
+                                                <div class="ticket-message__bubble">
+                                                    <div class="ticket-message__header">
+                                                        <div class="ticket-message__identity">
+                                                            <span class="ticket-message__author">@DisplayAuthor(item.Comment.Author)</span>
+                                                            <span class="ticket-message__channel">Internal note</span>
+                                                        </div>
+
+                                                        <span class="ticket-message__time">@FormatDateTime(item.Comment.CreatedAt)</span>
+                                                    </div>
+
+                                                    <div class="ticket-message__content">@item.Comment.Content</div>
+                                                </div>
+                                            </article>
+                                        }
+                                        else if (item.Kind == ConversationItemKind.SystemEvent && item.Event is not null)
+                                        {
+                                            <div class="ticket-system-event">
+                                                <span class="ticket-system-event__line" aria-hidden="true"></span>
+
+                                                <div class="ticket-system-event__content">
+                                                    <MudIcon Icon="@EventIcon(item.Event.Payload)"
+                                                             Class="ticket-system-event__icon"
+                                                             aria-hidden="true" />
+
+                                                    <div class="ticket-system-event__copy">
+                                                        <span class="ticket-system-event__title">@FormatEventType(item.Event.Payload)</span>
+                                                        <span class="ticket-system-event__detail">@FormatEventSummary(item.Event)</span>
+                                                    </div>
+
+                                                    <span class="ticket-system-event__time">@FormatDateTime(item.Event.OccurredAt)</span>
+                                                </div>
+
+                                                <span class="ticket-system-event__line" aria-hidden="true"></span>
+                                            </div>
+                                        }
+                                    }
+                                }
+                            </div>
+
+                            <div class="ticket-reply">
+                                <div class="ticket-reply__header">
+                                    <div>
+                                        <h2 class="ticket-reply__title">Reply</h2>
+                                        <p class="ticket-reply__copy">
+                                            Add an internal working note for the service desk record.
+                                        </p>
+                                    </div>
+
+                                    <div class="ticket-reply__channels" aria-label="Reply channel">
+                                        <span class="ticket-reply__channel ticket-reply__channel--active">Internal note</span>
+                                        <span class="ticket-reply__channel ticket-reply__channel--muted">Customer reply unavailable</span>
+                                    </div>
+                                </div>
+
+                                <div class="ticket-reply__form">
+                                    <MudTextField T="string"
+                                                  Label="Author (optional)"
+                                                  @bind-Value="_commentAuthor"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.None"
+                                                  MaxLength="100"
+                                                  Class="ticket-reply__author"
+                                                  Disabled="_isSubmittingComment" />
+
+                                    <MudTextField T="string"
+                                                  Label="Internal note"
+                                                  @bind-Value="_commentContent"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.None"
+                                                  Lines="5"
+                                                  MaxLength="2000"
+                                                  Immediate="true"
+                                                  Class="ticket-reply__content"
+                                                  Disabled="_isSubmittingComment" />
+                                </div>
+
+                                @if (_commentError is not null)
+                                {
+                                    <AppErrorPanel Error="_commentError" />
+                                }
+
+                                <div class="ticket-reply__footer">
+                                    <span class="ticket-reply__hint">
+                                        Customer-facing replies are not yet modeled in the current ticket API.
+                                    </span>
+
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               Class="ticket-reply__submit"
+                                               OnClick="SubmitCommentAsync"
+                                               Disabled="@(_isSubmittingComment || string.IsNullOrWhiteSpace(_commentContent))">
+                                        @if (_isSubmittingComment)
+                                        {
+                                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                        }
+                                        Add Internal Note
+                                    </MudButton>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else if (_activeTab == TicketDetailsTab.History)
+                    {
+                        @if (_auditEventsError is not null)
+                        {
+                            <AppErrorPanel Error="_auditEventsError" />
+                        }
+                        else if (_auditEvents is null || _auditEvents.Count == 0)
+                        {
+                            <div class="ticket-history__empty">
+                                <span class="ticket-history__empty-title">No history yet</span>
+                                <p class="ticket-history__empty-copy">
+                                    Status changes, assignments and future workflow events will appear here.
+                                </p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="ticket-history">
+                                @for (var i = 0; i < _auditEvents.Count; i++)
+                                {
+                                    var auditEvent = _auditEvents[i];
+
+                                    <article class="ticket-history__item">
+                                        <div class="ticket-history__rail">
+                                            <span class="@($"ticket-history__marker {HistoryMarkerClass(auditEvent.Payload)}")">
+                                                <MudIcon Icon="@EventIcon(auditEvent.Payload)"
+                                                         Class="ticket-history__marker-icon"
+                                                         aria-hidden="true" />
+                                            </span>
+
+                                            @if (i < _auditEvents.Count - 1)
+                                            {
+                                                <span class="ticket-history__line" aria-hidden="true"></span>
+                                            }
+                                        </div>
+
+                                        <div class="ticket-history__content">
+                                            <div class="ticket-history__top">
+                                                <h2 class="ticket-history__title">@FormatEventType(auditEvent.Payload)</h2>
+                                                <span class="ticket-history__time">@FormatDateTime(auditEvent.OccurredAt)</span>
+                                            </div>
+
+                                            <p class="ticket-history__summary">@FormatEventSummary(auditEvent)</p>
+
+                                            @if (auditEvent.Payload is TicketCommentAddedPayload commentPayload)
+                                            {
+                                                <div class="ticket-history__preview">@commentPayload.Content</div>
+                                            }
+                                            else if (auditEvent.Payload is RawAuditEventPayload rawPayload)
+                                            {
+                                                <div class="ticket-history__preview ticket-history__preview--muted">@rawPayload.RawJson</div>
+                                            }
+
+                                            @if (!string.IsNullOrWhiteSpace(auditEvent.Actor))
+                                            {
+                                                <span class="ticket-history__actor">@auditEvent.Actor</span>
+                                            }
+                                        </div>
+                                    </article>
+                                }
+                            </div>
+                        }
+                    }
+                </MudPaper>
+            </div>
+
+            <aside class="ticket-detail-sidebar">
+                <MudPaper Class="ticket-detail-surface ticket-context" Elevation="0">
+                    <div class="ticket-sidebar-section">
+                        <span class="ticket-panel__eyebrow">Context</span>
+
+                        <dl class="ticket-context__grid">
+                            <div class="ticket-context__row">
+                                <dt>Status</dt>
+                                <dd>
+                                    <span class="@($"ticket-detail-badge ticket-detail-badge--status {StatusBadgeClass(_ticket.Status)}")">
+                                        @FormatStatus(_ticket.Status)
+                                    </span>
+                                </dd>
+                            </div>
+
+                            <div class="ticket-context__row">
+                                <dt>Priority</dt>
+                                <dd>
+                                    <span class="@($"ticket-detail-badge ticket-detail-badge--priority {PriorityBadgeClass(_ticket.Priority)}")">
+                                        @FormatPriority(_ticket.Priority)
+                                    </span>
+                                </dd>
+                            </div>
+
+                            <div class="ticket-context__row">
+                                <dt>Assignee</dt>
+                                <dd>@(_ticket.Assignee ?? "Unassigned")</dd>
+                            </div>
+
+                            <div class="ticket-context__row">
+                                <dt>Created</dt>
+                                <dd>@FormatDateTime(_ticket.CreatedAt)</dd>
+                            </div>
+
+                            <div class="ticket-context__row">
+                                <dt>Due</dt>
+                                <dd class="@DueValueClass(_ticket)">@FormatDue(_ticket)</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </MudPaper>
+
+                <MudPaper Class="ticket-detail-surface ticket-next-steps" Elevation="0">
+                    <div class="ticket-sidebar-section">
+                        <span class="ticket-panel__eyebrow">Recommended next steps</span>
+                        <ul class="ticket-next-steps__list">
+                            @foreach (var suggestion in SuggestedNextSteps)
+                            {
+                                <li>@suggestion</li>
+                            }
+                        </ul>
+                    </div>
+
+                    <div class="ticket-sidebar-section ticket-next-steps__workflow">
+                        <span class="ticket-panel__eyebrow">Allowed next</span>
+
+                        @if (_ticket.AllowedTransitions.Count == 0)
+                        {
+                            <p class="ticket-next-steps__empty">No further workflow transition is currently available.</p>
+                        }
+                        else
+                        {
+                            <div class="ticket-next-steps__chips">
+                                @foreach (var status in _ticket.AllowedTransitions)
+                                {
+                                    <span class="ticket-next-steps__chip">@FormatStatus(status)</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </MudPaper>
+            </aside>
+        </div>
+    </div>
 }

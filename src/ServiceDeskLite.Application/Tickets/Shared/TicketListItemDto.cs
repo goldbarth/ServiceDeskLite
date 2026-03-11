@@ -8,4 +8,5 @@ public record TicketListItemDto(
     TicketStatus Status,
     TicketPriority Priority,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? DueAt);
+    DateTimeOffset? DueAt,
+    string? Assignee);

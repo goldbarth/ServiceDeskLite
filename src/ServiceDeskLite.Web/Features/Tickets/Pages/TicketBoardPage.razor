@@ -4,90 +4,177 @@
 
 @implements IDisposable
 
-<PageTitle>Board – ServiceDeskLite</PageTitle>
+<PageTitle>Board - ServiceDeskLite</PageTitle>
 
-<div class="d-flex align-items-center gap-3 mb-4">
-    <MudText Typo="Typo.h4" Class="mb-0">Board</MudText>
-    <MudSwitch T="bool"
-               Value="BoardState.HideClosed"
-               ValueChanged="OnHideClosedChanged"
-               Color="Color.Primary"
-               Label="Hide Closed"
-               Class="mb-0" />
-    
-    <MudButton Class="ms-auto"
-               Variant="Variant.Filled"
-               Color="Color.Primary"
-               StartIcon="@Icons.Material.Filled.Add"
-               Href="/tickets/new"
-               Size="Size.Small">
-        New Ticket
-    </MudButton>
-</div>
+<div class="board-page">
+    <h1 class="u-screen-reader-only">Ticket board</h1>
 
-@if (_moveError is not null)
-{
-    <MudAlert Severity="Severity.Warning"
-              Class="mb-3"
-              ShowCloseIcon="true"
-              CloseIconClicked="@(() => _moveError = null)">
-        <strong>Status change rejected:</strong> @(_moveError.Detail ?? _moveError.Title)
-    </MudAlert>
-}
+    <DashboardHero Badge="Workflow board"
+                   Title="Ticket board"
+                   Description="Move service requests through a clear operational workflow with enough context to scan, prioritize, and act."
+                   Stats="HeroStats" />
 
-@if (BoardState.State is TicketBoardState.Error loadError)
-{
-    <AppErrorPanel Error="loadError.ApiError" />
-}
-else if (BoardState.State is TicketBoardState.Idle or TicketBoardState.Loading)
-{
-    <div class="board-skeleton">
-        @foreach (var _ in VisibleColumns)
-        {
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle"
-                         Height="400px"
-                         Class="board-skeleton-col" />
-        }
-    </div>
-}
-else if (BoardState.State is TicketBoardState.Loaded loaded)
-{
-    <div class="board-scroll-wrapper">
-        <div class="board-container @(_isDragging ? "board-container--dragging" : "")">
-            @foreach (var status in VisibleColumns)
-            {
-                var columnTickets = TicketsForColumn(loaded.Tickets, status);
-                <div class="board-column"
-                     @ondragover:preventDefault
-                     @ondrop="() => OnDrop(status)">
+    <div class="board-toolbar">
+        <div class="board-flow-surface">
+            <span class="board-flow-surface__label">Workflow</span>
 
-                    <div class="board-column-header">
-                        <span class="board-column-title">@FormatStatus(status)</span>
-                        <span class="board-column-count">@columnTickets.Count</span>
+            <div class="board-flow" aria-label="Board workflow overview">
+                @for (var i = 0; i < WorkflowSteps.Count; i++)
+                {
+                    var step = WorkflowSteps[i];
+
+                    <div class="board-flow__step">
+                        <span class="board-flow__step-label">@step.Label</span>
+                        <span class="board-flow__step-caption">@step.Caption</span>
                     </div>
 
-                    <div class="board-column-body">
-                        @foreach (var ticket in columnTickets)
-                        {
-                            <div class="board-card @(_draggingTicket?.Id == ticket.Id ? "board-card--dragging" : "")"
-                                 draggable="true"
-                                 @ondragstart="() => OnDragStart(ticket)"
-                                 @ondragend="OnDragEnd">
-                                <a href="/tickets/@ticket.Id" class="board-card-title">@ticket.Title</a>
-                                <div class="board-card-footer">
-                                    <span class="board-priority board-priority--@ticket.Priority.ToString().ToLowerInvariant()">
-                                        @ticket.Priority
-                                    </span>
-                                    <span class="board-card-date">
-                                        @ticket.CreatedAt.ToString("dd.MM.yy")
-                                    </span>
-                                </div>
-                            </div>
-                        }
-                    </div>
+                    @if (i < WorkflowSteps.Count - 1)
+                    {
+                        <MudIcon Icon="@Icons.Material.Outlined.East"
+                                 Class="board-flow__arrow"
+                                 aria-hidden="true" />
+                    }
+                }
+            </div>
+        </div>
 
-                </div>
-            }
+        <div class="board-toolbar__actions">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       Href="/tickets/new"
+                       Class="board-toolbar__new-ticket">
+                New Ticket
+            </MudButton>
         </div>
     </div>
-}
+
+    @if (_moveError is not null)
+    {
+        <MudAlert Severity="Severity.Warning"
+                  Class="board-alert"
+                  Dense="true"
+                  ShowCloseIcon="true"
+                  CloseIconClicked="@(() => _moveError = null)">
+            <strong>Status change rejected:</strong> @(_moveError.Detail ?? _moveError.Title)
+        </MudAlert>
+    }
+
+    @if (BoardState.State is TicketBoardState.Error loadError)
+    {
+        <AppErrorPanel Error="loadError.ApiError" />
+    }
+    else if (BoardState.State is TicketBoardState.Idle or TicketBoardState.Loading)
+    {
+        <div class="board-skeleton">
+            @foreach (var _ in VisibleColumns)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle"
+                             Height="540px"
+                             Class="board-skeleton__column" />
+            }
+        </div>
+    }
+    else if (BoardState.State is TicketBoardState.Loaded loaded)
+    {
+        <MudPaper Class="board-surface" Elevation="0">
+            <div class="board-scroll-wrapper">
+                <div class="board-container @(_isDragging ? "board-container--dragging" : string.Empty)">
+                    @foreach (var status in VisibleColumns)
+                    {
+                        var columnTickets = TicketsForColumn(loaded.Tickets, status);
+                        var columnSpec = ColumnSpecs[status];
+
+                        <section class="board-column @ColumnClass(status)"
+                                 @ondragover:preventDefault
+                                 @ondragenter="() => OnDragEnter(status)"
+                                 @ondragleave="() => OnDragLeave(status)"
+                                 @ondrop="() => OnDrop(status)">
+
+                            <header class="board-column__header">
+                                <div class="board-column__heading">
+                                    <span class="board-column__eyebrow">@columnSpec.WorkflowHint</span>
+
+                                    <div class="board-column__title-row">
+                                        <h2 class="board-column__title">@FormatStatus(status)</h2>
+                                        <span class="board-column__count">@columnTickets.Count</span>
+                                    </div>
+
+                                    <p class="board-column__description">@columnSpec.Description</p>
+                                </div>
+
+                                <div class="board-column__allowed">
+                                    <span class="board-column__allowed-label">Allowed next</span>
+                                    <span class="board-column__allowed-value">@AllowedNextText(status)</span>
+                                </div>
+                            </header>
+
+                            @if (_isDragging)
+                            {
+                                <div class="@DropZoneClass(status)">
+                                    <MudIcon Icon="@Icons.Material.Outlined.Download"
+                                             Class="board-dropzone__icon"
+                                             aria-hidden="true" />
+                                    <span>@DropZoneText(status)</span>
+                                </div>
+                            }
+
+                            <div class="board-column__body">
+                                @if (columnTickets.Count == 0)
+                                {
+                                    <div class="board-column__empty">
+                                        <span class="board-column__empty-label">No tickets</span>
+                                        <p class="board-column__empty-text">@EmptyStateText(status)</p>
+                                    </div>
+                                }
+
+                                @foreach (var ticket in columnTickets)
+                                {
+                                    <article class="board-card @(_draggingTicket?.Id == ticket.Id ? "board-card--dragging" : string.Empty)"
+                                             draggable="true"
+                                             @ondragstart="() => OnDragStart(ticket)"
+                                             @ondragend="OnDragEnd">
+                                        <div class="board-card__top">
+                                            <div class="board-card__ref-row">
+                                                <span class="board-card__drag-handle" aria-hidden="true">
+                                                    <MudIcon Icon="@Icons.Material.Outlined.DragIndicator" />
+                                                </span>
+                                                <span class="board-card__ref">@FormatTicketRef(ticket.Id)</span>
+                                            </div>
+
+                                            <span class="@($"board-priority {PriorityClass(ticket.Priority)}")">
+                                                @FormatPriority(ticket.Priority)
+                                            </span>
+                                        </div>
+
+                                        <a href="/tickets/@ticket.Id" class="board-card__title">@ticket.Title</a>
+                                        <p class="board-card__summary">@BuildCardSummary(ticket)</p>
+
+                                        <div class="board-card__meta">
+                                            <span class="@DateClass(ticket)">
+                                                <MudIcon Icon="@Icons.Material.Outlined.Schedule"
+                                                         Class="board-card__meta-icon"
+                                                         aria-hidden="true" />
+                                                @FormatBoardDate(ticket)
+                                            </span>
+
+                                            @if (!string.IsNullOrWhiteSpace(ticket.Assignee))
+                                            {
+                                                <span class="board-card__meta-item">
+                                                    <MudIcon Icon="@Icons.Material.Outlined.PersonOutline"
+                                                             Class="board-card__meta-icon"
+                                                             aria-hidden="true" />
+                                                    @ticket.Assignee
+                                                </span>
+                                            }
+                                        </div>
+                                    </article>
+                                }
+                            </div>
+                        </section>
+                    }
+                </div>
+            </div>
+        </MudPaper>
+    }
+</div>

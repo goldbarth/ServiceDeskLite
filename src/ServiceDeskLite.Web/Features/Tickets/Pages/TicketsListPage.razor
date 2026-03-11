@@ -5,217 +5,320 @@
 
 <PageTitle>Tickets</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-2">Tickets</MudText>
+<div class="tickets-page">
+    <h1 class="u-screen-reader-only">Tickets</h1>
 
-<MudPaper Elevation="1" Class="pa-3 mb-3">
-    <div class="d-flex flex-wrap gap-3 align-items-end">
-        <MudTextField T="string"
-                      Label="Search"
-                      Placeholder="Title or description..."
-                      @bind-Value="_filterQ"
-                      Adornment="Adornment.End"
-                      AdornmentIcon="@Icons.Material.Filled.Search"
-                      Disabled="@(State is TicketsListState.Loading)"
-                      OnKeyDown="OnSearchKeyDownAsync" />
+    <DashboardHero Badge="Service queue"
+                   Title="Tickets"
+                   Description="Search, sort, and work through the shared service management queue with focused operational context." />
 
-        <MudSelect T="TicketStatus"
-                   Label="Status"
-                   MultiSelection="true"
-                   @bind-SelectedValues="_filterStatuses"
-                   Dense="true"
-                   Disabled="@(State is TicketsListState.Loading)">
-            @foreach (var s in Enum.GetValues<TicketStatus>())
-            {
-                <MudSelectItem T="TicketStatus" Value="s">@s</MudSelectItem>
-            }
-        </MudSelect>
+    <MudPaper Class="tickets-surface tickets-filters" Elevation="0">
+        <div class="tickets-filters__grid">
+            <div class="tickets-field tickets-field--search">
+                <div class="tickets-field__heading">
+                    <span class="tickets-field__label">Search</span>
+                </div>
 
-        <MudSelect T="TicketPriority"
-                   Label="Priority"
-                   MultiSelection="true"
-                   @bind-SelectedValues="_filterPriorities"
-                   Dense="true"
-                   Disabled="@(State is TicketsListState.Loading)">
-            @foreach (var p in Enum.GetValues<TicketPriority>())
-            {
-                <MudSelectItem T="TicketPriority" Value="p">@p</MudSelectItem>
-            }
-        </MudSelect>
+                <MudTextField T="string"
+                              Placeholder="Title or reference..."
+                              @bind-Value="_filterQ"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.None"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Outlined.Search"
+                              Class="tickets-field__input"
+                              Disabled="@(State is TicketsListState.Loading)"
+                              OnKeyDown="OnSearchKeyDownAsync" />
+            </div>
 
-        <MudTextField T="string"
-                      Label="Assignee"
-                      Placeholder="Name..."
-                      @bind-Value="_filterAssignee"
-                      Disabled="@(State is TicketsListState.Loading)"
-                      OnKeyDown="OnSearchKeyDownAsync" />
+            <div class="tickets-field tickets-field--multi">
+                <div class="tickets-field__heading">
+                    <span class="tickets-field__label">Status</span>
+                    <span class="tickets-field__meta">Multi-select</span>
+                </div>
 
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   OnClick="ApplyFiltersAsync"
-                   Disabled="@(State is TicketsListState.Loading)">
-            Search
-        </MudButton>
+                <MudSelect T="TicketStatus"
+                           MultiSelection="true"
+                           Placeholder="All statuses"
+                           @bind-SelectedValues="_filterStatuses"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.None"
+                           Class="tickets-field__input"
+                           Disabled="@(State is TicketsListState.Loading)">
+                    @foreach (var status in Enum.GetValues<TicketStatus>())
+                    {
+                        <MudSelectItem T="TicketStatus" Value="status">@FormatStatus(status)</MudSelectItem>
+                    }
+                </MudSelect>
+            </div>
 
-        <MudButton Variant="Variant.Text"
-                   OnClick="ClearFiltersAsync"
-                   Disabled="@(State is TicketsListState.Loading)">
-            Reset
-        </MudButton>
-    </div>
-</MudPaper>
+            <div class="tickets-field tickets-field--multi">
+                <div class="tickets-field__heading">
+                    <span class="tickets-field__label">Priority</span>
+                    <span class="tickets-field__meta">Multi-select</span>
+                </div>
 
-@if (State is TicketsListState.Loading or TicketsListState.Idle)
-{
-    <MudSkeleton Height="32px" Width="220px" Class="mb-3" />
-    <MudSkeleton Height="240px" />
-}
-else if (State is TicketsListState.Error err)
-{
-    <AppErrorPanel Error="err.ApiError" />
-}
-else if (State is TicketsListState.Loaded { Data.Items.Count: 0 })
-{
-    <MudPaper Class="pa-6 d-flex flex-column align-items-center text-center" Elevation="1">
-        <MudIcon Icon="@Icons.Material.Outlined.ConfirmationNumber"
-                 Color="Color.Default"
-                 Style="font-size: 3rem; opacity: 0.35;"
-                 Class="mb-3" />
-        <MudText Typo="Typo.h6" Class="mb-1">No Tickets Found</MudText>
-        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-            @(Query.HasActiveFilters()
-                ? "No results match the active filters. Try clearing the filters or adjusting your search."
-                : "No tickets yet. Create the first one.")
-        </MudText>
-        @if (Query.HasActiveFilters())
+                <MudSelect T="TicketPriority"
+                           MultiSelection="true"
+                           Placeholder="All priorities"
+                           @bind-SelectedValues="_filterPriorities"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.None"
+                           Class="tickets-field__input"
+                           Disabled="@(State is TicketsListState.Loading)">
+                    @foreach (var priority in Enum.GetValues<TicketPriority>())
+                    {
+                        <MudSelectItem T="TicketPriority" Value="priority">@FormatPriority(priority)</MudSelectItem>
+                    }
+                </MudSelect>
+            </div>
+
+            <div class="tickets-field">
+                <div class="tickets-field__heading">
+                    <span class="tickets-field__label">Assignee</span>
+                </div>
+
+                <MudTextField T="string"
+                              Placeholder="Person or team"
+                              @bind-Value="_filterAssignee"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.None"
+                              Class="tickets-field__input"
+                              Disabled="@(State is TicketsListState.Loading)"
+                              OnKeyDown="OnSearchKeyDownAsync" />
+            </div>
+
+            <div class="tickets-filters__actions">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Default"
+                           Class="tickets-filters__apply"
+                           OnClick="ApplyFiltersAsync"
+                           Disabled="@(State is TicketsListState.Loading)">
+                    Apply filters
+                </MudButton>
+
+                <MudButton Variant="Variant.Text"
+                           Class="tickets-filters__reset"
+                           OnClick="ClearFiltersAsync"
+                           Disabled="@(State is TicketsListState.Loading)">
+                    Reset
+                </MudButton>
+            </div>
+        </div>
+    </MudPaper>
+
+    @if (State is TicketsListState.Loading or TicketsListState.Idle)
+    {
+        <MudPaper Class="tickets-surface tickets-table-shell" Elevation="0">
+            <MudSkeleton Height="42px" Width="240px" Class="mb-3" />
+            <MudSkeleton Height="430px" />
+        </MudPaper>
+    }
+    else if (State is TicketsListState.Error err)
+    {
+        <AppErrorPanel Error="err.ApiError" />
+    }
+    else if (State is TicketsListState.Loaded loaded)
+    {
+        var data = loaded.Data;
+
+        <div class="tickets-toolbar">
+            <div class="tickets-toolbar__meta">
+                <span class="tickets-toolbar__count">@data.TotalCount tickets</span>
+
+                @if (Query.HasActiveFilters())
+                {
+                    <MudChip T="string" Class="tickets-toolbar__chip" Size="Size.Small">
+                        @ActiveFilterCountLabel
+                    </MudChip>
+                }
+            </div>
+
+            <div class="tickets-toolbar__actions">
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                               Class="tickets-toolbar__refresh"
+                               OnClick="ReloadAsync"
+                               title="Refresh tickets" />
+
+                <div class="tickets-toolbar__page-size">
+                    <span class="tickets-toolbar__label">Page size</span>
+
+                    <MudSelect T="int"
+                               Dense="true"
+                               Value="Query.PageSize"
+                               ValueChanged="OnPageSizeChangedAsync"
+                               Variant="Variant.Text"
+                               AnchorOrigin="Origin.BottomCenter"
+                               Class="tickets-toolbar__page-size-select">
+                        <MudSelectItem Value="10">10</MudSelectItem>
+                        <MudSelectItem Value="25">25</MudSelectItem>
+                        <MudSelectItem Value="50">50</MudSelectItem>
+                        <MudSelectItem Value="100">100</MudSelectItem>
+                    </MudSelect>
+                </div>
+
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           Href="/tickets/new"
+                           Class="tickets-toolbar__new-ticket">
+                    New Ticket
+                </MudButton>
+            </div>
+        </div>
+
+        @if (data.Items.Count == 0)
         {
-            <MudButton Variant="Variant.Outlined" OnClick="ClearFiltersAsync">
-                Clear Filters
-            </MudButton>
+            <MudPaper Class="tickets-surface tickets-empty-state" Elevation="0">
+                <MudIcon Icon="@Icons.Material.Outlined.ConfirmationNumber"
+                         Color="Color.Default"
+                         Class="tickets-empty-state__icon" />
+
+                <div class="tickets-empty-state__content">
+                    <h2 class="tickets-empty-state__title">No tickets found</h2>
+                    <p class="tickets-empty-state__description">
+                        @(Query.HasActiveFilters()
+                            ? "No results match the current filters. Adjust the filters or clear them to widen the queue."
+                            : "No tickets are available yet. Create the first one to populate the shared queue.")
+                    </p>
+                </div>
+
+                @if (Query.HasActiveFilters())
+                {
+                    <MudButton Variant="Variant.Outlined" OnClick="ClearFiltersAsync">
+                        Clear filters
+                    </MudButton>
+                }
+                else
+                {
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               Href="/tickets/new">
+                        New Ticket
+                    </MudButton>
+                }
+            </MudPaper>
         }
         else
         {
-            <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.Add"
-                       Href="/tickets/new">
-                New Ticket
-            </MudButton>
+            <MudPaper Class="tickets-surface tickets-table-shell" Elevation="0">
+                <MudTable T="TicketListItemResponse"
+                          Items="data.Items"
+                          Dense="true"
+                          Hover="true"
+                          OnRowClick="HandleRowClick"
+                          Class="tickets-table">
+                    <HeaderContent>
+                        <MudTh Class="tickets-table__th tickets-table__th--ref">
+                            <span class="tickets-table__label">Ref</span>
+                        </MudTh>
+                        <MudTh Class="tickets-table__th tickets-table__th--title">
+                            <button type="button"
+                                    class="@SortButtonClass(TicketSortField.Title)"
+                                    @onclick="() => SortByAsync(TicketSortField.Title)">
+                                <span>Title</span>
+                                <MudIcon Icon="@SortIcon(TicketSortField.Title)" Class="tickets-sort__icon" />
+                            </button>
+                        </MudTh>
+                        <MudTh Class="tickets-table__th tickets-table__th--status">
+                            <button type="button"
+                                    class="@SortButtonClass(TicketSortField.Status)"
+                                    @onclick="() => SortByAsync(TicketSortField.Status)">
+                                <span>Status</span>
+                                <MudIcon Icon="@SortIcon(TicketSortField.Status)" Class="tickets-sort__icon" />
+                            </button>
+                        </MudTh>
+                        <MudTh Class="tickets-table__th tickets-table__th--priority">
+                            <button type="button"
+                                    class="@SortButtonClass(TicketSortField.Priority)"
+                                    @onclick="() => SortByAsync(TicketSortField.Priority)">
+                                <span>Priority</span>
+                                <MudIcon Icon="@SortIcon(TicketSortField.Priority)" Class="tickets-sort__icon" />
+                            </button>
+                        </MudTh>
+                        <MudTh Class="tickets-table__th tickets-table__th--due">
+                            <button type="button"
+                                    class="@SortButtonClass(TicketSortField.DueAt)"
+                                    @onclick="() => SortByAsync(TicketSortField.DueAt)">
+                                <span>Due</span>
+                                <MudIcon Icon="@SortIcon(TicketSortField.DueAt)" Class="tickets-sort__icon" />
+                            </button>
+                        </MudTh>
+                        <MudTh Class="tickets-table__th tickets-table__th--created">
+                            <button type="button"
+                                    class="@SortButtonClass(TicketSortField.CreatedAt)"
+                                    @onclick="() => SortByAsync(TicketSortField.CreatedAt)">
+                                <span>Created</span>
+                                <MudIcon Icon="@SortIcon(TicketSortField.CreatedAt)" Class="tickets-sort__icon" />
+                            </button>
+                        </MudTh>
+                    </HeaderContent>
+
+                    <RowTemplate>
+                        <MudTd DataLabel="Ref" Class="tickets-table__cell tickets-table__cell--ref">
+                            <span class="tickets-ref">@FormatTicketRef(context.Id)</span>
+                        </MudTd>
+
+                        <MudTd DataLabel="Title" Class="tickets-table__cell tickets-table__cell--title">
+                            <div class="tickets-title-cell">
+                                <div class="tickets-title-cell__title">@context.Title</div>
+                                <div class="tickets-title-cell__summary">@BuildSecondaryLine(context)</div>
+                            </div>
+                        </MudTd>
+
+                        <MudTd DataLabel="Status" Class="tickets-table__cell tickets-table__cell--status">
+                            <MudChip T="string"
+                                     Class="@($"tickets-chip tickets-chip--status {StatusChipClass(context.Status)}")"
+                                     Size="Size.Small">
+                                @FormatStatus(context.Status)
+                            </MudChip>
+                        </MudTd>
+
+                        <MudTd DataLabel="Priority" Class="tickets-table__cell tickets-table__cell--priority">
+                            <MudChip T="string"
+                                     Class="@($"tickets-chip tickets-chip--priority {PriorityChipClass(context.Priority)}")"
+                                     Size="Size.Small">
+                                @FormatPriority(context.Priority)
+                            </MudChip>
+                        </MudTd>
+
+                        <MudTd DataLabel="Due" Class="tickets-table__cell tickets-table__cell--due">
+                            <div class="tickets-date">
+                                @if (context.DueAt is null)
+                                {
+                                    <span class="tickets-date__value tickets-date__value--muted">No due date</span>
+                                }
+                                else
+                                {
+                                    <span class="@($"tickets-date__value{(IsOverdue(context) ? " tickets-date__value--alert" : string.Empty)}")">
+                                        @FormatDate(context.DueAt.Value)
+                                    </span>
+                                    <span class="tickets-date__meta">@FormatTime(context.DueAt.Value)</span>
+                                }
+                            </div>
+                        </MudTd>
+
+                        <MudTd DataLabel="Created" Class="tickets-table__cell tickets-table__cell--created">
+                            <div class="tickets-date">
+                                <span class="tickets-date__value tickets-date__value--muted">@FormatDate(context.CreatedAt)</span>
+                                <span class="tickets-date__meta">@FormatTime(context.CreatedAt)</span>
+                            </div>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+
+            <div class="tickets-pagination">
+                <MudText Typo="Typo.caption" Class="tickets-pagination__meta">
+                    Page @Query.Page of @data.TotalPages - @data.TotalCount total
+                </MudText>
+
+                <MudPagination Selected="Query.Page"
+                               SelectedChanged="OnPageChangedAsync"
+                               Count="@Math.Max(1, data.TotalPages)"
+                               Class="tickets-pagination__control" />
+            </div>
         }
-    </MudPaper>
-}
-else if (State is TicketsListState.Loaded loaded)
-{
-    var data = loaded.Data;
-
-    <div class="d-flex align-items-center mb-2">
-        <MudText Typo="Typo.caption">@data.TotalCount total</MudText>
-
-        <div class="d-flex align-items-center gap-2 ms-3">
-            <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                           OnClick="ReloadAsync"
-                           title="Reload" />
-
-            <MudSelect T="int"
-                       Dense="true"
-                       Label="Page size"
-                       Style="min-width: 80px"
-                       Value="Query.PageSize"
-                       ValueChanged="OnPageSizeChangedAsync"
-                       AnchorOrigin="Origin.BottomCenter">
-                <MudSelectItem Value="10">10</MudSelectItem>
-                <MudSelectItem Value="25">25</MudSelectItem>
-                <MudSelectItem Value="50">50</MudSelectItem>
-                <MudSelectItem Value="100">100</MudSelectItem>
-            </MudSelect>
-        </div>
-
-        <MudButton Class="ms-auto"
-                   Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Add"
-                   Href="/tickets/new"
-                   Size="Size.Small">
-            New Ticket
-        </MudButton>
-    </div>
-
-    <MudPaper Elevation="1" Class="pa-2">
-        <MudTable T="TicketListItemResponse"
-                  Items="data.Items"
-                  Dense="true"
-                  Hover="true"
-                  OnRowClick="HandleRowClick">
-            <HeaderContent>
-                <MudTh>Id</MudTh>
-                <MudTh>
-                    <MudButton Variant="Variant.Text" Size="Size.Small"
-                               OnClick="() => SortByAsync(TicketSortField.Title)">
-                        Title
-                        @if (Query.SortField == TicketSortField.Title)
-                        {
-                            <MudIcon Icon="@SortIcon(TicketSortField.Title)" Class="ms-1" />
-                        }
-                    </MudButton>
-                </MudTh>
-                <MudTh>
-                    <MudButton Variant="Variant.Text" Size="Size.Small"
-                               OnClick="() => SortByAsync(TicketSortField.Status)">
-                        Status
-                        @if (Query.SortField == TicketSortField.Status)
-                        {
-                            <MudIcon Icon="@SortIcon(TicketSortField.Status)" Class="ms-1" />
-                        }
-                    </MudButton>
-                </MudTh>
-                <MudTh>
-                    <MudButton Variant="Variant.Text" Size="Size.Small"
-                               OnClick="() => SortByAsync(TicketSortField.Priority)">
-                        Priority
-                        @if (Query.SortField == TicketSortField.Priority)
-                        {
-                            <MudIcon Icon="@SortIcon(TicketSortField.Priority)" Class="ms-1" />
-                        }
-                    </MudButton>
-                </MudTh>
-                <MudTh>
-                    <MudButton Variant="Variant.Text" Size="Size.Small"
-                               OnClick="() => SortByAsync(TicketSortField.DueAt)">
-                        DueAt
-                        @if (Query.SortField == TicketSortField.DueAt)
-                        {
-                            <MudIcon Icon="@SortIcon(TicketSortField.DueAt)" Class="ms-1" />
-                        }
-                    </MudButton>
-                </MudTh>
-                <MudTh>
-                    <MudButton Variant="Variant.Text" Size="Size.Small"
-                               OnClick="() => SortByAsync(TicketSortField.CreatedAt)">
-                        CreatedAt
-                        @if (Query.SortField == TicketSortField.CreatedAt)
-                        {
-                            <MudIcon Icon="@SortIcon(TicketSortField.CreatedAt)" Class="ms-1" />
-                        }
-                    </MudButton>
-                </MudTh>
-            </HeaderContent>
-
-            <RowTemplate>
-                <MudTd DataLabel="Id">@context.Id</MudTd>
-                <MudTd DataLabel="Title">@context.Title</MudTd>
-                <MudTd DataLabel="Status">@context.Status</MudTd>
-                <MudTd DataLabel="Priority">@context.Priority</MudTd>
-                <MudTd DataLabel="DueAt">@(context.DueAt is null ? "-" : context.DueAt.Value.ToString("u"))</MudTd>
-                <MudTd DataLabel="CreatedAt">@context.CreatedAt.ToString("u")</MudTd>
-            </RowTemplate>
-        </MudTable>
-    </MudPaper>
-
-    <div class="d-flex align-items-center justify-content-between mt-3">
-        <MudText Typo="Typo.caption">
-            Page @Query.Page of @data.TotalPages — @data.TotalCount total (@Query.PageSize per page)
-        </MudText>
-
-        <MudPagination Selected="Query.Page"
-                       SelectedChanged="OnPageChangedAsync"
-                       Count="@Math.Max(1, data.TotalPages)" />
-    </div>
-}
+    }
+</div>

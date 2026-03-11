@@ -75,7 +75,14 @@ public class EfTicketRepository : ITicketRepository
         var items = await q
             .Skip(paging.Skip)
             .Take(paging.PageSize)
-            .Select(t => new TicketListItemDto(t.Id, t.Title, t.Status, t.Priority, t.CreatedAt, t.DueAt))
+            .Select(t => new TicketListItemDto(
+                t.Id,
+                t.Title,
+                t.Status,
+                t.Priority,
+                t.CreatedAt,
+                t.DueAt,
+                t.Assignee != null ? t.Assignee.Value.Name : null))
             .ToListAsync(ct);
 
         return new PagedResult<TicketListItemDto>(items, total, paging);
