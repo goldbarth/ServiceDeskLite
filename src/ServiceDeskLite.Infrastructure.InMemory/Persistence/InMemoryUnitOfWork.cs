@@ -1,5 +1,6 @@
 ﻿using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Domain.Audit;
+using ServiceDeskLite.Domain.Outbox;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Infrastructure.InMemory.Persistence;
@@ -24,6 +25,10 @@ internal sealed class InMemoryUnitOfWork : IUnitOfWork
         var auditEventAdds = PendingAdds.OfType<AuditEvent>().ToArray();
         if (auditEventAdds.Length > 0)
             _store.AppendAuditEvents(auditEventAdds);
+
+        var outboxAdds = PendingAdds.OfType<OutboxMessage>().ToArray();
+        if (outboxAdds.Length > 0)
+            _store.AppendOutboxMessages(outboxAdds);
 
         PendingAdds.Clear();
         return Task.CompletedTask;

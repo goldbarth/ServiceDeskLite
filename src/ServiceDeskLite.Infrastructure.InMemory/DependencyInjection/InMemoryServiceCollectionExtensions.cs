@@ -18,6 +18,7 @@ public static class InMemoryServiceCollectionExtensions
 
         services.AddScoped<ITicketRepository, InMemoryTicketRepository>();
         services.AddScoped<IAuditEventRepository, InMemoryAuditEventRepository>();
+        services.AddScoped<IOutboxRepository, InMemoryOutboxRepository>();
         services.AddScoped<IDashboardRepository, InMemoryDashboardRepository>();
 
         return services;
