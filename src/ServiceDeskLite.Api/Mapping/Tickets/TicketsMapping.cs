@@ -28,9 +28,11 @@ public static class TicketsMapping
         => new(
             Id: dto.Id.Value,
             Title: dto.Title,
+            Description: dto.Description,
             Priority: dto.Priority.ToContract(),
             Status: dto.Status.ToContract(),
             CreatedAt: dto.CreatedAt,
-            DueAt: dto.DueAt
+            DueAt: dto.DueAt,
+            Assignee: dto.Assignee
         );
 }

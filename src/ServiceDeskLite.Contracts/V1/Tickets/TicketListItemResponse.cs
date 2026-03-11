@@ -3,8 +3,10 @@
 public sealed record TicketListItemResponse(
     Guid Id,
     string Title,
+    string Description,
     TicketPriority Priority,
     TicketStatus Status,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? DueAt);
+    DateTimeOffset? DueAt,
+    string? Assignee);
 

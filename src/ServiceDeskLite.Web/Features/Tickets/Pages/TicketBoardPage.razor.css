@@ -1,162 +1,520 @@
-/* -----------------------------------------------------------------------
-   Board container — horizontal Kanban layout
-   ----------------------------------------------------------------------- */
+.board-page {
+    display: grid;
+    gap: 1.7rem;
+    width: 100%;
+}
 
-/*
- * Two-element scroll pattern:
- *   board-scroll-wrapper  → block-level, overflow-x: auto  (creates the scrollbar)
- *   board-container       → flex, min-width: max-content   (expands to fit all columns)
- *
- * This is required because overflow-x: auto on a flex container itself is
- * not reliable across browsers — the flex formatting context prevents the
- * browser from correctly computing the overflow extent.
- */
+.board-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.board-flow-surface {
+    display: grid;
+    gap: 0.85rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 1rem 1.15rem;
+    border: 1px solid rgba(216, 223, 232, 0.96);
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.98) 100%);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.035);
+}
+
+.board-flow-surface__label {
+    color: #627084;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.board-flow {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.board-flow__step {
+    display: grid;
+    gap: 0.16rem;
+    min-width: 108px;
+    padding: 0.72rem 0.9rem;
+    border: 1px solid rgba(221, 228, 236, 0.96);
+    border-radius: 18px;
+    background: rgba(247, 249, 251, 0.94);
+}
+
+.board-flow__step-label {
+    color: #223041;
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.board-flow__step-caption {
+    color: #7a8799;
+    font-size: 0.75rem;
+    line-height: 1.35;
+}
+
+::deep .board-flow__arrow {
+    flex: 0 0 auto;
+    color: #8b97a8;
+    font-size: 1rem;
+}
+
+.board-toolbar__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+::deep .board-toolbar__switch {
+    margin: 0;
+    padding: 0.3rem 0.8rem 0.3rem 0.3rem;
+    border: 1px solid rgba(216, 223, 232, 0.96);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+::deep .board-toolbar__switch .mud-switch {
+    margin: 0;
+}
+
+::deep .board-toolbar__switch .mud-switch-label {
+    color: #344254;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+::deep .board-toolbar__new-ticket.mud-button-root {
+    min-height: 42px;
+    padding-inline: 1rem 1.08rem;
+    border-radius: 14px;
+    box-shadow: none;
+}
+
+::deep .board-alert {
+    border-radius: 18px;
+    border: 1px solid rgba(236, 214, 166, 0.96);
+    background: rgba(255, 248, 236, 0.96);
+    color: #6d5520;
+}
+
+::deep .board-surface {
+    padding: 1.05rem;
+    border: 1px solid rgba(216, 223, 232, 0.96);
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(244, 246, 249, 0.98) 0%, rgba(241, 244, 247, 0.98) 100%);
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.04);
+}
 
 .board-scroll-wrapper {
     overflow-x: auto;
-    padding-bottom: 8px; /* breathing room for the horizontal scrollbar */
+    padding-bottom: 0.55rem;
+    scrollbar-width: thin;
 }
 
 .board-container {
     display: flex;
-    gap: 12px;
+    gap: 1rem;
     min-width: max-content;
-    padding-bottom: 8px;
     align-items: flex-start;
 }
 
-/* When a drag is active, hovering a column highlights it as a drop target. */
-.board-container--dragging .board-column:hover {
-    background-color: var(--mud-palette-primary-lighten);
-    outline: 2px dashed var(--mud-palette-primary);
-}
-
-/* -----------------------------------------------------------------------
-   Column
-   ----------------------------------------------------------------------- */
-
 .board-column {
-    flex: 0 0 260px;
-    min-width: 260px;
-    background: var(--mud-palette-background-grey);
-    border-radius: 8px;
-    padding: 8px;
-    min-height: 200px;
-    transition: background-color 0.15s ease, outline 0.15s ease;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 0.85rem;
+    flex: 0 0 340px;
+    width: 340px;
+    min-width: 340px;
+    padding: 0.95rem;
+    border: 1px solid rgba(217, 224, 232, 0.96);
+    border-radius: 24px;
+    background: rgba(249, 250, 252, 0.96);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
 }
 
-.board-column-header {
+.board-column__header {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.board-column__heading {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.board-column__eyebrow {
+    color: #6a788c;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.board-column__title-row {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 4px 4px 8px 4px;
-    border-bottom: 1px solid var(--mud-palette-lines-default);
-    margin-bottom: 8px;
+    justify-content: space-between;
+    gap: 0.75rem;
 }
 
-.board-column-title {
+.board-column__title {
+    margin: 0;
+    color: #1a2433;
+    font-size: 1.08rem;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+.board-column__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding-inline: 0.55rem;
+    border-radius: 999px;
+    background: rgba(234, 239, 245, 0.98);
+    border: 1px solid rgba(216, 223, 232, 0.92);
+    color: #425163;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.board-column__description {
+    margin: 0;
+    color: #6c7b90;
+    font-size: 0.83rem;
+    line-height: 1.5;
+}
+
+.board-column__allowed {
+    display: grid;
+    gap: 0.18rem;
+    padding: 0.75rem 0.8rem;
+    border-radius: 18px;
+    background: rgba(243, 246, 249, 0.92);
+    border: 1px solid rgba(221, 228, 236, 0.92);
+}
+
+.board-column__allowed-label {
+    color: #7a8798;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.board-column__allowed-value {
+    color: #314052;
+    font-size: 0.82rem;
     font-weight: 600;
-    font-size: 0.875rem;
+    line-height: 1.45;
 }
 
-.board-column-count {
-    background: var(--mud-palette-lines-default);
-    border-radius: 10px;
-    padding: 1px 8px;
-    font-size: 0.75rem;
-}
-
-.board-column-body {
+.board-column__body {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    max-height: calc(100vh - 220px);
+    gap: 0.85rem;
+    min-height: 18rem;
+    max-height: calc(100vh - 24rem);
     overflow-y: auto;
-    padding-right: 2px; /* prevent scrollbar from overlapping card border */
+    padding-right: 0.15rem;
 }
 
-/* -----------------------------------------------------------------------
-   Ticket card
-   ----------------------------------------------------------------------- */
+.board-column__empty {
+    display: grid;
+    gap: 0.3rem;
+    padding: 1.15rem 1rem;
+    border: 1px dashed rgba(211, 219, 228, 0.96);
+    border-radius: 18px;
+    background: rgba(251, 252, 253, 0.92);
+}
+
+.board-column__empty-label {
+    color: #425163;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.board-column__empty-text {
+    margin: 0;
+    color: #7b8797;
+    font-size: 0.79rem;
+    line-height: 1.5;
+}
+
+.board-dropzone {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 2.85rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px dashed rgba(207, 216, 226, 0.96);
+    border-radius: 18px;
+    background: rgba(250, 251, 253, 0.92);
+    color: #6f7d91;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+::deep .board-dropzone__icon {
+    font-size: 1rem;
+    color: inherit;
+}
+
+.board-dropzone--allowed {
+    border-color: rgba(169, 183, 201, 0.96);
+    background: rgba(244, 248, 253, 0.95);
+    color: #3d536c;
+}
+
+.board-dropzone--blocked {
+    border-color: rgba(228, 213, 220, 0.96);
+    background: rgba(252, 247, 249, 0.95);
+    color: #8c6170;
+}
+
+.board-dropzone--origin {
+    border-style: solid;
+    color: #69778a;
+}
+
+.board-dropzone--active {
+    box-shadow: inset 0 0 0 1px rgba(78, 103, 134, 0.26);
+}
+
+.board-column--can-drop {
+    border-color: rgba(189, 201, 216, 0.98);
+}
+
+.board-column--blocked {
+    background: rgba(248, 249, 251, 0.92);
+}
+
+.board-column--origin {
+    border-color: rgba(212, 220, 230, 0.98);
+}
+
+.board-column--drop-active {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.05);
+}
 
 .board-card {
-    background: var(--mud-palette-surface);
-    border: 1px solid var(--mud-palette-lines-default);
-    border-radius: 6px;
-    padding: 10px 12px;
+    display: grid;
+    gap: 0.72rem;
+    min-height: 10.25rem;
+    padding: 0.95rem 1rem 1rem;
+    border: 1px solid rgba(221, 228, 236, 0.96);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
     cursor: grab;
     user-select: none;
-    transition: box-shadow 0.15s ease, opacity 0.15s ease;
+    transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease, opacity 140ms ease;
 }
 
 .board-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+    border-color: rgba(202, 212, 223, 0.96);
+    box-shadow: 0 16px 28px rgba(15, 23, 42, 0.06);
 }
 
 .board-card:active {
     cursor: grabbing;
 }
 
-/* The card being dragged fades out to indicate it has been "picked up". */
 .board-card--dragging {
     opacity: 0.35;
+    transform: scale(0.985);
 }
 
-.board-card-title {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--mud-palette-text-primary);
-    text-decoration: none;
-    margin-bottom: 8px;
-    line-height: 1.4;
-}
-
-.board-card-title:hover {
-    color: var(--mud-palette-primary);
-    text-decoration: underline;
-}
-
-.board-card-footer {
+.board-card__top {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
 }
 
-.board-card-date {
-    font-size: 0.75rem;
-    color: var(--mud-palette-text-secondary);
+.board-card__ref-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
 }
 
-/* -----------------------------------------------------------------------
-   Priority badge
-   ----------------------------------------------------------------------- */
+.board-card__drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 12px;
+    background: rgba(243, 246, 249, 0.98);
+    border: 1px solid rgba(220, 227, 235, 0.96);
+    color: #7c8898;
+}
 
-.board-priority {
-    font-size: 0.7rem;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 4px;
-    text-transform: uppercase;
+::deep .board-card__drag-handle .mud-icon-root {
+    font-size: 1rem;
+}
+
+.board-card__ref {
+    color: #7c8898;
+    font-family: Consolas, "SFMono-Regular", "Cascadia Mono", monospace;
+    font-size: 0.77rem;
+    font-weight: 700;
     letter-spacing: 0.03em;
 }
 
-.board-priority--low      { background: #e3f2fd; color: #1565c0; }
-.board-priority--medium   { background: #e8f5e9; color: #2e7d32; }
-.board-priority--high     { background: #fff3e0; color: #e65100; }
-.board-priority--critical { background: #ffebee; color: #c62828; }
+.board-card__title {
+    display: -webkit-box;
+    overflow: hidden;
+    color: #182230;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.38;
+    text-decoration: none;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
 
-/* -----------------------------------------------------------------------
-   Loading skeleton
-   ----------------------------------------------------------------------- */
+.board-card__title:hover {
+    color: #182230;
+    text-decoration: underline;
+    text-decoration-color: rgba(94, 111, 132, 0.45);
+}
+
+.board-card__summary {
+    display: -webkit-box;
+    overflow: hidden;
+    margin: 0;
+    color: #748295;
+    font-size: 0.83rem;
+    line-height: 1.55;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.board-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    margin-top: auto;
+}
+
+.board-card__meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 1.9rem;
+    padding-inline: 0.62rem;
+    border-radius: 999px;
+    background: rgba(245, 247, 250, 0.96);
+    border: 1px solid rgba(224, 230, 237, 0.96);
+    color: #627084;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.board-card__meta-item--alert {
+    background: rgba(254, 243, 245, 0.96);
+    border-color: rgba(237, 209, 217, 0.96);
+    color: #9b5a6a;
+}
+
+::deep .board-card__meta-icon {
+    font-size: 0.92rem;
+    color: inherit;
+}
+
+.board-priority {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.9rem;
+    padding-inline: 0.7rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.board-priority--low {
+    color: #5f6f84;
+    background: #f2f5f8;
+    border-color: #e1e8ef;
+}
+
+.board-priority--medium {
+    color: #3764b2;
+    background: #edf3ff;
+    border-color: #d8e5ff;
+}
+
+.board-priority--high {
+    color: #996017;
+    background: #fff4e2;
+    border-color: #f1ddb2;
+}
+
+.board-priority--critical {
+    color: #a34d5e;
+    background: #fff0f3;
+    border-color: #f2d5dd;
+}
 
 .board-skeleton {
     display: flex;
-    gap: 12px;
+    gap: 1rem;
+    overflow-x: auto;
 }
 
-.board-skeleton-col {
-    flex: 0 0 260px;
-    min-width: 260px;
-    border-radius: 8px;
+::deep .board-skeleton__column {
+    flex: 0 0 340px;
+    min-width: 340px;
+    border-radius: 24px;
+}
+
+@media (max-width: 1100px) {
+    .board-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .board-toolbar__actions {
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 720px) {
+    .board-flow__step {
+        min-width: 96px;
+    }
+
+    .board-toolbar__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    ::deep .board-toolbar__switch {
+        justify-content: center;
+    }
 }
