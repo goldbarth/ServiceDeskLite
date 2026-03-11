@@ -17,6 +17,7 @@ public static class InfrastructureServiceCollectionExtensions
         
         services.AddScoped<ITicketRepository, EfTicketRepository>();
         services.AddScoped<IAuditEventRepository, EfAuditEventRepository>();
+        services.AddScoped<IOutboxRepository, EfOutboxRepository>();
         services.AddScoped<IDashboardRepository, EfDashboardRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         

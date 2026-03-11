@@ -6,6 +6,7 @@ using ServiceDeskLite.Application.Common.Validation;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Audit;
+using ServiceDeskLite.Domain.Outbox;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Tests.Application.Tickets.CreateTicket;
@@ -17,7 +18,7 @@ public class CreateTicketHandlerTests
     {
         var repo = new FakeTicketRepository();
         var uow = new FakeUnitOfWork();
-        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow, new CreateTicketValidator(), new FakeClock());
+        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), new FakeOutboxRepository(), uow, new CreateTicketValidator(), new FakeClock());
 
         var cmd = new CreateTicketCommand(
             Title: " ",
@@ -40,7 +41,7 @@ public class CreateTicketHandlerTests
         var repo = new FakeTicketRepository();
         var uow = new FakeUnitOfWork(
             new InvalidOperationException("Ticket already exists: 123"));
-        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow, new FakeValidator(), new FakeClock());
+        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), new FakeOutboxRepository(), uow, new FakeValidator(), new FakeClock());
 
         var cmd = new CreateTicketCommand(
             Title: "Test",
@@ -60,7 +61,7 @@ public class CreateTicketHandlerTests
     {
         var repo = new FakeTicketRepository();
         var uow = new FakeUnitOfWork(new IOException("disk full"));
-        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), uow, new FakeValidator(), new FakeClock());
+        var handler = new CreateTicketHandler(repo, new FakeAuditEventRepository(), new FakeOutboxRepository(), uow, new FakeValidator(), new FakeClock());
 
         var cmd = new CreateTicketCommand(
             Title: "Test",
@@ -126,6 +127,12 @@ public class CreateTicketHandlerTests
 
         public Task<IReadOnlyList<AuditEvent>> GetByTicketIdAsync(TicketId ticketId, CancellationToken ct = default)
             => throw new NotImplementedException();
+    }
+
+    private sealed class FakeOutboxRepository : IOutboxRepository
+    {
+        public Task AddAsync(OutboxMessage message, CancellationToken ct = default)
+            => Task.CompletedTask;
     }
 
     private sealed class FakeValidator : ICommandValidator<CreateTicketCommand>

@@ -2,6 +2,7 @@
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Common.Validation;
 using ServiceDeskLite.Application.Tickets.Audit;
+using ServiceDeskLite.Application.Tickets.Outbox;
 using ServiceDeskLite.Domain.Common;
 using ServiceDeskLite.Domain.Tickets;
 using ServiceDeskLite.Domain.Tickets.Events;
@@ -12,6 +13,7 @@ public sealed class CreateTicketHandler
 {
     private readonly ITicketRepository _repository;
     private readonly IAuditEventRepository _auditRepository;
+    private readonly IOutboxRepository _outboxRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICommandValidator<CreateTicketCommand> _validator;
     private readonly IClock _clock;
@@ -19,12 +21,14 @@ public sealed class CreateTicketHandler
     public CreateTicketHandler(
         ITicketRepository repo,
         IAuditEventRepository auditRepository,
+        IOutboxRepository outboxRepository,
         IUnitOfWork unitOfWork,
         ICommandValidator<CreateTicketCommand> validator,
         IClock clock)
     {
         _repository = repo ?? throw new ArgumentNullException(nameof(repo));
         _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
+        _outboxRepository = outboxRepository ?? throw new ArgumentNullException(nameof(outboxRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
@@ -60,11 +64,14 @@ public sealed class CreateTicketHandler
 
             await _repository.AddAsync(ticket, ct);
 
-            // Translate the domain event raised by the constructor into an audit record.
-            // Both are queued before SaveChangesAsync so they are persisted atomically.
+            // Translate the domain event raised by the constructor into an audit record
+            // and an outbox message. All three (ticket, audit, outbox) are staged before
+            // SaveChangesAsync so they are persisted atomically within one transaction.
             var domainEvent = ticket.DomainEvents.OfType<TicketCreatedDomainEvent>().Single();
             await _auditRepository.AddAsync(
                 AuditEventFactory.FromTicketCreated(domainEvent, command.Actor, _clock.UtcNow), ct);
+            await _outboxRepository.AddAsync(
+                OutboxMessageFactory.FromTicketCreated(domainEvent, _clock.UtcNow), ct);
             ticket.ClearDomainEvents();
 
             await _unitOfWork.SaveChangesAsync(ct);
