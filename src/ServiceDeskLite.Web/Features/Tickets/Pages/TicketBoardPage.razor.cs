@@ -158,16 +158,9 @@ public partial class TicketBoardPage : IDisposable
         => $"#{id:N}"[..7].ToUpperInvariant();
 
     private static string BuildCardSummary(TicketListItemResponse ticket)
-    {
-        if (!string.IsNullOrWhiteSpace(ticket.Description))
-        {
-            return Truncate(ticket.Description.Trim(), 110);
-        }
-
-        return ticket.DueAt is not null
+        => ticket.DueAt is not null
             ? $"Due {ticket.DueAt.Value.ToLocalTime():dd MMM yyyy}"
             : $"Created {ticket.CreatedAt.ToLocalTime():dd MMM yyyy}";
-    }
 
     private static string FormatBoardDate(TicketListItemResponse ticket)
         => ticket.DueAt is not null
