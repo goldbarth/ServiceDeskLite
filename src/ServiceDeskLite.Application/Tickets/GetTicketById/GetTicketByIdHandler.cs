@@ -1,5 +1,6 @@
 ﻿using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
+using ServiceDeskLite.Application.Tickets.GetAuditEvents;
 using ServiceDeskLite.Application.Tickets.Shared;
 
 namespace ServiceDeskLite.Application.Tickets.GetTicketById;
@@ -7,11 +8,16 @@ namespace ServiceDeskLite.Application.Tickets.GetTicketById;
 public sealed class GetTicketByIdHandler
 {
     private readonly ITicketRepository _repository;
+    private readonly IAuditEventRepository _auditRepository;
     private readonly IClock _clock;
 
-    public GetTicketByIdHandler(ITicketRepository repository, IClock clock)
+    public GetTicketByIdHandler(
+        ITicketRepository repository,
+        IAuditEventRepository auditRepository,
+        IClock clock)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
@@ -34,7 +40,12 @@ public sealed class GetTicketByIdHandler
                 meta: new Dictionary<string, object?>{["ticketId"] = query.Id}!);
         }
 
-        var dto = ticket.ToDetailsDto(_clock.UtcNow);
+        var auditEvents = await _auditRepository.GetByTicketIdAsync(query.Id, ct);
+        var auditEventDtos = auditEvents
+            .Select(e => new AuditEventDto(e.Id.Value, e.EventType, e.Actor, e.OccurredAt, e.Payload))
+            .ToList();
+
+        var dto = ticket.ToDetailsDto(auditEventDtos, _clock.UtcNow);
 
         return Result<TicketDetailsDto>.Success(dto);
     }

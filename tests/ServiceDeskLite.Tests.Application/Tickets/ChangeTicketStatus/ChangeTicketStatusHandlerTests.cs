@@ -148,7 +148,7 @@ public class ChangeTicketStatusHandlerTests
             => Task.CompletedTask;
 
         public Task<IReadOnlyList<AuditEvent>> GetByTicketIdAsync(TicketId ticketId, CancellationToken ct = default)
-            => throw new NotImplementedException();
+            => Task.FromResult<IReadOnlyList<AuditEvent>>([]);
     }
 
     private sealed class FakeClock : IClock

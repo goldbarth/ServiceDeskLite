@@ -4,6 +4,7 @@ using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
 using ServiceDeskLite.Application.Tickets.Shared;
+using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Tests.Application.Tickets.GetTicketById;
@@ -14,7 +15,7 @@ public class GetTicketByIdHandlerTests
     public async Task Returns_not_found_when_ticket_missing()
     {
         var repo =  new FakeTicketRepository(null);
-        var handler = new GetTicketByIdHandler(repo, new FakeClock());
+        var handler = new GetTicketByIdHandler(repo, new FakeAuditEventRepository(), new FakeClock());
         
         var result = await handler.HandleAsync(new GetTicketByIdQuery(TicketId.New()));
         
@@ -35,7 +36,7 @@ public class GetTicketByIdHandlerTests
             DateTimeOffset.UtcNow);
         
         var repo =  new FakeTicketRepository(ticket);
-        var handler = new GetTicketByIdHandler(repo, new FakeClock());
+        var handler = new GetTicketByIdHandler(repo, new FakeAuditEventRepository(), new FakeClock());
         
         var result = await handler.HandleAsync(new GetTicketByIdQuery(id));
 
@@ -48,6 +49,15 @@ public class GetTicketByIdHandlerTests
     private sealed class FakeClock : IClock
     {
         public DateTimeOffset UtcNow { get; set; } = DateTimeOffset.UtcNow;
+    }
+
+    private sealed class FakeAuditEventRepository : IAuditEventRepository
+    {
+        public Task AddAsync(AuditEvent auditEvent, CancellationToken ct = default)
+            => Task.CompletedTask;
+
+        public Task<IReadOnlyList<AuditEvent>> GetByTicketIdAsync(TicketId ticketId, CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<AuditEvent>>([]);
     }
 
     private sealed class FakeTicketRepository : ITicketRepository

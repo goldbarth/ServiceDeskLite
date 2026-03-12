@@ -2,6 +2,9 @@
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Contracts.V1.Tickets;
 
+using AppConversationItemKind = ServiceDeskLite.Application.Tickets.GetTicketById.ConversationItemKind;
+using ContractsConversationItemKind = ServiceDeskLite.Contracts.V1.Tickets.ConversationItemKind;
+
 namespace ServiceDeskLite.Api.Mapping.Tickets;
 
 public static class TicketsMapping
@@ -16,8 +19,16 @@ public static class TicketsMapping
             CreatedAt: dto.CreatedAt,
             DueAt: dto.DueAt,
             Assignee: dto.Assignee?.Name,
-            Comments: dto.Comments
-                .Select(c => new CommentResponse(c.Id.Value, c.Content, c.Author, c.CreatedAt))
+            Conversation: dto.Conversation
+                .Select(item => new ConversationItemResponse(
+                    item.Timestamp,
+                    item.Kind == AppConversationItemKind.Comment
+                        ? ContractsConversationItemKind.Comment
+                        : ContractsConversationItemKind.SystemEvent,
+                    item.Comment is null
+                        ? null
+                        : new CommentResponse(item.Comment.Id.Value, item.Comment.Content, item.Comment.Author, item.Comment.CreatedAt),
+                    item.Event?.ToResponse()))
                 .ToList(),
             AllowedTransitions: dto.AllowedTransitions
                 .Select(status => status.ToContract())

@@ -1,15 +1,21 @@
+using ServiceDeskLite.Application.Tickets.GetAuditEvents;
 using ServiceDeskLite.Application.Tickets.Shared;
+using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Application.Tickets.GetTicketById;
 
 internal static class TicketDetailsDtoMapping
 {
-    public static TicketDetailsDto ToDetailsDto(this Ticket ticket, DateTimeOffset utcNow)
+    public static TicketDetailsDto ToDetailsDto(
+        this Ticket ticket,
+        IReadOnlyList<AuditEventDto> auditEvents,
+        DateTimeOffset utcNow)
     {
         ArgumentNullException.ThrowIfNull(ticket);
 
         var allowedTransitions = TicketWorkflow.GetAllowedTransitions(ticket.Status);
+        var conversation = BuildConversation(ticket, auditEvents);
 
         return new TicketDetailsDto(
             ticket.Id,
@@ -20,10 +26,7 @@ internal static class TicketDetailsDtoMapping
             ticket.CreatedAt,
             ticket.DueAt,
             ticket.Assignee,
-            ticket.Comments
-                .OrderBy(comment => comment.CreatedAt)
-                .Select(comment => new CommentDto(comment.Id, comment.Content, comment.Author, comment.CreatedAt))
-                .ToList(),
+            conversation,
             allowedTransitions,
             IsOverdue: ticket.DueAt is not null && ticket.DueAt.Value < utcNow
                 && ticket.Status is not TicketStatus.Resolved and not TicketStatus.Closed,
@@ -73,4 +76,30 @@ internal static class TicketDetailsDtoMapping
 
     private static string FormatStatus(TicketStatus status)
         => status == TicketStatus.InProgress ? "In Progress" : status.ToString();
+
+    private static IReadOnlyList<ConversationItemDto> BuildConversation(
+        Ticket ticket,
+        IReadOnlyList<AuditEventDto> auditEvents)
+    {
+        var items = new List<ConversationItemDto>();
+
+        items.AddRange(ticket.Comments
+            .Select(c => new ConversationItemDto(
+                c.CreatedAt,
+                ConversationItemKind.Comment,
+                new CommentDto(c.Id, c.Content, c.Author, c.CreatedAt),
+                Event: null)));
+
+        items.AddRange(auditEvents
+            .Where(e => e.EventType != AuditEventTypes.CommentAdded)
+            .Select(e => new ConversationItemDto(
+                e.OccurredAt,
+                ConversationItemKind.SystemEvent,
+                Comment: null,
+                new AuditEventDto(e.Id, e.EventType, e.Actor, e.OccurredAt, e.Payload))));
+
+        return [.. items
+            .OrderBy(item => item.Timestamp)
+            .ThenBy(item => item.Kind)];
+    }
 }

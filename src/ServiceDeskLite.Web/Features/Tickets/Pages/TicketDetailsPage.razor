@@ -155,15 +155,8 @@ else
                     else if (_activeTab == TicketDetailsTab.Comments)
                     {
                         <div class="ticket-conversation">
-                            @if (_auditEventsError is not null)
-                            {
-                                <div class="ticket-panel__notice">
-                                    Workflow events are temporarily unavailable. Comments remain visible below.
-                                </div>
-                            }
-
                             <div class="ticket-conversation__list">
-                                @if (ConversationItems.Count == 0)
+                                @if (_ticket.Conversation.Count == 0)
                                 {
                                     <div class="ticket-conversation__empty">
                                         <span class="ticket-conversation__empty-title">No conversation yet</span>
@@ -174,7 +167,7 @@ else
                                 }
                                 else
                                 {
-                                    @foreach (var item in ConversationItems)
+                                    @foreach (var item in _ticket.Conversation)
                                     {
                                         if (item.Kind == ConversationItemKind.Comment && item.Comment is not null)
                                         {
@@ -284,11 +277,11 @@ else
                     }
                     else if (_activeTab == TicketDetailsTab.History)
                     {
-                        @if (_auditEventsError is not null)
-                        {
-                            <AppErrorPanel Error="_auditEventsError" />
-                        }
-                        else if (_auditEvents is null || _auditEvents.Count == 0)
+                        var historyItems = _ticket.Conversation
+                            .Where(x => x.Kind == ConversationItemKind.SystemEvent && x.Event is not null)
+                            .ToList();
+
+                        @if (historyItems.Count == 0)
                         {
                             <div class="ticket-history__empty">
                                 <span class="ticket-history__empty-title">No history yet</span>
@@ -300,9 +293,9 @@ else
                         else
                         {
                             <div class="ticket-history">
-                                @for (var i = 0; i < _auditEvents.Count; i++)
+                                @for (var i = 0; i < historyItems.Count; i++)
                                 {
-                                    var auditEvent = _auditEvents[i];
+                                    var auditEvent = historyItems[i].Event!;
 
                                     <article class="ticket-history__item">
                                         <div class="ticket-history__rail">
@@ -312,7 +305,7 @@ else
                                                          aria-hidden="true" />
                                             </span>
 
-                                            @if (i < _auditEvents.Count - 1)
+                                            @if (i < historyItems.Count - 1)
                                             {
                                                 <span class="ticket-history__line" aria-hidden="true"></span>
                                             }
@@ -326,11 +319,7 @@ else
 
                                             <p class="ticket-history__summary">@FormatEventSummary(auditEvent)</p>
 
-                                            @if (auditEvent.Payload is TicketCommentAddedPayload commentPayload)
-                                            {
-                                                <div class="ticket-history__preview">@commentPayload.Content</div>
-                                            }
-                                            else if (auditEvent.Payload is RawAuditEventPayload rawPayload)
+                                            @if (auditEvent.Payload is RawAuditEventPayload rawPayload)
                                             {
                                                 <div class="ticket-history__preview ticket-history__preview--muted">@rawPayload.RawJson</div>
                                             }
