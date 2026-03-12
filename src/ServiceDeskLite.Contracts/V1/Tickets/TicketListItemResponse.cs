@@ -7,5 +7,7 @@ public sealed record TicketListItemResponse(
     TicketStatus Status,
     DateTimeOffset CreatedAt,
     DateTimeOffset? DueAt,
-    string? Assignee);
+    string? Assignee,
+    IReadOnlyList<TicketStatus> AllowedTransitions,
+    bool IsOverdue);
 

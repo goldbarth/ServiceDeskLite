@@ -33,30 +33,12 @@ public partial class TicketBoardPage : IDisposable
     private static readonly IReadOnlyDictionary<TicketStatus, BoardColumnSpec> ColumnSpecs =
         new Dictionary<TicketStatus, BoardColumnSpec>
         {
-            [TicketStatus.New] = new(
-                "Incoming intake",
-                "Fresh requests awaiting first review.",
-                [TicketStatus.Triaged]),
-            [TicketStatus.Triaged] = new(
-                "Assess and route",
-                "Reviewed work ready for assignment or a quick resolution path.",
-                [TicketStatus.InProgress, TicketStatus.Waiting, TicketStatus.Resolved]),
-            [TicketStatus.InProgress] = new(
-                "Active handling",
-                "Tickets currently owned and being worked by the service desk.",
-                [TicketStatus.Waiting, TicketStatus.Resolved]),
-            [TicketStatus.Waiting] = new(
-                "External dependency",
-                "Paused until customer, vendor, or another dependency responds.",
-                [TicketStatus.InProgress, TicketStatus.Resolved]),
-            [TicketStatus.Resolved] = new(
-                "Ready to close",
-                "Completed work awaiting confirmation or a possible reopen.",
-                [TicketStatus.Closed, TicketStatus.InProgress]),
-            [TicketStatus.Closed] = new(
-                "Archived record",
-                "Completed outcomes kept for traceability and audit context.",
-                [])
+            [TicketStatus.New]        = new("Incoming intake",     "Fresh requests awaiting first review."),
+            [TicketStatus.Triaged]    = new("Assess and route",    "Reviewed work ready for assignment or a quick resolution path."),
+            [TicketStatus.InProgress] = new("Active handling",     "Tickets currently owned and being worked by the service desk."),
+            [TicketStatus.Waiting]    = new("External dependency",  "Paused until customer, vendor, or another dependency responds."),
+            [TicketStatus.Resolved]   = new("Ready to close",      "Completed work awaiting confirmation or a possible reopen."),
+            [TicketStatus.Closed]     = new("Archived record",     "Completed outcomes kept for traceability and audit context."),
         };
 
     private TicketListItemResponse? _draggingTicket;
@@ -70,9 +52,9 @@ public partial class TicketBoardPage : IDisposable
         BoardState.State is TicketBoardState.Loaded loaded
             ?
             [
-                new("Workflow lanes", VisibleColumns.Count().ToString()),
-                new("Board cards", loaded.Tickets.Count.ToString()),
-                new("Closed lane", "Visible")
+                new DashboardHeroStat("Workflow lanes", VisibleColumns.Count().ToString()),
+                new DashboardHeroStat("Board cards", loaded.Tickets.Count.ToString()),
+                new DashboardHeroStat("Closed lane", "Visible")
             ]
             : [];
 
@@ -254,12 +236,12 @@ public partial class TicketBoardPage : IDisposable
             : $"Not allowed from {FormatStatus(_draggingTicket.Status)}";
     }
 
-    private static string AllowedNextText(TicketStatus status)
+    private static string AllowedNextText(IReadOnlyList<TicketListItemResponse> columnTickets)
     {
-        var allowed = ColumnSpecs[status].AllowedNext;
-        return allowed.Count == 0
+        var transitions = columnTickets.Count > 0 ? columnTickets[0].AllowedTransitions : [];
+        return transitions.Count == 0
             ? "Final state"
-            : string.Join(", ", allowed.Select(FormatStatus));
+            : string.Join(", ", transitions.Select(FormatStatus));
     }
 
     private static string EmptyStateText(TicketStatus status)
@@ -274,20 +256,15 @@ public partial class TicketBoardPage : IDisposable
             _ => "No tickets in this lane."
         };
 
-    private static bool IsOverdue(TicketListItemResponse ticket)
-        => ticket.DueAt is not null
-            && ticket.DueAt.Value < DateTimeOffset.UtcNow
-            && ticket.Status is not TicketStatus.Resolved and not TicketStatus.Closed;
-
     private static string DateClass(TicketListItemResponse ticket)
-        => IsOverdue(ticket)
+        => ticket.IsOverdue
             ? "board-card__meta-item board-card__meta-item--alert"
             : "board-card__meta-item";
 
     private bool CanDropTo(TicketStatus targetStatus)
         => _draggingTicket is not null
             && _draggingTicket.Status != targetStatus
-            && ColumnSpecs[_draggingTicket.Status].AllowedNext.Contains(targetStatus);
+            && _draggingTicket.AllowedTransitions.Contains(targetStatus);
 
     private static string Truncate(string value, int maxLength)
     {
@@ -304,8 +281,5 @@ public partial class TicketBoardPage : IDisposable
 
     private sealed record WorkflowStep(string Label, string Caption);
 
-    private sealed record BoardColumnSpec(
-        string WorkflowHint,
-        string Description,
-        IReadOnlyList<TicketStatus> AllowedNext);
+    private sealed record BoardColumnSpec(string WorkflowHint, string Description);
 }

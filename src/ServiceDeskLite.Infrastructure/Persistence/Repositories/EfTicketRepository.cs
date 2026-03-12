@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
 using ServiceDeskLite.Application.Abstractions.Persistence;
+using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Tickets;
 
@@ -9,9 +10,13 @@ namespace ServiceDeskLite.Infrastructure.Persistence.Repositories;
 public class EfTicketRepository : ITicketRepository
 {
     private readonly ServiceDeskLiteDbContext _dbContext;
-    
-    public EfTicketRepository(ServiceDeskLiteDbContext dbContext)
-        => _dbContext = dbContext;
+    private readonly IClock _clock;
+
+    public EfTicketRepository(ServiceDeskLiteDbContext dbContext, IClock clock)
+    {
+        _dbContext = dbContext;
+        _clock = clock;
+    }
 
     public Task AddAsync(Ticket ticket, CancellationToken ct = default)
         => _dbContext.Tickets.AddAsync(ticket, ct)
@@ -72,9 +77,23 @@ public class EfTicketRepository : ITicketRepository
             _ => q.OrderByDescending(t => t.CreatedAt)
         };
 
-        var items = await q
+        var raw = await q
             .Skip(paging.Skip)
             .Take(paging.PageSize)
+            .Select(t => new
+            {
+                t.Id,
+                t.Title,
+                t.Status,
+                t.Priority,
+                t.CreatedAt,
+                t.DueAt,
+                AssigneeName = t.Assignee != null ? t.Assignee.Value.Name : null
+            })
+            .ToListAsync(ct);
+
+        var utcNow = _clock.UtcNow;
+        var items = raw
             .Select(t => new TicketListItemDto(
                 t.Id,
                 t.Title,
@@ -82,8 +101,11 @@ public class EfTicketRepository : ITicketRepository
                 t.Priority,
                 t.CreatedAt,
                 t.DueAt,
-                t.Assignee != null ? t.Assignee.Value.Name : null))
-            .ToListAsync(ct);
+                t.AssigneeName,
+                TicketWorkflow.GetAllowedTransitions(t.Status),
+                t.DueAt is not null && t.DueAt.Value < utcNow
+                    && t.Status is not TicketStatus.Resolved and not TicketStatus.Closed))
+            .ToList();
 
         return new PagedResult<TicketListItemDto>(items, total, paging);
     }
