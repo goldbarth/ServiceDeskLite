@@ -105,7 +105,7 @@ public class EfTicketRepository : ITicketRepository
                 TicketWorkflow.GetAllowedTransitions(t.Status),
                 t.DueAt is not null && t.DueAt.Value < utcNow
                     && t.Status is not TicketStatus.Resolved and not TicketStatus.Closed,
-                $"#{t.Id.Value:N}"[..7].ToUpperInvariant()))
+                "#" + $"{t.Id.Value:N}"[^6..].ToUpperInvariant()))
             .ToList();
 
         return new PagedResult<TicketListItemDto>(items, total, paging);
