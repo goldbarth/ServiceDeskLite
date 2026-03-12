@@ -448,6 +448,9 @@
             "format": "date-time",
             "type": "string"
           },
+          "displayRef": {
+            "type": "string"
+          },
           "dueAt": {
             "format": "date-time",
             "type": [
@@ -481,7 +484,8 @@
           "dueAt",
           "assignee",
           "allowedTransitions",
-          "isOverdue"
+          "isOverdue",
+          "displayRef"
         ],
         "type": "object"
       },
@@ -521,6 +525,9 @@
           "description": {
             "type": "string"
           },
+          "displayRef": {
+            "type": "string"
+          },
           "dueAt": {
             "format": "date-time",
             "type": [
@@ -532,11 +539,23 @@
             "format": "uuid",
             "type": "string"
           },
+          "isOverdue": {
+            "type": "boolean"
+          },
           "priority": {
             "$ref": "#/components/schemas/TicketPriority"
           },
           "status": {
             "$ref": "#/components/schemas/TicketStatus"
+          },
+          "statusGuidance": {
+            "type": "string"
+          },
+          "suggestedNextSteps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "title": {
             "type": "string"
@@ -552,7 +571,11 @@
           "dueAt",
           "assignee",
           "comments",
-          "allowedTransitions"
+          "allowedTransitions",
+          "isOverdue",
+          "displayRef",
+          "statusGuidance",
+          "suggestedNextSteps"
         ],
         "type": "object"
       },
