@@ -104,7 +104,7 @@ Migrations are auto-applied on startup when `Provider = Postgres`.
 
 ### Component Relationships
 
-<img src="../assets/diagrams/component-relationships-sqlite.svg" alt="Component Relationships" style="max-width:720px;width:100%;">
+<img src="../assets/diagrams/component-relationships-sqlite.svg" alt="Component Relationships" style="max-width:960px;width:100%;">
 
 ### DI Lifetime
 

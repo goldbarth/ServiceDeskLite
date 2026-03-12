@@ -89,7 +89,7 @@ Comments are owned by the `Ticket` aggregate and stored in a separate
 
 ### Domain Model
 
-<img src="../assets/diagrams/domain-model.svg" alt="Domain Model" style="max-width:720px;width:100%;">
+<img src="../assets/diagrams/domain-model.svg" alt="Domain Model" style="max-width:960	px;width:100%;">
 
 ### `TicketWorkflow` – Status Transition Rules
 

@@ -66,7 +66,7 @@ public sealed record ApplicationError(
 
 #### Result & Error Type Model
 
-<img src="../assets/diagrams/result-error-type-model.svg" alt="Result & Error Type Model" style="max-width:360px;width:100%;">
+<img src="../assets/diagrams/result-error-type-model.svg" alt="Result & Error Type Model" style="max-width:540px;width:100%;">
 
 #### `ErrorType` → HTTP Status Mapping
 

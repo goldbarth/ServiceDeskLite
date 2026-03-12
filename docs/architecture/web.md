@@ -103,7 +103,7 @@ public class ProblemDetailsDto
 
 ### Client / API Result Types
 
-<img src="../assets/diagrams/client-api-result-types.svg" alt="Client / API Result Types" style="max-width:360px;width:100%;">
+<img src="../assets/diagrams/client-api-result-types.svg" alt="Client / API Result Types" style="max-width:540px;width:100%;">
 
 ### API Client Call Flow
 

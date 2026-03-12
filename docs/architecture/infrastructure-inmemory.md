@@ -72,13 +72,13 @@ All three entity types (Ticket, AuditEvent, OutboxMessage) are flushed atomicall
 
 ### Component Relationships
 
-<img src="../assets/diagrams/component-relationships-inmemory.svg" alt="Component Relationships" style="max-width:360px;width:100%;">
+<img src="../assets/diagrams/component-relationships-inmemory.svg" alt="Component Relationships" style="max-width:540px;width:100%;">
 
 ### Unit of Work Commit Boundary
 
 The two-phase write (buffer → commit) prevents partially visible state within a request scope.
 
-<img src="../assets/diagrams/uow-commit-boundary.svg" alt="Unit of Work Commit Boundary" style="max-width:720px;width:100%;">
+<img src="../assets/diagrams/uow-commit-boundary.svg" alt="Unit of Work Commit Boundary" style="max-width:960px;width:100%;">
 
 ### DI Lifetime Summary
 
