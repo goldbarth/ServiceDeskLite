@@ -1,15 +1,25 @@
-﻿classDiagram
+classDiagram
     class ITicketsApiClient {
         <<interface>>
         +SearchAsync(request, ct) Task
         +GetByIdAsync(id, ct) Task
         +CreateAsync(request, ct) Task
+        +ChangeStatusAsync(id, request, ct) Task
+        +AssignAsync(id, request, ct) Task
+        +AddCommentAsync(id, request, ct) Task
+        +GetAuditEventsAsync(id, ct) Task
+        +GetDashboardSummaryAsync(ct) Task
     }
     class TicketsApiClient {
         -HttpClient _http
         +SearchAsync(request, ct) Task
         +GetByIdAsync(id, ct) Task
         +CreateAsync(request, ct) Task
+        +ChangeStatusAsync(id, request, ct) Task
+        +AssignAsync(id, request, ct) Task
+        +AddCommentAsync(id, request, ct) Task
+        +GetAuditEventsAsync(id, ct) Task
+        +GetDashboardSummaryAsync(ct) Task
     }
     class ApiResultT["ApiResult~T~"] {
         +bool IsSuccess
@@ -25,6 +35,11 @@
         +string? TraceId
         +Dictionary~string,object~? Meta
     }
+    class ApiKeyDelegatingHandler {
+        <<DelegatingHandler>>
+        +SendAsync(request, ct) Task
+    }
 
     TicketsApiClient ..|> ITicketsApiClient : implements
     ApiResultT --> ApiError : contains on failure
+    TicketsApiClient --> ApiKeyDelegatingHandler : outbound requests via

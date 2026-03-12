@@ -1,6 +1,6 @@
 ## Web Layer (`ServiceDeskLite.Web`)
 
-#### API Client
+### API Client
 
 ```csharp
 // ServiceDeskLite.Web.Api.V1
@@ -17,13 +17,46 @@ public interface ITicketsApiClient
 
     Task<ApiResult<TicketResponse>> ChangeStatusAsync(
         Guid id, ChangeTicketStatusRequest request, CancellationToken ct = default);
+
+    Task<ApiResult<TicketResponse>> AssignAsync(
+        Guid id, AssignTicketRequest request, CancellationToken ct = default);
+
+    Task<ApiResult<CommentResponse>> AddCommentAsync(
+        Guid id, AddCommentRequest request, CancellationToken ct = default);
+
+    Task<ApiResult<IReadOnlyList<AuditEventResponse>>> GetAuditEventsAsync(
+        Guid id, CancellationToken ct = default);
+
+    Task<ApiResult<DashboardSummaryResponse>> GetDashboardSummaryAsync(
+        CancellationToken ct = default);
 }
 ```
 
 `TicketsApiClient` uses `HttpClient` with `PropertyNameCaseInsensitive` JSON deserialization and parses ProblemDetails from API error responses.
-Outgoing requests that carry enum values (e.g., `ChangeStatusAsync`) are serialised with camelCase + `JsonStringEnumConverter`.
+Outgoing requests that carry enum values (e.g. `ChangeStatusAsync`) are serialised with camelCase + `JsonStringEnumConverter`.
 
-#### `ApiResult<T>` and `ApiError`
+### `ApiKeyDelegatingHandler`
+
+```csharp
+// Attaches the configured API key to every outbound HTTP request.
+// The key is read from Auth:ApiKey at request time so that configuration changes
+// (e.g. via environment variables) take effect without restarting.
+internal sealed class ApiKeyDelegatingHandler(IConfiguration configuration) : DelegatingHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var apiKey = configuration["Auth:ApiKey"];
+        if (!string.IsNullOrWhiteSpace(apiKey))
+            request.Headers.TryAddWithoutValidation("X-Api-Key", apiKey);
+        return base.SendAsync(request, cancellationToken);
+    }
+}
+```
+
+This handler is registered as a `DelegatingHandler` on the typed `HttpClient` for `TicketsApiClient`. See ADR 0022.
+
+### `ApiResult<T>` and `ApiError`
 
 ```csharp
 public sealed class ApiResult<T>
@@ -48,7 +81,7 @@ public sealed class ApiError
 }
 ```
 
-#### `ProblemDetailsDto`
+### `ProblemDetailsDto`
 
 Internal DTO used to deserialise RFC 9457 error responses from the API before mapping them to `ApiError`.
 
@@ -68,15 +101,15 @@ public class ProblemDetailsDto
 
 `[JsonExtensionData]` captures all extra fields (`code`, `errorType`, `traceId`, `meta`) without requiring an explicit property per extension key.
 
-#### Client / API Result Types
+### Client / API Result Types
 
-![Client / API Result Types](../assets/diagrams/client-api-result-types.svg)
+<img src="../assets/diagrams/client-api-result-types.svg" alt="Client / API Result Types" style="max-width:360px;width:100%;">
 
-#### API Client Call Flow
+### API Client Call Flow
 
-![API Client Call Flow](../assets/diagrams/api-client-call-flow.svg)
+<img src="../assets/diagrams/api-client-call-flow.svg" alt="API Client Call Flow" style="max-width:720px;width:100%;">
 
-#### Configuration
+### Configuration
 
 ```json lines
 // appsettings.Development.json (Web)
@@ -84,6 +117,9 @@ public class ProblemDetailsDto
     "ApiClient": {
         "BaseUrl": "https://localhost:7238",
         "TimeoutSeconds": 10
+    },
+    "Auth": {
+        "ApiKey": "dev-api-key"
     }
 }
 ```

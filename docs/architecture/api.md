@@ -1,26 +1,31 @@
 ## API Layer (`ServiceDeskLite.Api`)
 
-#### Middleware Pipeline Order (`Program.cs`)
+### Middleware Pipeline Order (`Program.cs`)
 
 ```
 1.  Serilog configuration (before WebApplication builder)
 2.  Services:
-      AddApiDocumentation        → OpenAPI
+      AddApiDocumentation        → OpenAPI + Swagger
       AddApiErrorHandling        → ProblemDetails + ExceptionHandler + Mapper
       AddApplication             → use-case handlers (Scoped)
       AddApiInfrastructure       → persistence provider switch
-3.  EF Core auto-migration (Postgres only)
-4.  app.UseSerilogRequestLogging()
-5.  app.UseApiDocumentation()
-6.  app.UseApiErrorHandling()     → UseExceptionHandler()
-7.  app.UseHttpsRedirection()
-8.  app.UseCors("WebDev")         → https://localhost:7023 only
-9.  Endpoint mapping
+      AddCors("WebFrontend")     → origins from Cors:AllowedOrigins config
+3.  EF Core auto-migration (Postgres only, before app.Build())
+4.  app.UseApiRequestLogging()   → Serilog request logging
+5.  app.UseApiDocumentation()    → OpenAPI endpoint
+6.  app.UseApiErrorHandling()    → UseExceptionHandler()
+7.  app.UseApiSecurity()         → ApiKeyMiddleware (X-Api-Key header)
+8.  app.UseHttpsRedirection()
+9.  app.UseSwagger() / UseSwaggerUI()  → Development only
+10. app.UseCors("WebFrontend")
+11. Endpoint mapping
 ```
 
-![Middleware Pipeline](../assets/diagrams/middleware-pipeline.svg)
+> In Development, a `ITicketSeeder` runs on startup to populate the InMemory store with sample data.
 
-#### Endpoints
+<img src="../assets/diagrams/middleware-pipeline.svg" alt="Middleware Pipeline" style="max-width:720px;width:100%;">
+
+### Endpoints
 
 **Tickets** (`TicketsEndpoints.cs`) — base route group: `/api/v1/tickets`
 
@@ -42,13 +47,26 @@
 
 All errors return RFC 9457 ProblemDetails via `ResultToProblemDetailsMapper`.
 
-#### Request Lifecycle
+### Request Lifecycle
 
 The following sequence covers the `POST /api/v1/tickets` happy path. All other endpoints follow the same structure.
 
-![Request Lifecycle](../assets/diagrams/request-lifecycle.svg)
+<img src="../assets/diagrams/request-lifecycle.svg" alt="Request Lifecycle" style="max-width:720px;width:100%;">
 
-#### Correlation
+### API Key Authentication (`ApiKeyMiddleware`)
+
+All API endpoints require an `X-Api-Key` header (see ADR 0022).
+
+```csharp
+// Slim middleware — runs before all other pipeline stages except logging and error handling.
+// Returns 401 Unauthorized (plain, no ProblemDetails body) on missing or invalid key.
+// Exempt for OpenAPI/Swagger endpoints in Development.
+// Key is read from Auth:ApiKey configuration (injected via environment variable or user secrets).
+```
+
+The Blazor Web frontend forwards the key on every outbound request via `ApiKeyDelegatingHandler`.
+
+### Correlation
 
 ```csharp
 public static class Correlation
@@ -62,7 +80,7 @@ public static class Correlation
 
 TraceId is attached to every ProblemDetails response as the `traceId` extension field.
 
-#### `ResultToProblemDetailsMapper`
+### `ResultToProblemDetailsMapper`
 
 ```csharp
 public sealed class ResultToProblemDetailsMapper
@@ -76,11 +94,11 @@ public sealed class ResultToProblemDetailsMapper
 Uses `ApiProblemDetailsFactory` to produce RFC 9457 responses with extensions:
 `code`, `errorType`, `traceId`, `meta`.
 
-#### `ResultMappingExtensions`
+### `ResultMappingExtensions`
 
 Fluent bridge: `result.ToHttpResult(ctx, mapper, value => Results.Ok(value.ToResponse()))`.
 
-#### Exception Handling Pipeline
+### Exception Handling Pipeline
 
 - `ApiExceptionHandler : IExceptionHandler` catches all unhandled exceptions
 - `ExceptionClassification.IsClientBadRequest(ex)` → `BadHttpRequestException, FormatException, InvalidOperationException` → 400
@@ -89,9 +107,9 @@ Fluent bridge: `result.ToHttpResult(ctx, mapper, value => Results.Ok(value.ToRes
 
 Logging: 5xx → ERROR, 409 → WARNING, 400 → WARNING, others → INFO.
 
-![Exception Handling Pipeline](../assets/diagrams/exception-handling-pipeline.svg)
+<img src="../assets/diagrams/exception-handling-pipeline.svg" alt="Exception Handling Pipeline" style="max-width:360px;width:100%;">
 
-#### Enum Mapping (`Api/Mapping/Tickets/TicketEnumMapping.cs`)
+### Enum Mapping (`Api/Mapping/Tickets/TicketEnumMapping.cs`)
 
 ```csharp
 // Contracts → Domain
@@ -111,23 +129,27 @@ public static PagedResponse<TicketListItemResponse>
     ToPagedResponse(this PagedResult<TicketListItemDto> page)
 ```
 
-#### `appsettings.json` (Production)
+### `appsettings.json` (Production)
 
 ```json
 {
     "Logging": { "LogLevel": { "Default": "Information", "Microsoft.AspNetCore": "Warning" } },
     "Persistence": { "Provider": "Postgres" },
-    "ConnectionStrings": { "ServiceDeskLite": "Host=localhost;Port=5432;Database=servicedesklite;Username=postgres;Password=postgres" },
+    "ConnectionStrings": { "ServiceDeskLite": "<injected via environment variable>" },
+    "Auth": { "ApiKey": "<injected via environment variable>" },
+    "Cors": { "AllowedOrigins": [] },
     "AllowedHosts": "*"
 }
 ```
 
-#### `appsettings.Development.json`
+### `appsettings.Development.json`
 
 ```json
 {
     "Logging": { "LogLevel": { "Default": "Information", "Microsoft.AspNetCore": "Warning" } },
-    "Persistence": { "Provider": "InMemory" }
+    "Persistence": { "Provider": "InMemory" },
+    "Auth": { "ApiKey": "dev-api-key" },
+    "Cors": { "AllowedOrigins": [ "https://localhost:7023" ] }
 }
 ```
 

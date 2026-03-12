@@ -1,6 +1,6 @@
 ## Application Layer (`ServiceDeskLite.Application`)
 
-#### Result Pattern
+### Result Pattern
 
 Handlers never throw. All outcomes are expressed via `Result` or `Result<T>`.
 
@@ -66,7 +66,7 @@ public sealed record ApplicationError(
 
 #### Result & Error Type Model
 
-![Result & Error Type Model](../assets/diagrams/result-error-type-model.svg)
+<img src="../assets/diagrams/result-error-type-model.svg" alt="Result & Error Type Model" style="max-width:360px;width:100%;">
 
 #### `ErrorType` → HTTP Status Mapping
 
@@ -78,7 +78,42 @@ public sealed record ApplicationError(
 | `Conflict`        | 409         |
 | `Unexpected`      | 500         |
 
-#### Use Case Handlers
+---
+
+### IClock – Time Abstraction
+
+```csharp
+/// <summary>
+/// Every handler or service that needs the current time must receive
+/// an IClock via constructor injection — never call DateTimeOffset.UtcNow directly.
+/// This keeps all time-dependent logic deterministic and fully testable.
+/// </summary>
+public interface IClock
+{
+    DateTimeOffset UtcNow { get; }
+}
+```
+
+`SystemClock` is the production implementation (registered in DI). Tests use `TestClock` for deterministic time control.
+
+---
+
+### Field-Level Validation
+
+```csharp
+public interface ICommandValidator<TCommand>
+{
+    FieldValidationResult Validate(TCommand command);
+}
+```
+
+Validators are registered in DI per command type. Handlers call `_validator.Validate(command)` before executing domain logic.
+`FieldValidationBuilder` provides a fluent API for building field error lists.
+Handlers that operate on strongly-typed parameters (e.g. `ChangeTicketStatus`) skip validation — all values are structurally valid by construction (see ADR 0019).
+
+---
+
+### Use Case Handlers
 
 Each use case lives in its own folder under `Application/Tickets/<UseCase>/`. Structure:
 
@@ -116,7 +151,7 @@ Extension paths if the scope changes later:
 - Introduce pipeline behaviors when validation, logging, auth, or transaction policies must apply consistently to every handler call.
 - Introduce dedicated read models or a separate read store only when query complexity, performance, or projection needs justify that extra operational cost.
 
-#### Handler signature contract:
+#### Handler Signature Contract
 
 ```csharp
 public async Task<Result<TOutput>> HandleAsync(TInput? input, CancellationToken ct = default)
@@ -125,7 +160,11 @@ public async Task<Result<TOutput>> HandleAsync(TInput? input, CancellationToken 
 
 All handlers follow the same guard-then-act pattern. `CreateTicket` is the canonical example:
 
-![Handler Signature Contract](../assets/diagrams/handler-signature-contract.svg)
+<img src="../assets/diagrams/handler-signature-contract.svg" alt="Handler Signature Contract" style="max-width:720px;width:100%;">
+
+---
+
+### Handlers Reference
 
 #### `CreateTicket`
 
@@ -139,11 +178,9 @@ public sealed record CreateTicketCommand(
 
 public sealed record CreateTicketResult(TicketId Id);
 
-// Handler: validates null (command + field-level), catches DomainException,
-//          AddAsync + audit record + SaveChangesAsync (atomic).
-//          Duplicate IDs are not checked via ExistsAsync; uniqueness is enforced
-//          by the persistence layer and mapped to Result<T>.Conflict by
-//          PersistenceExceptionMapper.
+// Handler: validates null + fields (ICommandValidator), creates Ticket,
+//          writes audit record + outbox message atomically.
+//          Uniqueness enforced by persistence layer → mapped to Result<T>.Conflict.
 public sealed class CreateTicketHandler
 {
     public async Task<Result<CreateTicketResult>> HandleAsync(
@@ -163,7 +200,14 @@ public record TicketDetailsDto(
     TicketStatus Status,
     TicketPriority Priority,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? DueAt);
+    DateTimeOffset? DueAt,
+    Assignee? Assignee,
+    IReadOnlyList<ConversationItemDto> Conversation,
+    IReadOnlyList<TicketStatus> AllowedTransitions,
+    bool IsOverdue,
+    string DisplayRef,
+    string StatusGuidance,
+    IReadOnlyList<string> SuggestedNextSteps);
 
 public sealed class GetTicketByIdHandler
 {
@@ -171,6 +215,10 @@ public sealed class GetTicketByIdHandler
         GetTicketByIdQuery? query, CancellationToken ct = default)
 }
 ```
+
+`TicketDetailsDto` includes server-side computed fields: `AllowedTransitions`, `IsOverdue`,
+`DisplayRef`, `StatusGuidance`, `SuggestedNextSteps`, and the aggregated `Conversation`
+(comments + audit events merged by timestamp).
 
 #### `SearchTickets`
 
@@ -180,11 +228,11 @@ public sealed record SearchTicketsQuery(
     Paging Paging,
     SortSpec? Sort = null);
 
-public sealed record SearchTickesResult(PagedResult<TicketListItemDto> Page);
+public sealed record SearchTicketsResult(PagedResult<TicketListItemDto> Page);
 
 public class SearchTicketsHandler
 {
-    public async Task<Result<SearchTickesResult>> HandleAsync(
+    public async Task<Result<SearchTicketsResult>> HandleAsync(
         SearchTicketsQuery? query, CancellationToken ct = default)
 }
 ```
@@ -198,8 +246,7 @@ public sealed record ChangeTicketStatusCommand(TicketId Id, TicketStatus NewStat
 //          calls ticket.ChangeStatus, records audit event, saves via UnitOfWork.
 //          invalid_transition → Result<T>.Conflict (409)
 //          other DomainException → Result<T>.DomainViolation (400)
-// No ICommandValidator – all fields are strongly typed (TicketId, TicketStatus).
-// Transition logic is domain behaviour, not input validation (see ADR 0019).
+// No ICommandValidator – all fields are strongly typed (see ADR 0019).
 public sealed class ChangeTicketStatusHandler
 {
     public async Task<Result<TicketDetailsDto>> HandleAsync(
@@ -207,9 +254,74 @@ public sealed class ChangeTicketStatusHandler
 }
 ```
 
-Returns the updated ticket as `TicketDetailsDto` (same as `GetTicketById`).
+#### `AssignTicket`
 
-#### Shared Application Types
+```csharp
+public sealed record AssignTicketCommand(TicketId Id, string? AssigneeName, string? Actor = null);
+
+// Handler: validates null + fields (ICommandValidator), loads ticket,
+//          calls ticket.Assign(assignee?), records audit event, saves via UnitOfWork.
+//          Closed ticket assignment → Result<T>.Conflict (409).
+public sealed class AssignTicketHandler
+{
+    public async Task<Result<TicketDetailsDto>> HandleAsync(
+        AssignTicketCommand? command, CancellationToken ct = default)
+}
+```
+
+`AssigneeName = null` means unassign.
+
+#### `AddComment`
+
+```csharp
+public sealed record AddCommentCommand(TicketId TicketId, string Content,
+    string? Author, DateTimeOffset CreatedAt);
+
+public sealed record AddCommentResult(CommentDto Comment);
+
+// Handler: validates null + fields (ICommandValidator), loads ticket,
+//          calls ticket.AddComment(...), records audit event, saves via UnitOfWork.
+public sealed class AddCommentHandler
+{
+    public async Task<Result<AddCommentResult>> HandleAsync(
+        AddCommentCommand? command, CancellationToken ct = default)
+}
+```
+
+#### `GetAuditEvents`
+
+```csharp
+public sealed record GetAuditEventsQuery(TicketId TicketId);
+
+// Returns the full ordered audit trail for a ticket.
+public sealed class GetAuditEventsHandler
+{
+    public async Task<Result<IReadOnlyList<AuditEventDto>>> HandleAsync(
+        GetAuditEventsQuery? query, CancellationToken ct = default)
+}
+```
+
+#### `GetDashboardSummary`
+
+```csharp
+public sealed record GetDashboardSummaryQuery;
+
+public sealed record DashboardSummaryDto(
+    int NewCount,
+    int TriagedCount,
+    int InProgressCount,
+    int OverdueCount,
+    int ResolvedLast7DaysCount);
+
+// Handler: delegates to IDashboardRepository with clock.UtcNow as reference time.
+public sealed class GetDashboardSummaryHandler
+{
+    public async Task<Result<DashboardSummaryDto>> HandleAsync(
+        GetDashboardSummaryQuery? query, CancellationToken ct = default)
+}
+```
+
+### Shared Application Types
 
 ```csharp
 public sealed record TicketSearchCriteria(
@@ -227,7 +339,6 @@ public readonly record struct Paging(int Page, int PageSize)
 }
 
 public enum SortDirection { Asc, Desc }
-
 public enum TicketSortField { CreatedAt, DueAt, Priority, Status, Title }
 
 public readonly record struct SortSpec(TicketSortField Field, SortDirection Direction)
@@ -235,10 +346,7 @@ public readonly record struct SortSpec(TicketSortField Field, SortDirection Dire
     public static SortSpec Default => new(TicketSortField.CreatedAt, SortDirection.Desc);
 }
 
-public sealed record PagedResult<T>(
-    IReadOnlyList<T> Items,
-    int TotalCount,
-    Paging Paging);
+public sealed record PagedResult<T>(IReadOnlyList<T> Items, int TotalCount, Paging Paging);
 
 public record TicketListItemDto(
     TicketId Id,
@@ -246,10 +354,12 @@ public record TicketListItemDto(
     TicketStatus Status,
     TicketPriority Priority,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? DueAt);
+    DateTimeOffset? DueAt,
+    string DisplayRef,
+    bool IsOverdue);
 ```
 
-#### Paging Policy Constants
+### Paging Policy Constants
 
 ```csharp
 public static class PagingPolicy
@@ -261,9 +371,7 @@ public static class PagingPolicy
 }
 ```
 
-#### Exception Mappers
-
-Two helper classes centralise the translation from caught exceptions to `ApplicationError`:
+### Exception Mappers
 
 ```csharp
 // Domain layer exceptions → ApplicationError.DomainViolation
@@ -273,17 +381,13 @@ public static class DomainExceptionMapper
 }
 
 // Persistence layer exceptions → ApplicationError.Conflict or ApplicationError.Unexpected
-// Conflict is detected by inspecting the exception message for keywords
-// ("already exists", "duplicate", "unique", "concurrency").
 public static class PersistenceExceptionMapper
 {
     public static ApplicationError ToApplicationError(Exception ex)
 }
 ```
 
-Handlers use these instead of duplicating the mapping logic inline.
-
-#### Repository & Unit of Work Abstractions
+### Repository & Unit of Work Abstractions
 
 ```csharp
 public interface ITicketRepository
@@ -292,10 +396,26 @@ public interface ITicketRepository
     Task<Ticket?> GetByIdAsync(TicketId id, CancellationToken ct = default);
     Task<bool> ExistsAsync(TicketId id, CancellationToken ct = default);
     Task<PagedResult<Ticket>> SearchAsync(
-        TicketSearchCriteria criteria,
-        Paging paging,
-        SortSpec sort,
+        TicketSearchCriteria criteria, Paging paging, SortSpec sort,
         CancellationToken ct = default);
+}
+
+public interface IAuditEventRepository
+{
+    Task AddAsync(AuditEvent auditEvent, CancellationToken ct = default);
+    Task<IReadOnlyList<AuditEvent>> GetByTicketIdAsync(
+        TicketId ticketId, CancellationToken ct = default);
+}
+
+public interface IOutboxRepository
+{
+    Task AddAsync(OutboxMessage message, CancellationToken ct = default);
+}
+
+public interface IDashboardRepository
+{
+    Task<DashboardSummaryDto> GetSummaryAsync(
+        DateTimeOffset now, CancellationToken ct = default);
 }
 
 public interface IUnitOfWork

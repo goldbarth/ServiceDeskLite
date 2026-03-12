@@ -1,16 +1,24 @@
-﻿sequenceDiagram
+sequenceDiagram
     participant H as Handler
-    participant Repo as InMemoryTicketRepository
+    participant TR as ITicketRepository
+    participant AR as IAuditEventRepository
+    participant OR as IOutboxRepository
     participant UoW as InMemoryUnitOfWork (Scoped)
     participant Store as InMemoryStore (Singleton)
 
-    H->>Repo: AddAsync(ticket)
-    Repo->>UoW: PendingAdds.Add(ticket)
-    Note over UoW: ticket buffered – not yet visible
+    H->>TR: AddAsync(ticket)
+    TR->>UoW: PendingAdds.Add(ticket)
+    H->>AR: AddAsync(auditEvent)
+    AR->>UoW: PendingAdds.Add(auditEvent)
+    H->>OR: AddAsync(outboxMessage)
+    OR->>UoW: PendingAdds.Add(outboxMessage)
+    Note over UoW: all three buffered – none visible yet
 
     H->>UoW: SaveChangesAsync()
     UoW->>Store: ApplyAdds([ticket])
-    Note over Store: ConcurrentDictionary.TryAdd\nthrows on duplicate key
+    UoW->>Store: AppendAuditEvents([auditEvent])
+    UoW->>Store: AppendOutboxMessages([outboxMessage])
+    Note over Store: atomic flush – all or nothing
     Store-->>UoW: ok
     UoW->>UoW: PendingAdds.Clear()
     UoW-->>H: completed

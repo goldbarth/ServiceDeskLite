@@ -1,4 +1,4 @@
-﻿classDiagram
+classDiagram
     class Ticket {
         +TicketId Id
         +string Title
@@ -7,13 +7,54 @@
         +TicketStatus Status
         +DateTimeOffset CreatedAt
         +DateTimeOffset? DueAt
+        +Assignee? Assignee
+        +IReadOnlyList~Comment~ Comments
+        +IReadOnlyList~IDomainEvent~ DomainEvents
         +Ticket(id, title, description, priority, createdAt, dueAt?)
         +ChangeStatus(newStatus) void
+        +Assign(assignee?) void
+        +AddComment(content, createdAt, author?) Comment
+        +ClearDomainEvents() void
     }
     class TicketId {
         <<record struct>>
         +Guid Value
         +New()$ TicketId
+    }
+    class Assignee {
+        <<record>>
+        +string Name
+    }
+    class Comment {
+        +CommentId Id
+        +string Content
+        +DateTimeOffset CreatedAt
+        +string? Author
+    }
+    class CommentId {
+        <<record struct>>
+        +Guid Value
+        +New()$ CommentId
+    }
+    class AuditEvent {
+        +AuditEventId Id
+        +TicketId TicketId
+        +string EventType
+        +string? Actor
+        +DateTimeOffset OccurredAt
+        +string Payload
+    }
+    class OutboxMessage {
+        +OutboxMessageId Id
+        +string EventType
+        +string Payload
+        +DateTimeOffset OccurredAt
+        +DateTimeOffset? DispatchedAt
+        +OutboxMessageStatus Status
+        +MarkDispatched(at) void
+    }
+    class IDomainEvent {
+        <<interface>>
     }
     class TicketStatus {
         <<enumeration>>
@@ -52,8 +93,12 @@
     }
 
     Ticket "1" --> "1" TicketId : identified by
+    Ticket "1" --> "0..1" Assignee : assigned to
+    Ticket "1" --> "*" Comment : owns
     Ticket --> TicketStatus : has
     Ticket --> TicketPriority : has
+    Ticket "1" --> "*" IDomainEvent : raises
+    Comment --> CommentId : identified by
     Ticket ..> TicketWorkflow : delegates ChangeStatus to
     Ticket ..> Guard : validated by
     DomainException --> DomainError : carries
