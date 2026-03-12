@@ -1,4 +1,5 @@
 ﻿using ServiceDeskLite.Application.Abstractions.Persistence;
+using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Tickets;
 
@@ -8,11 +9,13 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
 {
     private readonly InMemoryStore _store;
     private readonly InMemoryUnitOfWork _unitOfWork;
+    private readonly IClock _clock;
 
-    public InMemoryTicketRepository(InMemoryStore store, InMemoryUnitOfWork unitOfWork)
+    public InMemoryTicketRepository(InMemoryStore store, InMemoryUnitOfWork unitOfWork, IClock clock)
     {
         _store = store;
         _unitOfWork = unitOfWork;
+        _clock = clock;
     }
     
     public Task AddAsync(Ticket ticket, CancellationToken ct = default)
@@ -87,6 +90,7 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
         var enumerable = q as Ticket[] ?? q.ToArray();
         var total = enumerable.Length;
 
+        var utcNow = _clock.UtcNow;
         var items = enumerable
             .Skip(paging.Skip)
             .Take(paging.PageSize)
@@ -97,7 +101,10 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
                 t.Priority,
                 t.CreatedAt,
                 t.DueAt,
-                t.Assignee?.Name))
+                t.Assignee?.Name,
+                TicketWorkflow.GetAllowedTransitions(t.Status),
+                t.DueAt is not null && t.DueAt.Value < utcNow
+                    && t.Status is not TicketStatus.Resolved and not TicketStatus.Closed))
             .ToList();
 
         return Task.FromResult(new PagedResult<TicketListItemDto>(items, total, paging));

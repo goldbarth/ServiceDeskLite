@@ -1,5 +1,6 @@
 using FluentAssertions;
 
+using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Tickets;
 using ServiceDeskLite.Infrastructure.InMemory.Persistence;
@@ -9,11 +10,12 @@ namespace ServiceDeskLite.Tests.Infrastructure.InMemory;
 public class InMemoryTicketRepositoryTests
 {
     private readonly InMemoryStore _store = new();
+    private readonly FakeClock _clock = new();
 
     private (InMemoryTicketRepository repo, InMemoryUnitOfWork uow) CreateSut()
     {
         var uow = new InMemoryUnitOfWork(_store);
-        var repo = new InMemoryTicketRepository(_store, uow);
+        var repo = new InMemoryTicketRepository(_store, uow, _clock);
         return (repo, uow);
     }
 
@@ -174,5 +176,10 @@ public class InMemoryTicketRepositoryTests
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*already exists*");
+    }
+
+    private sealed class FakeClock : IClock
+    {
+        public DateTimeOffset UtcNow { get; set; } = DateTimeOffset.UtcNow;
     }
 }

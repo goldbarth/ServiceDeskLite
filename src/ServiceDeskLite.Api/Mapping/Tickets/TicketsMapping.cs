@@ -32,6 +32,8 @@ public static class TicketsMapping
             Status: dto.Status.ToContract(),
             CreatedAt: dto.CreatedAt,
             DueAt: dto.DueAt,
-            Assignee: dto.Assignee
+            Assignee: dto.Assignee,
+            AllowedTransitions: dto.AllowedTransitions.Select(s => s.ToContract()).ToList(),
+            IsOverdue: dto.IsOverdue
         );
 }

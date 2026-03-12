@@ -9,4 +9,6 @@ public record TicketListItemDto(
     TicketPriority Priority,
     DateTimeOffset CreatedAt,
     DateTimeOffset? DueAt,
-    string? Assignee);
+    string? Assignee,
+    IReadOnlyList<TicketStatus> AllowedTransitions,
+    bool IsOverdue);
