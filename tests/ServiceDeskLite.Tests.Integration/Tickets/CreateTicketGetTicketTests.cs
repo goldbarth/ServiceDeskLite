@@ -66,7 +66,7 @@ public sealed class CreateTicketGetTicketTests
         ticket.AllowedTransitions.Should().Equal(TicketStatus.Triaged);
         ticket.DueAt.Should().Be(request.DueAt);
         ticket.Assignee.Should().BeNull();
-        ticket.Comments.Should().BeEmpty();
+        ticket.Conversation.Should().NotContain(x => x.Kind == ConversationItemKind.Comment);
         ticket.CreatedAt.Should().NotBe(default);
     }
 }

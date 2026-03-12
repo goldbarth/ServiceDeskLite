@@ -12,7 +12,7 @@ public record TicketDetailsDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset? DueAt,
     Assignee? Assignee,
-    IReadOnlyList<CommentDto> Comments,
+    IReadOnlyList<ConversationItemDto> Conversation,
     IReadOnlyList<TicketStatus> AllowedTransitions,
     bool IsOverdue,
     string DisplayRef,

@@ -9,7 +9,7 @@ public sealed record TicketResponse(
     DateTimeOffset CreatedAt,
     DateTimeOffset? DueAt,
     string? Assignee,
-    IReadOnlyList<CommentResponse> Comments,
+    IReadOnlyList<ConversationItemResponse> Conversation,
     IReadOnlyList<TicketStatus> AllowedTransitions,
     bool IsOverdue,
     string DisplayRef,

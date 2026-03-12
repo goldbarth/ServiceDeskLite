@@ -28,39 +28,13 @@ public partial class TicketDetailsPage
     private bool _isSubmittingComment;
     private ApiError? _commentError;
 
-    private IReadOnlyList<AuditEventResponse>? _auditEvents;
-    private ApiError? _auditEventsError;
     private TicketDetailsTab _activeTab = TicketDetailsTab.Details;
 
-    private int CommentCount => _ticket?.Comments.Count ?? 0;
-    private int HistoryCount => _auditEvents?.Count ?? 0;
+    private int CommentCount
+        => _ticket?.Conversation.Count(x => x.Kind == ConversationItemKind.Comment) ?? 0;
 
-    private IReadOnlyList<ConversationItem> ConversationItems
-    {
-        get
-        {
-            if (_ticket is null)
-            {
-                return [];
-            }
-
-            var items = new List<ConversationItem>();
-
-            items.AddRange(_ticket.Comments.Select(comment =>
-                new ConversationItem(comment.CreatedAt, ConversationItemKind.Comment, comment, null)));
-
-            if (_auditEvents is not null)
-            {
-                items.AddRange(_auditEvents
-                    .Where(auditEvent => auditEvent.Payload is not TicketCommentAddedPayload)
-                    .Select(auditEvent => new ConversationItem(auditEvent.OccurredAt, ConversationItemKind.SystemEvent, null, auditEvent)));
-            }
-
-            return [.. items
-                .OrderBy(item => item.Timestamp)
-                .ThenBy(item => item.Kind)];
-        }
-    }
+    private int HistoryCount
+        => _ticket?.Conversation.Count(x => x.Kind == ConversationItemKind.SystemEvent) ?? 0;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -68,8 +42,6 @@ public partial class TicketDetailsPage
         _error = null;
         _ticket = null;
         _commentError = null;
-        _auditEvents = null;
-        _auditEventsError = null;
         _activeTab = TicketDetailsTab.Details;
 
         await LoadPageAsync();
@@ -79,25 +51,15 @@ public partial class TicketDetailsPage
 
     private async Task LoadPageAsync()
     {
-        var ticketResult = await TicketsApi.GetByIdAsync(Id);
-        var auditResult = await TicketsApi.GetAuditEventsAsync(Id);
+        var result = await TicketsApi.GetByIdAsync(Id);
 
-        if (ticketResult.IsSuccess)
+        if (result.IsSuccess)
         {
-            _ticket = ticketResult.Value;
+            _ticket = result.Value;
         }
         else
         {
-            _error = ticketResult.Error;
-        }
-
-        if (auditResult.IsSuccess)
-        {
-            _auditEvents = auditResult.Value;
-        }
-        else
-        {
-            _auditEventsError = auditResult.Error;
+            _error = result.Error;
         }
     }
 
@@ -124,7 +86,6 @@ public partial class TicketDetailsPage
         {
             _ticket = updated;
             TicketsListState.Invalidate();
-            await RefreshAuditEventsAsync();
             Snackbar.Add("Status updated.", Severity.Success);
         }
     }
@@ -146,7 +107,6 @@ public partial class TicketDetailsPage
         {
             _ticket = updated;
             TicketsListState.Invalidate();
-            await RefreshAuditEventsAsync();
             Snackbar.Add("Assignee updated.", Severity.Success);
         }
     }
@@ -172,7 +132,6 @@ public partial class TicketDetailsPage
         if (result.IsSuccess)
         {
             await RefreshTicketAsync();
-            await RefreshAuditEventsAsync();
             TicketsListState.Invalidate();
 
             _commentContent = null;
@@ -193,21 +152,6 @@ public partial class TicketDetailsPage
         if (result.IsSuccess)
         {
             _ticket = result.Value;
-        }
-    }
-
-    private async Task RefreshAuditEventsAsync()
-    {
-        var result = await TicketsApi.GetAuditEventsAsync(Id);
-
-        if (result.IsSuccess)
-        {
-            _auditEvents = result.Value;
-            _auditEventsError = null;
-        }
-        else
-        {
-            _auditEventsError = result.Error;
         }
     }
 
@@ -370,16 +314,4 @@ public partial class TicketDetailsPage
         Comments,
         History
     }
-
-    private enum ConversationItemKind
-    {
-        Comment,
-        SystemEvent
-    }
-
-    private sealed record ConversationItem(
-        DateTimeOffset Timestamp,
-        ConversationItemKind Kind,
-        CommentResponse? Comment,
-        AuditEventResponse? Event);
 }

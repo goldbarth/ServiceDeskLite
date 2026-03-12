@@ -2,6 +2,7 @@ using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Common.Validation;
 using ServiceDeskLite.Application.Tickets.Audit;
+using ServiceDeskLite.Application.Tickets.GetAuditEvents;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Common;
@@ -72,7 +73,12 @@ public sealed class AssignTicketHandler
 
             await _unitOfWork.SaveChangesAsync(ct);
 
-            return Result<TicketDetailsDto>.Success(ticket.ToDetailsDto(_clock.UtcNow));
+            var auditEvents = await _auditRepository.GetByTicketIdAsync(ticket.Id, ct);
+            var auditEventDtos = auditEvents
+                .Select(e => new AuditEventDto(e.Id.Value, e.EventType, e.Actor, e.OccurredAt, e.Payload))
+                .ToList();
+
+            return Result<TicketDetailsDto>.Success(ticket.ToDetailsDto(auditEventDtos, _clock.UtcNow));
         }
         catch (DomainException ex) when (ex.Error.Code == TicketErrors.CannotAssignClosedCode)
         {
