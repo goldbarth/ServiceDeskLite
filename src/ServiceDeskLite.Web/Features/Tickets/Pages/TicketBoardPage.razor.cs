@@ -136,9 +136,6 @@ public partial class TicketBoardPage : IDisposable
     private static string FormatPriority(TicketPriority priority)
         => priority.ToString();
 
-    private static string FormatTicketRef(Guid id)
-        => $"#{id:N}"[..7].ToUpperInvariant();
-
     private static string BuildCardSummary(TicketListItemResponse ticket)
         => ticket.DueAt is not null
             ? $"Due {ticket.DueAt.Value.ToLocalTime():dd MMM yyyy}"
@@ -265,16 +262,6 @@ public partial class TicketBoardPage : IDisposable
         => _draggingTicket is not null
             && _draggingTicket.Status != targetStatus
             && _draggingTicket.AllowedTransitions.Contains(targetStatus);
-
-    private static string Truncate(string value, int maxLength)
-    {
-        if (value.Length <= maxLength)
-        {
-            return value;
-        }
-
-        return $"{value[..(maxLength - 3)].TrimEnd()}...";
-    }
 
     private void HandleStateChanged()
         => InvokeAsync(StateHasChanged);

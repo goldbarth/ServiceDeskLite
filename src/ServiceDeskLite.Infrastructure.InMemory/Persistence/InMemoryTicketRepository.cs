@@ -104,7 +104,8 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
                 t.Assignee?.Name,
                 TicketWorkflow.GetAllowedTransitions(t.Status),
                 t.DueAt is not null && t.DueAt.Value < utcNow
-                    && t.Status is not TicketStatus.Resolved and not TicketStatus.Closed))
+                    && t.Status is not TicketStatus.Resolved and not TicketStatus.Closed,
+                $"#{t.Id.Value:N}"[..7].ToUpperInvariant()))
             .ToList();
 
         return Task.FromResult(new PagedResult<TicketListItemDto>(items, total, paging));

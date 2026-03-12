@@ -192,7 +192,7 @@ public sealed class TicketBoardFeatureStateTests
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private static TicketListItemResponse MakeTicket(TicketStatus status = TicketStatus.New) =>
-        new(Guid.NewGuid(), "Test ticket", TicketPriority.Low, status, DateTimeOffset.UtcNow, null, null, [], false);
+        new(Guid.NewGuid(), "Test ticket", TicketPriority.Low, status, DateTimeOffset.UtcNow, null, null, [], false, "#ABC1234");
 
     // ── Fakes ────────────────────────────────────────────────────────────────
 
@@ -253,7 +253,11 @@ public sealed class TicketBoardFeatureStateTests
                         null,
                         null,
                         [],
-                        [TicketStatus.Triaged]))
+                        [TicketStatus.Triaged],
+                        IsOverdue: false,
+                        DisplayRef: "#ABC1234",
+                        StatusGuidance: string.Empty,
+                        SuggestedNextSteps: []))
                 : ApiResult<TicketResponse>.Failure(changeStatusError);
 
             return new(

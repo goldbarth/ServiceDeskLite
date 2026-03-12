@@ -36,7 +36,11 @@ public class TicketsApiClientTests
             null,
             null,
             [],
-            [TicketStatus.Triaged]);
+            [TicketStatus.Triaged],
+            IsOverdue: false,
+            DisplayRef: "#ABC1234",
+            StatusGuidance: string.Empty,
+            SuggestedNextSteps: []);
 
         var handler = FakeHttpMessageHandler.WithJson(HttpStatusCode.OK, body);
         var client = CreateClient(handler);

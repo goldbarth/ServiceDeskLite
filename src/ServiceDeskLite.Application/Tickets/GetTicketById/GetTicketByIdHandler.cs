@@ -7,10 +7,12 @@ namespace ServiceDeskLite.Application.Tickets.GetTicketById;
 public sealed class GetTicketByIdHandler
 {
     private readonly ITicketRepository _repository;
+    private readonly IClock _clock;
 
-    public GetTicketByIdHandler(ITicketRepository repository)
+    public GetTicketByIdHandler(ITicketRepository repository, IClock clock)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     public async Task<Result<TicketDetailsDto>> HandleAsync(
@@ -32,8 +34,8 @@ public sealed class GetTicketByIdHandler
                 meta: new Dictionary<string, object?>{["ticketId"] = query.Id}!);
         }
 
-        var dto = ticket.ToDetailsDto();
-        
+        var dto = ticket.ToDetailsDto(_clock.UtcNow);
+
         return Result<TicketDetailsDto>.Success(dto);
     }
 }

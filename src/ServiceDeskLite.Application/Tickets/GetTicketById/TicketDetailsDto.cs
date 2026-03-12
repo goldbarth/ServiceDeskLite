@@ -13,4 +13,8 @@ public record TicketDetailsDto(
     DateTimeOffset? DueAt,
     Assignee? Assignee,
     IReadOnlyList<CommentDto> Comments,
-    IReadOnlyList<TicketStatus> AllowedTransitions);
+    IReadOnlyList<TicketStatus> AllowedTransitions,
+    bool IsOverdue,
+    string DisplayRef,
+    string StatusGuidance,
+    IReadOnlyList<string> SuggestedNextSteps);

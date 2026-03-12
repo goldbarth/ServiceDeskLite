@@ -10,4 +10,8 @@ public sealed record TicketResponse(
     DateTimeOffset? DueAt,
     string? Assignee,
     IReadOnlyList<CommentResponse> Comments,
-    IReadOnlyList<TicketStatus> AllowedTransitions);
+    IReadOnlyList<TicketStatus> AllowedTransitions,
+    bool IsOverdue,
+    string DisplayRef,
+    string StatusGuidance,
+    IReadOnlyList<string> SuggestedNextSteps);
