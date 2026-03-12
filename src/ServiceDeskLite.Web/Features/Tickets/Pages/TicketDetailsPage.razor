@@ -188,7 +188,8 @@ else
                                                 </div>
                                             </article>
                                         }
-                                        else if (item.Kind == ConversationItemKind.SystemEvent && item.Event is not null)
+                                        else if (item.Kind == ConversationItemKind.SystemEvent && item.Event is not null
+                                                 && item.Event.Payload is not TicketCommentAddedPayload)
                                         {
                                             <div class="ticket-system-event">
                                                 <span class="ticket-system-event__line" aria-hidden="true"></span>
