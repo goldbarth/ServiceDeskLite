@@ -23,7 +23,7 @@
 
 > In Development, a `ITicketSeeder` runs on startup to populate the InMemory store with sample data.
 
-<img src="../assets/diagrams/middleware-pipeline.svg" alt="Middleware Pipeline" style="max-width:720px;width:100%;">
+<img src="../assets/diagrams/middleware-pipeline.svg" alt="Middleware Pipeline" style="max-width:960px;width:100%;">
 
 ### Endpoints
 
@@ -51,7 +51,7 @@ All errors return RFC 9457 ProblemDetails via `ResultToProblemDetailsMapper`.
 
 The following sequence covers the `POST /api/v1/tickets` happy path. All other endpoints follow the same structure.
 
-<img src="../assets/diagrams/request-lifecycle.svg" alt="Request Lifecycle" style="max-width:720px;width:100%;">
+<img src="../assets/diagrams/request-lifecycle.svg" alt="Request Lifecycle" style="max-width:960px;width:100%;">
 
 ### API Key Authentication (`ApiKeyMiddleware`)
 
