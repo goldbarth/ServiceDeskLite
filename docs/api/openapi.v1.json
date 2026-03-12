@@ -432,6 +432,12 @@
       },
       "TicketListItemResponse": {
         "properties": {
+          "allowedTransitions": {
+            "items": {
+              "$ref": "#/components/schemas/TicketStatus"
+            },
+            "type": "array"
+          },
           "assignee": {
             "type": [
               "null",
@@ -453,6 +459,9 @@
             "format": "uuid",
             "type": "string"
           },
+          "isOverdue": {
+            "type": "boolean"
+          },
           "priority": {
             "$ref": "#/components/schemas/TicketPriority"
           },
@@ -470,7 +479,9 @@
           "status",
           "createdAt",
           "dueAt",
-          "assignee"
+          "assignee",
+          "allowedTransitions",
+          "isOverdue"
         ],
         "type": "object"
       },
