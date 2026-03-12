@@ -1,6 +1,5 @@
 using ServiceDeskLite.Application.Tickets.GetAuditEvents;
 using ServiceDeskLite.Application.Tickets.Shared;
-using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Application.Tickets.GetTicketById;
@@ -91,7 +90,6 @@ internal static class TicketDetailsDtoMapping
                 Event: null)));
 
         items.AddRange(auditEvents
-            .Where(e => e.EventType != AuditEventTypes.CommentAdded)
             .Select(e => new ConversationItemDto(
                 e.OccurredAt,
                 ConversationItemKind.SystemEvent,
