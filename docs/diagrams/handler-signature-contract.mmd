@@ -1,9 +1,10 @@
-﻿flowchart TD
+flowchart TD
     Start([HandleAsync\nCreateTicketCommand?]) --> NullCheck{command\nis null?}
     NullCheck -- yes --> ValFail(["Result.Validation\n'command.required'"])
-    NullCheck -- no --> Construct["new Ticket()\nGuard validates all inputs"]
+    NullCheck -- no --> Validate["ICommandValidator\n.Validate(command)"]
+    Validate -- invalid --> FieldFail(["Result.ValidationWithFields\nfield errors"])
+    Validate -- ok --> Construct["new Ticket()\nGuard validates all inputs"]
     Construct -- DomainException --> DomainFail(["Result.DomainViolation\ne.g. 'title.required'"])
-    Construct -- ok --> ExistsCheck{ExistsAsync\nticket id}
-    ExistsCheck -- true --> ConflictFail(["Result.Conflict\n'ticket.duplicate'"])
-    ExistsCheck -- false --> Persist["AddAsync\n+ SaveChangesAsync"]
-    Persist --> Success(["Result.Success\nCreateTicketResult(id)"])
+    Construct -- ok --> Persist["AddAsync(ticket)\n+ AddAsync(auditEvent)\n+ AddAsync(outboxMessage)\n+ ClearDomainEvents()\n+ SaveChangesAsync()"]
+    Persist -- persistence error --> ConflictOrUnexpected(["Result.Conflict or\nResult.Failure(Unexpected)"])
+    Persist -- ok --> Success(["Result.Success\nCreateTicketResult(id)"])

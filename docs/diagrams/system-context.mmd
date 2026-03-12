@@ -1,11 +1,11 @@
-﻿graph LR
+graph LR
     User(["Browser / User"])
     Web["ServiceDeskLite.Web\n(Blazor Server)"]
     Api["ServiceDeskLite.API\n(Minimal API)"]
-    SQLite[("SQLite\nservicedesklite.db")]
+    PG[("PostgreSQL\n(production)")]
     InMem[("In-Process Memory\n(dev / test)")]
 
     User -->|HTTPS| Web
-    Web -->|REST / JSON| Api
-    Api -->|EF Core| SQLite
+    Web -->|REST / JSON\nX-Api-Key| Api
+    Api -->|EF Core / Npgsql| PG
     Api -. InMemory .-> InMem

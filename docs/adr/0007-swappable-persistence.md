@@ -21,7 +21,7 @@ architecture needs to prove.
 - Local development and tests must start without a database file or
   migration step.
 - The InMemory implementation must honour the same unit-of-work commit
-  boundary as the SQLite implementation — uncommitted adds must not be
+  boundary as the PostgreSQL implementation — uncommitted adds must not be
   readable by concurrent requests.
 - The port boundaries established in ADR 0001 must be verifiable: replacing
   the entire persistence stack should require no changes outside the
@@ -34,7 +34,7 @@ architecture needs to prove.
 ### Option A — Hand-rolled InMemory provider with runtime config switch (Selected)
 
 Two complete, interchangeable implementations of `ITicketRepository` and
-`IUnitOfWork` exist: one backed by EF Core + SQLite, one backed by a
+`IUnitOfWork` exist: one backed by EF Core + PostgreSQL, one backed by a
 hand-rolled `ConcurrentDictionary` store. The active implementation is
 selected at startup by reading `Persistence:Provider` from configuration.
 The composition root (`InfrastructureComposition`) registers one set or the
@@ -104,7 +104,7 @@ Chosen option: **Option A — Hand-rolled InMemory provider with runtime config 
 ### Positive Consequences
 
 - Development and test runs start instantly with no file system state.
-- The InMemory and SQLite paths exercise the same application code —
+- The InMemory and PostgreSQL paths exercise the same application code —
   end-to-end tests cover both providers via the `[ProviderMatrix]` attribute.
 - The commit-boundary behaviour is verifiable in tests
   (`CommitBoundaryTests`, `ReadIsolationTests`) because the InMemory

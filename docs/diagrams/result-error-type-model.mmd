@@ -17,8 +17,10 @@
         +Success(value)$ ResultT
         +Failure(error)$ ResultT
         +Validation(code, msg)$ ResultT
+        +ValidationWithFields(code, msg, fieldErrors)$ ResultT
         +NotFound(code, msg)$ ResultT
         +DomainViolation(code, msg)$ ResultT
+        +Conflict(code, msg)$ ResultT
     }
     class ApplicationError {
         <<record>>

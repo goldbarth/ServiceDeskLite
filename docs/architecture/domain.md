@@ -89,7 +89,7 @@ Comments are owned by the `Ticket` aggregate and stored in a separate
 
 ### Domain Model
 
-![Domain Model](../assets/diagrams/domain-model.svg)
+<img src="../assets/diagrams/domain-model.svg" alt="Domain Model" style="max-width:720px;width:100%;">
 
 ### `TicketWorkflow` – Status Transition Rules
 
@@ -117,7 +117,7 @@ public static void EnsureCanTransition(TicketStatus from, TicketStatus to)
 
 ## Ticket Workflow
 
-![Ticket workflow](../assets/diagrams/ticket-workflow.svg)
+<img src="../assets/diagrams/ticket-workflow.svg" alt="Ticket Workflow" style="max-width:360px;width:100%;">
 
 ### Domain Events
 

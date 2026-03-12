@@ -1,18 +1,22 @@
-﻿sequenceDiagram
+sequenceDiagram
     participant C as Client
     participant EP as API Endpoint
     participant H as CreateTicketHandler
     participant Repo as ITicketRepository
+    participant AR as IAuditEventRepository
+    participant OR as IOutboxRepository
     participant UoW as IUnitOfWork
 
     C->>+EP: POST /api/v1/tickets\n{ title, description, priority, dueAt }
     EP->>EP: bind CreateTicketRequest
     EP->>EP: map → CreateTicketCommand
     EP->>+H: HandleAsync(command)
-    H->>H: null check, new Ticket() + Guard
-    H->>Repo: ExistsAsync(id)
-    Repo-->>H: false
+    H->>H: null check + ICommandValidator.Validate
+    H->>H: new Ticket() + Guard
     H->>Repo: AddAsync(ticket)
+    H->>AR: AddAsync(auditEvent)
+    H->>OR: AddAsync(outboxMessage)
+    H->>H: ticket.ClearDomainEvents()
     H->>UoW: SaveChangesAsync()
     H-->>-EP: Result.Success(CreateTicketResult)
     EP->>EP: map → CreateTicketResponse

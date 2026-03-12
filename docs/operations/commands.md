@@ -1,8 +1,8 @@
-﻿## Common Commands
+## Common Commands
 
-#### Build and Test
+### Build and Test
 
-```
+```bash
 # Restore (uses lock files – required before first build)
 dotnet restore ./ServiceDeskLite.slnx
 
@@ -19,9 +19,9 @@ dotnet test tests/ServiceDeskLite.Tests.Domain/
 dotnet test --filter "FullyQualifiedName~TicketTests"
 ```
 
-#### Run Applications
+### Run Applications
 
-```csharp
+```bash
 # API (defaults to InMemory in Development)
 dotnet run --project src/ServiceDeskLite.Api
 
@@ -29,9 +29,32 @@ dotnet run --project src/ServiceDeskLite.Api
 dotnet run --project src/ServiceDeskLite.Web
 ```
 
-#### EF Core Migrations
+### Docker Compose (PostgreSQL)
 
+```bash
+# Start PostgreSQL in the background
+docker compose up -d
+
+# Start all services (API + DB)
+docker compose up --build
+
+# Stop and remove containers
+docker compose down
+
+# Stop and remove containers + volumes (wipes database)
+docker compose down -v
 ```
+
+When running with Docker Compose, set the API persistence provider:
+
+```json lines
+// appsettings.json or environment variable
+{ "Persistence": { "Provider": "Postgres" } }
+```
+
+### EF Core Migrations
+
+```bash
 # Add a new migration (from repo root)
 dotnet ef migrations add <MigrationName> \
   --project src/ServiceDeskLite.Infrastructure \
@@ -41,4 +64,12 @@ dotnet ef migrations add <MigrationName> \
 dotnet ef database update \
   --project src/ServiceDeskLite.Infrastructure \
   --startup-project src/ServiceDeskLite.Api
+```
+
+### Lock Files
+
+After adding or updating any NuGet package, regenerate lock files:
+
+```bash
+dotnet restore --force-evaluate ./ServiceDeskLite.slnx
 ```

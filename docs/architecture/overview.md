@@ -7,7 +7,7 @@ The goal is a portfolio-grade reference for Clean Architecture with explicit dom
 
 ## System Context
 
-![System Context](../assets/diagrams/system-context.svg)
+<img src="../assets/diagrams/system-context.svg" alt="System Context" style="max-width:720px;width:100%;">
 
 ---
 
@@ -18,19 +18,21 @@ The goal is a portfolio-grade reference for Clean Architecture with explicit dom
 - Blazor Interactive Server (MudBlazor, Bootstrap 5)
 - EF Core 10
 - PostgreSQL / Npgsql (production) + InMemory provider (dev/test)
-- xUnit + FluentAssertions + Microsoft.AspNetCore.Mvc.Testing
+- Docker Compose (PostgreSQL 17)
+- xUnit + FluentAssertions + Microsoft.AspNetCore.Mvc.Testing + Testcontainers
 - Serilog
 
 ---
 
 ## Solution Structure (High-Level)
 
-- `Domain`: Aggregates, workflow rules, guards, domain exceptions
-- `Application`: Use cases, `Result` / `Result<T>`, abstractions
+- `Domain`: Aggregates, value objects, domain events, workflow rules, guards, domain exceptions
+- `Application`: Use cases, `Result` / `Result<T>`, abstractions, validators, `IClock`
 - `Contracts`: Versioned HTTP DTOs (V1) shared across boundaries
-- `Infrastructure`: Persistence providers + repositories
-- `API`: HTTP boundary, ProblemDetails mapping, exception handling
-- `Web`: UI + typed API client
+- `Infrastructure`: PostgreSQL/EF Core persistence + repositories
+- `Infrastructure.InMemory`: In-memory persistence (dev/test)
+- `API`: HTTP boundary, ProblemDetails mapping, exception handling, API key auth
+- `Web`: Blazor UI + typed API client
 
 ---
 
@@ -38,7 +40,7 @@ The goal is a portfolio-grade reference for Clean Architecture with explicit dom
 
 Dependencies must point strictly **inward**. No layer may reference anything from a layer that is outer to it.
 
-![Dependency Rules](../assets/diagrams/dependency-rules.svg)
+<img src="../assets/diagrams/dependency-rules.svg" alt="Dependency Rules" style="max-width:720px;width:100%;">
 
 Violations are blocking issues.
 
@@ -57,7 +59,11 @@ Violations are blocking issues.
 
 ### Deterministic paging & sorting
 - Paging is validated via a policy (min/max/default).
-- Sorting is stable; ties use additional deterministic fields (e.g., `CreatedAt` + `Id`).
+- Sorting is stable; ties use additional deterministic fields (`CreatedAt` + `Id`).
+
+### Domain events + Audit trail
+- Every aggregate mutation raises a domain event.
+- Handlers consume events to write audit records and outbox messages atomically.
 
 ---
 
@@ -67,6 +73,6 @@ Violations are blocking issues.
 - [Application](application.md)
 - [API](api.md)
 - [Contracts](contracts.md)
-- [Infrastructure (SQLite)](infrastructure-sqlite.md)
+- [Infrastructure (PostgreSQL/EF Core)](infrastructure-postgres.md)
 - [Infrastructure (InMemory)](infrastructure-inmemory.md)
 - [Web Layer](web.md)

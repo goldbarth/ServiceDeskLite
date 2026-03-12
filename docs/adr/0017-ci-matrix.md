@@ -11,15 +11,15 @@ operating systems to include in the build and test matrix. Running on a
 single platform is simpler and faster; running on multiple platforms catches
 issues that only manifest on specific operating systems.
 
-The project uses SQLite (file path handling, EF Core migrations), Serilog
-(file sink path separators in future), and a bash-based OpenAPI snapshot
+The project uses PostgreSQL with EF Core (connection handling, migrations),
+Serilog (file sink path separators in future), and a bash-based OpenAPI snapshot
 script — all of which have platform-specific surface area.
 
 ## Decision Drivers
 
 - Path separator differences (`/` vs `\`) must not silently break file
   operations on either platform.
-- SQLite and EF Core behaviour must be verified on both Linux and Windows,
+- PostgreSQL and EF Core behaviour must be verified on both Linux and Windows,
   since the application targets both as deployment platforms.
 - A failing test on one platform must not silently pass on the other —
   full signal from both matrix legs is more useful than a fast fail on one.
@@ -87,7 +87,7 @@ Chosen option: **Option A — Ubuntu + Windows matrix, `fail-fast: false`**.
 
 ### Positive Consequences
 
-- Platform-specific issues (path separators, SQLite file handling,
+- Platform-specific issues (path separators, PostgreSQL connection handling,
   EF Core behaviour) are caught on every push, not just when someone
   happens to run on that platform.
 - Both matrix legs always run to completion — a single push always
