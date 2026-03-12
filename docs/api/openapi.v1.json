@@ -239,6 +239,51 @@
         ],
         "type": "object"
       },
+      "ConversationItemKind": {
+        "enum": [
+          "Comment",
+          "SystemEvent"
+        ],
+        "type": "string"
+      },
+      "ConversationItemResponse": {
+        "properties": {
+          "comment": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CommentResponse"
+              }
+            ]
+          },
+          "event": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AuditEventResponse"
+              }
+            ]
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ConversationItemKind"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timestamp",
+          "kind",
+          "comment",
+          "event"
+        ],
+        "type": "object"
+      },
       "CreateTicketRequest": {
         "properties": {
           "description": {
@@ -512,9 +557,9 @@
               "string"
             ]
           },
-          "comments": {
+          "conversation": {
             "items": {
-              "$ref": "#/components/schemas/CommentResponse"
+              "$ref": "#/components/schemas/ConversationItemResponse"
             },
             "type": "array"
           },
@@ -570,7 +615,7 @@
           "createdAt",
           "dueAt",
           "assignee",
-          "comments",
+          "conversation",
           "allowedTransitions",
           "isOverdue",
           "displayRef",
