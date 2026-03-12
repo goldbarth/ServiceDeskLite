@@ -29,7 +29,7 @@ internal static class TicketDetailsDtoMapping
             allowedTransitions,
             IsOverdue: ticket.DueAt is not null && ticket.DueAt.Value < utcNow
                 && ticket.Status is not TicketStatus.Resolved and not TicketStatus.Closed,
-            DisplayRef: $"#{ticket.Id.Value:N}"[..7].ToUpperInvariant(),
+            DisplayRef: "#" + $"{ticket.Id.Value:N}"[^6..].ToUpperInvariant(),
             StatusGuidance: BuildStatusGuidance(ticket.Status),
             SuggestedNextSteps: BuildSuggestedNextSteps(ticket, allowedTransitions));
     }
