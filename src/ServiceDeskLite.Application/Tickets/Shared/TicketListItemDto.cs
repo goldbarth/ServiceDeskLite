@@ -11,4 +11,5 @@ public record TicketListItemDto(
     DateTimeOffset? DueAt,
     string? Assignee,
     IReadOnlyList<TicketStatus> AllowedTransitions,
-    bool IsOverdue);
+    bool IsOverdue,
+    string DisplayRef);

@@ -143,9 +143,6 @@ public partial class TicketsListPage : IDisposable
     private string SortButtonClass(TicketSortField field)
         => Query.SortField == field ? "tickets-sort is-active" : "tickets-sort";
 
-    private static string FormatTicketRef(Guid id)
-        => $"#{id:N}"[..7].ToUpperInvariant();
-
     private static string FormatStatus(TicketStatus status)
         => status switch
         {
@@ -182,7 +179,7 @@ public partial class TicketsListPage : IDisposable
     {
         if (item.DueAt is not null)
         {
-            var prefix = IsOverdue(item) ? "Overdue since" : "Due";
+            var prefix = item.IsOverdue ? "Overdue since" : "Due";
             return $"{prefix} {FormatCompactDateTime(item.DueAt.Value)}";
         }
 
@@ -197,11 +194,6 @@ public partial class TicketsListPage : IDisposable
 
     private static string FormatCompactDateTime(DateTimeOffset value)
         => value.ToLocalTime().ToString("dd MMM yyyy, HH:mm");
-
-    private static bool IsOverdue(TicketListItemResponse item)
-        => item.DueAt is not null
-            && item.DueAt.Value < DateTimeOffset.UtcNow
-            && item.Status is not TicketStatus.Resolved and not TicketStatus.Closed;
 
     private async Task LoadAndSyncUrlAsync(TicketQueryParams query)
     {

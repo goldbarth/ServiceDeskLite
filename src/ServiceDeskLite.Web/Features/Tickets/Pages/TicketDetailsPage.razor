@@ -70,7 +70,7 @@ else
     <div class="ticket-detail-page">
         <MudPaper Class="ticket-detail-surface ticket-detail-header" Elevation="0">
             <div class="ticket-detail-header__content">
-                <span class="ticket-detail-header__ref">@FormatTicketRef(_ticket.Id)</span>
+                <span class="ticket-detail-header__ref">@_ticket.DisplayRef</span>
                 <h1 class="ticket-detail-header__title">@_ticket.Title</h1>
                 <p class="ticket-detail-header__summary">@BuildHeaderSummary(_ticket.Description)</p>
 
@@ -87,7 +87,7 @@ else
             <div class="ticket-detail-header__actions">
                 <div class="ticket-detail-header__actions-copy">
                     <span class="ticket-detail-header__actions-label">Workflow actions</span>
-                    <p class="ticket-detail-header__actions-note">@WorkflowActionNote</p>
+                    <p class="ticket-detail-header__actions-note">@(_ticket.SuggestedNextSteps.FirstOrDefault() ?? string.Empty)</p>
                 </div>
 
                 <div class="ticket-detail-header__buttons">
@@ -149,7 +149,7 @@ else
 
                         <div class="ticket-panel__section">
                             <span class="ticket-panel__eyebrow">Operational focus</span>
-                            <p class="ticket-panel__text">@DetailsSummaryText</p>
+                            <p class="ticket-panel__text">@_ticket.StatusGuidance</p>
                         </div>
                     }
                     else if (_activeTab == TicketDetailsTab.Comments)
@@ -394,7 +394,7 @@ else
                     <div class="ticket-sidebar-section">
                         <span class="ticket-panel__eyebrow">Recommended next steps</span>
                         <ul class="ticket-next-steps__list">
-                            @foreach (var suggestion in SuggestedNextSteps)
+                            @foreach (var suggestion in _ticket.SuggestedNextSteps)
                             {
                                 <li>@suggestion</li>
                             }

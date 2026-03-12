@@ -14,7 +14,7 @@ public class GetTicketByIdHandlerTests
     public async Task Returns_not_found_when_ticket_missing()
     {
         var repo =  new FakeTicketRepository(null);
-        var handler = new GetTicketByIdHandler(repo);
+        var handler = new GetTicketByIdHandler(repo, new FakeClock());
         
         var result = await handler.HandleAsync(new GetTicketByIdQuery(TicketId.New()));
         
@@ -35,7 +35,7 @@ public class GetTicketByIdHandlerTests
             DateTimeOffset.UtcNow);
         
         var repo =  new FakeTicketRepository(ticket);
-        var handler = new GetTicketByIdHandler(repo);
+        var handler = new GetTicketByIdHandler(repo, new FakeClock());
         
         var result = await handler.HandleAsync(new GetTicketByIdQuery(id));
 
@@ -45,6 +45,11 @@ public class GetTicketByIdHandlerTests
         result.Value.AllowedTransitions.Should().Equal(TicketStatus.Triaged);
     }
     
+    private sealed class FakeClock : IClock
+    {
+        public DateTimeOffset UtcNow { get; set; } = DateTimeOffset.UtcNow;
+    }
+
     private sealed class FakeTicketRepository : ITicketRepository
     {
         private readonly Ticket? _ticket;

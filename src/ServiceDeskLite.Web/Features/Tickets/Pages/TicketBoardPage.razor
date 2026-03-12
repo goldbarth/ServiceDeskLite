@@ -139,7 +139,7 @@
                                                 <span class="board-card__drag-handle" aria-hidden="true">
                                                     <MudIcon Icon="@Icons.Material.Outlined.DragIndicator" />
                                                 </span>
-                                                <span class="board-card__ref">@FormatTicketRef(ticket.Id)</span>
+                                                <span class="board-card__ref">@ticket.DisplayRef</span>
                                             </div>
 
                                             <span class="@($"board-priority {PriorityClass(ticket.Priority)}")">

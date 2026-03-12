@@ -257,7 +257,7 @@
 
                     <RowTemplate>
                         <MudTd DataLabel="Ref" Class="tickets-table__cell tickets-table__cell--ref">
-                            <span class="tickets-ref">@FormatTicketRef(context.Id)</span>
+                            <span class="tickets-ref">@context.DisplayRef</span>
                         </MudTd>
 
                         <MudTd DataLabel="Title" Class="tickets-table__cell tickets-table__cell--title">
@@ -291,7 +291,7 @@
                                 }
                                 else
                                 {
-                                    <span class="@($"tickets-date__value{(IsOverdue(context) ? " tickets-date__value--alert" : string.Empty)}")">
+                                    <span class="@($"tickets-date__value{(context.IsOverdue ? " tickets-date__value--alert" : string.Empty)}")">
                                         @FormatDate(context.DueAt.Value)
                                     </span>
                                     <span class="tickets-date__meta">@FormatTime(context.DueAt.Value)</span>

@@ -62,72 +62,6 @@ public partial class TicketDetailsPage
         }
     }
 
-    private string WorkflowActionNote
-        => _ticket is null
-            ? string.Empty
-            : _ticket.AllowedTransitions.Count == 0
-                ? "No further status transition is currently available for this ticket."
-                : $"Next workflow options: {string.Join(", ", _ticket.AllowedTransitions.Select(FormatStatus))}.";
-
-    private string DetailsSummaryText
-        => _ticket is null
-            ? string.Empty
-            : _ticket.Status switch
-            {
-                TicketStatus.New => "Review the request, confirm the issue statement, and move it into triage once it is ready for routing.",
-                TicketStatus.Triaged => "The ticket is ready for assignment, progress work, or direct resolution if the outcome is already clear.",
-                TicketStatus.InProgress => "Active work is underway. Keep the latest context in the conversation thread and track the due date closely.",
-                TicketStatus.Waiting => "The ticket is currently blocked by an external dependency. Document the blocker and move it forward once a response arrives.",
-                TicketStatus.Resolved => "Resolution is recorded. Confirm the outcome and close the ticket when no further action is needed.",
-                TicketStatus.Closed => "The workflow is complete. Use history and comments as the factual record of what happened.",
-                _ => string.Empty
-            };
-
-    private IReadOnlyList<string> SuggestedNextSteps
-    {
-        get
-        {
-            if (_ticket is null)
-            {
-                return [];
-            }
-
-            var suggestions = new List<string>();
-
-            if (_ticket.Assignee is null && _ticket.Status is not TicketStatus.Closed)
-            {
-                suggestions.Add("Assign an owner so responsibility and next handling steps are explicit.");
-            }
-
-            if (_ticket.DueAt is null && _ticket.Status is not TicketStatus.Resolved and not TicketStatus.Closed)
-            {
-                suggestions.Add("Add a due date if the ticket should be tracked against a service target or external commitment.");
-            }
-
-            if (_ticket.AllowedTransitions.Count > 0)
-            {
-                suggestions.Add($"Prepare the next workflow move: {string.Join(", ", _ticket.AllowedTransitions.Select(FormatStatus))}.");
-            }
-
-            if (_ticket.Status == TicketStatus.Waiting)
-            {
-                suggestions.Add("Record the blocker clearly in the notes and move the ticket back to In Progress once the dependency responds.");
-            }
-
-            if (_ticket.Status == TicketStatus.Resolved)
-            {
-                suggestions.Add("Validate the outcome before closing, or reopen to In Progress if follow-up work is required.");
-            }
-
-            if (suggestions.Count == 0)
-            {
-                suggestions.Add("No immediate follow-up is suggested. Use comments and history for recordkeeping.");
-            }
-
-            return suggestions;
-        }
-    }
-
     protected override async Task OnParametersSetAsync()
     {
         _isLoading = true;
@@ -277,9 +211,6 @@ public partial class TicketDetailsPage
         }
     }
 
-    private static string FormatTicketRef(Guid id)
-        => $"#{id:N}"[..7].ToUpperInvariant();
-
     private static string BuildHeaderSummary(string description)
         => Truncate(description.Trim(), 220);
 
@@ -321,13 +252,8 @@ public partial class TicketDetailsPage
     private static string FormatDue(TicketResponse ticket)
         => ticket.DueAt is null ? "No due date" : FormatDateTime(ticket.DueAt.Value);
 
-    private static bool IsOverdue(TicketResponse ticket)
-        => ticket.DueAt is not null
-            && ticket.DueAt.Value < DateTimeOffset.UtcNow
-            && ticket.Status is not TicketStatus.Resolved and not TicketStatus.Closed;
-
     private static string DueValueClass(TicketResponse ticket)
-        => IsOverdue(ticket)
+        => ticket.IsOverdue
             ? "ticket-context__value ticket-context__value--alert"
             : "ticket-context__value";
 

@@ -21,7 +21,11 @@ public static class TicketsMapping
                 .ToList(),
             AllowedTransitions: dto.AllowedTransitions
                 .Select(status => status.ToContract())
-                .ToList()
+                .ToList(),
+            IsOverdue: dto.IsOverdue,
+            DisplayRef: dto.DisplayRef,
+            StatusGuidance: dto.StatusGuidance,
+            SuggestedNextSteps: dto.SuggestedNextSteps
         );
 
     public static TicketListItemResponse ToListItemResponse(this TicketListItemDto dto)
@@ -34,6 +38,7 @@ public static class TicketsMapping
             DueAt: dto.DueAt,
             Assignee: dto.Assignee,
             AllowedTransitions: dto.AllowedTransitions.Select(s => s.ToContract()).ToList(),
-            IsOverdue: dto.IsOverdue
+            IsOverdue: dto.IsOverdue,
+            DisplayRef: dto.DisplayRef
         );
 }

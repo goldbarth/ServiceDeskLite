@@ -72,7 +72,7 @@ public sealed class AssignTicketHandler
 
             await _unitOfWork.SaveChangesAsync(ct);
 
-            return Result<TicketDetailsDto>.Success(ticket.ToDetailsDto());
+            return Result<TicketDetailsDto>.Success(ticket.ToDetailsDto(_clock.UtcNow));
         }
         catch (DomainException ex) when (ex.Error.Code == TicketErrors.CannotAssignClosedCode)
         {
