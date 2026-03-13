@@ -52,9 +52,9 @@ public partial class TicketBoardPage : IDisposable
         BoardState.State is TicketBoardState.Loaded loaded
             ?
             [
-                new DashboardHeroStat("Workflow lanes", VisibleColumns.Count().ToString()),
                 new DashboardHeroStat("Board cards", loaded.Tickets.Count.ToString()),
-                new DashboardHeroStat("Closed lane", "Visible")
+                new DashboardHeroStat("Overdue", loaded.Tickets.Count(t => t.IsOverdue).ToString()),
+                new DashboardHeroStat("Blocked", loaded.Tickets.Count(t => t.Status == TicketStatus.Waiting).ToString())
             ]
             : [];
 
