@@ -29,5 +29,5 @@
     [Parameter, EditorRequired] public string Badge { get; set; } = default!;
     [Parameter, EditorRequired] public string Title { get; set; } = default!;
     [Parameter, EditorRequired] public string Description { get; set; } = default!;
-    [Parameter] public IReadOnlyList<DashboardHeroStat> Stats { get; set; } = Array.Empty<DashboardHeroStat>();
+    [Parameter] public IReadOnlyList<DashboardHeroStat> Stats { get; set; } = [];
 }
