@@ -1,6 +1,7 @@
 # ServiceDeskLite
 
 <p>
+  <img src="https://img.shields.io/github/v/release/goldbarth/ServiceDeskLite"/>
   <a href="https://github.com/goldbarth/ServiceDeskLite/actions/workflows/ci.yml">
     <img src="https://github.com/goldbarth/ServiceDeskLite/actions/workflows/ci.yml/badge.svg" alt="CI" />
   </a>
