@@ -54,6 +54,6 @@ Docker setup, and architecture/API documentation.
 
 ### Links
 
-- [Repository](https://github.com/FelixStaworski/ServiceDeskLite)
-- [Documentation / GitHub Pages](https://felixstaworski.github.io/ServiceDeskLite/)
-- [OpenAPI](https://felixstaworski.github.io/ServiceDeskLite/api/)
+- [Repository](https://github.com/goldbarth/ServiceDeskLite)
+- [Documentation / GitHub Pages](https://goldbarth.github.io/ServiceDeskLite/)
+- [OpenAPI](https://goldbarth.github.io/ServiceDeskLite/api/openapi)
