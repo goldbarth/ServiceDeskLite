@@ -26,8 +26,11 @@ echo "==> Starting API..."
 pushd "$ROOT_DIR" >/dev/null
 
 # Run API on a deterministic URL/port. No rebuild inside script to keep it fast/predictable.
+# Anthropic:ApiKey is validated fail-fast at startup; OpenAPI generation never calls the
+# model, so a placeholder keeps the API bootable in CI (same approach as docker-compose).
 ASPNETCORE_URLS="${BASE_URL}" \
 DOTNET_ENVIRONMENT="Development" \
+Anthropic__ApiKey="${ANTHROPIC_API_KEY:-openapi-gen-placeholder}" \
 dotnet run --project "$API_PROJECT" -c Release --no-build --no-launch-profile >/dev/null 2>&1 &
 API_PID=$!
 

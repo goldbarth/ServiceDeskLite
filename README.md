@@ -10,74 +10,128 @@
   </a>
 </p>
 
-A structured .NET 10 backend reference application focused on Clean Architecture, explicit domain rules, and controlled dependencies.
+A .NET 10 service-desk reference application built on Clean Architecture: explicit domain rules, result-based error handling, swappable persistence, and an AI assistant that turns free-text problem reports into tickets via LLM tool calling — streamed live to a Blazor frontend. The goal is not feature breadth, but structural clarity, explicit boundaries, and reviewable design decisions.
 
-## Core Focus
+> **See it running:** the [runbook](docs/operations/runbook.md) gets you from clone to the web UI (including the AI assistant) in under five minutes.
+> **Full documentation** — architecture, all ADRs, API reference, testing strategy — lives on the [documentation site](https://goldbarth.github.io/ServiceDeskLite/).
 
-- Strict layering
-- Explicit domain workflow rules
-- Controlled dependencies
-- Result-based error handling
-- Testable application logic
+## Core capabilities
 
-The goal is not feature breadth, but structural clarity, explicit boundaries, and reviewable design decisions.
+- **Ticket workflow** — create, search (filter/sort/paging), partial update, workflow-validated status transitions, assignment, and comments, enforced by an explicit domain state machine
+- **AI intake assistant** — users describe issues in free text; Claude decides via tool calling whether to create or update a ticket, and every tool call executes through the same application-layer command handlers as the REST API
+- **Streaming end to end** — model output reaches the browser token by token over Server-Sent Events; tool activity is surfaced as typed events while the stream stays open
+- **Audit trail** — every state change raises a domain event that is persisted as an audit record, including changes made by the assistant (actor `ai-assistant`)
+- **Transactional outbox (stub)** — domain events are staged as outbox messages in the same transaction as the state change; deliberately without a dispatcher ([ADR-0021](docs/adr/0021-outbox-stub.md))
+- **Result-based application flow** — no exceptions cross application boundaries; failures map to RFC 9457 ProblemDetails with machine-readable error codes and field-level validation
+- **Swappable persistence** — PostgreSQL (EF Core) and InMemory behind the same application ports; end-to-end tests run against both
 
-## Documentation
-
-Full project documentation is available on GitHub Pages.
-
-- [Documentation hub](https://goldbarth.github.io/ServiceDeskLite/)
-- [Architecture overview](https://goldbarth.github.io/ServiceDeskLite/architecture/overview.html)
-- [ADR index](https://goldbarth.github.io/ServiceDeskLite/adr/index.html)
-- [OpenAPI reference and Swagger UI](https://goldbarth.github.io/ServiceDeskLite/api/openapi.html)
-- [Testing overview](https://goldbarth.github.io/ServiceDeskLite/testing/overview.html)
-
-The documentation site is the primary deep dive for architecture, ADRs, repository structure, and API details.
-
-## Architecture
-
-- Strict inward dependency flow across Domain, Application, Infrastructure, and API
-- Result-based application flow with no exceptions crossing application boundaries
-- RFC 9457 ProblemDetails as the HTTP error contract
-- PostgreSQL and in-memory persistence behind the same application ports
-- Explicit unit-of-work boundary for controlled writes
-- End-to-end tests cover both persistence implementations
-
-## Layer Structure
+## System architecture
 
 ```text
 ┌─────────────────────────────────────┐
-│              Web (Blazor)           │
+│              Web (Blazor)           │  MudBlazor UI, SSE consumer (chat)
 ├─────────────────────────────────────┤
-│           API (Minimal API)         │
+│           API (Minimal API)         │  Endpoints, ProblemDetails, AI adapter
 ├───────────────────┬─────────────────┤
-│  Infrastructure   │  Infra.InMemory │
+│  Infrastructure   │  Infra.InMemory │  EF Core/PostgreSQL │ in-process store
 ├───────────────────┴─────────────────┤
-│           Application               │
+│           Application               │  Use cases, validation, ports, UoW
 ├─────────────────────────────────────┤
-│              Domain                 │
+│              Domain                 │  Entities, workflow rules, events
 └─────────────────────────────────────┘
 ```
 
-Layer responsibilities:
+Dependency direction is strictly inward: Domain knows nothing about Application, Application nothing about API or Infrastructure. The LLM integration lives entirely at the edge (API layer) — a deep dive is in the [architecture overview](https://goldbarth.github.io/ServiceDeskLite/architecture/overview.html).
 
-- **Domain** — business rules, domain errors, events
-- **Application** — use cases, validation, ports, unit-of-work coordination
-- **Contracts** — versioned request/response models
-- **Infrastructure / Infrastructure.InMemory** — persistence adapters behind application ports
-- **API** — Minimal API endpoints and ProblemDetails mapping
-- **Web** — optional UI for exercising the workflow
+## AI assistant — tool calling & streaming
 
-Dependency direction is strictly inward.
+`POST /api/v1/assistant/chat` drives an agentic loop against the Anthropic Messages API (official .NET SDK) and re-streams the result as Server-Sent Events. The design goal: the model decides *what* to do, but *can only act* through the existing application layer.
 
-## Tech Stack
+```text
+Browser ──POST transcript──▶ API adapter ──stream──▶ Anthropic Messages API
+   ▲                             │
+   │  SSE: text / tool_call /    │  stop_reason: tool_use?
+   │  tool_result / done         ▼
+   └───────────────────── CreateTicketHandler / UpdateTicketHandler
+                          (validation, audit, outbox — unchanged)
+```
 
-- .NET 10 / C#
-- ASP.NET Core Minimal API
-- Blazor
-- EF Core
-- PostgreSQL
-- xUnit
+**Non-blocking token streaming.** Text deltas are forwarded to the browser the moment they arrive — the stream is never buffered until completion. Tool-use blocks arrive interleaved in the same stream as partial JSON fragments (`input_json_delta`); the adapter accumulates them per content block and parses the input only when the block closes. Streaming text and assembling tool calls happen concurrently on one pass over the stream, so the user watches the model "think aloud" while its tool arguments are still being assembled.
+
+**The loop.** When a turn ends with `stop_reason: tool_use`, the adapter executes each requested tool through the corresponding command handler, appends the assistant turn plus all tool results to the message history, and calls the model again — up to a configurable iteration cap. Two tools are exposed: `create_ticket` (file a ticket from the user's description) and `update_ticket` (correct a ticket created earlier in the conversation, partial update by ticket id).
+
+**Self-correction instead of silent failure.** Tool inputs are parsed and guarded before touching the domain (schema shape, priority enum, due dates in the past). A rejected input — or a handler `Result` failure — is returned to the model as a `tool_result` with `is_error: true`, including the reason; the model then retries with corrected arguments within the same loop. LLM output is treated as untrusted input, never piped raw into business logic.
+
+**Statelessness and time.** The API holds no conversation state — the client resends the transcript each turn, which is what lets the model reference the id of a ticket it created earlier. Because the model has no calendar, the current date (with weekday) and the configured user timezone are injected into the system prompt per request, so relative deadlines ("by Friday") resolve correctly and due times render in the user's local time. Vague times of day ("morning") trigger a clarifying question rather than a guess.
+
+## Architecture decisions
+
+Every non-obvious choice is recorded as an ADR — 23 records, browsable on the [ADR index](https://goldbarth.github.io/ServiceDeskLite/adr/index.html). A selection:
+
+| ADR | Decision | In short |
+|-----|----------|----------|
+| [0001](docs/adr/0001-hexagonal-layered-architecture.md) | Hexagonal layering | Ports & adapters with strict inward dependencies |
+| [0002](docs/adr/0002-result-pattern.md) | Result pattern | Expected failures as values, not exceptions |
+| [0003](docs/adr/0003-problem-details.md) | RFC 9457 ProblemDetails | One machine-readable HTTP error contract |
+| [0004](docs/adr/0004-minimal-api-no-mediatr.md) | No MediatR | Plain handlers over pipeline indirection |
+| [0005](docs/adr/0005-strongly-typed-ids.md) | Strongly-typed ids | `TicketId` instead of bare `Guid` |
+| [0007](docs/adr/0007-swappable-persistence.md) | Swappable persistence | Same ports, two implementations, both tested |
+| [0009](docs/adr/0009-deterministic-paging.md) | Deterministic paging | Stable sort keys, reproducible pages |
+| [0019](docs/adr/0019-field-level-validation.md) | Field-level validation | Errors addressable per input field |
+| [0020](docs/adr/0020-audit-event-payload-format.md) | Audit payload format | JSON payloads, schema-free event types |
+| [0021](docs/adr/0021-outbox-stub.md) | Outbox stub | Transactional staging now, dispatch later |
+| [0023](docs/adr/0023-ai-assistant-edge-adapter.md) | AI assistant as edge adapter | LLM orchestration at the edge; the model acts only through command handlers |
+
+## Tech stack
+
+| Concern | Technology |
+|---------|------------|
+| Runtime / language | .NET 10, C# |
+| HTTP API | ASP.NET Core Minimal API, RFC 9457 ProblemDetails, SSE via `TypedResults.ServerSentEvents` |
+| LLM integration | Anthropic Messages API (official `Anthropic` .NET SDK), streaming tool calling |
+| Frontend | Blazor Server, MudBlazor, `System.Net.ServerSentEvents` client |
+| Persistence | EF Core + PostgreSQL, swappable InMemory implementation |
+| Logging | Serilog (console, enriched with trace ids) |
+| API documentation | OpenAPI/Swagger, snapshot-checked in CI |
+| Testing | xUnit, FluentAssertions, `WebApplicationFactory`-based integration and end-to-end suites |
+| Packaging / ops | Docker Compose (API + PostgreSQL), NuGet lock files |
+
+## Testing
+
+| Project | Scope |
+|---------|-------|
+| `Tests.Domain` | Domain rules and workflow transitions, pure unit tests |
+| `Tests.Application` | Command/query handlers against in-memory fakes |
+| `Tests.Api` | Endpoint behavior via `WebApplicationFactory`, plus AI tool-input parsing |
+| `Tests.Integration` | API against the InMemory infrastructure |
+| `Tests.Infrastructure.InMemory` | InMemory persistence adapter |
+| `Tests.Web` | Frontend API clients and feature state |
+| `Tests.EndToEnd` | Full stack against both persistence implementations |
+
+```bash
+dotnet test   # no database or API key required — test hosts inject fakes
+```
+
+CI runs all suites on every push and additionally guards the OpenAPI contract against unintended changes via a snapshot check. Details: [testing overview](https://goldbarth.github.io/ServiceDeskLite/testing/overview.html).
+
+## Out of scope (deliberately)
+
+- Real authentication/authorization — the API key middleware is a demo-grade guard, not an identity system
+- Outbox dispatching — messages are staged transactionally but not yet relayed to a broker (ADR-0021)
+- Conversation persistence for the assistant — transcripts live in the browser session only
+- LLM prompt caching and multi-tenant rate limiting
+- Multi-language localization of the UI
+
+## Documentation
+
+The complete documentation is published on GitHub Pages (DocFX, docs-as-code):
+
+- [Documentation hub](https://goldbarth.github.io/ServiceDeskLite/) — entry point
+- [Architecture overview](https://goldbarth.github.io/ServiceDeskLite/architecture/overview.html)
+- [ADR index](https://goldbarth.github.io/ServiceDeskLite/adr/index.html) — all 23 decision records
+- [OpenAPI reference and Swagger UI](https://goldbarth.github.io/ServiceDeskLite/api/openapi.html)
+- [Testing overview](https://goldbarth.github.io/ServiceDeskLite/testing/overview.html)
+- [Runbook](docs/operations/runbook.md) — local setup for reviewers
 
 ## License
 

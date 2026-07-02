@@ -27,6 +27,9 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       Persistence__Provider: Postgres
       ConnectionStrings__ServiceDeskLite: "Host=db;Port=5432;Database=servicedesklite;Username=postgres;Password=postgres"
+      # AI assistant: export ANTHROPIC_API_KEY before `docker compose up` to enable it.
+      # The placeholder lets the API boot without a key; assistant requests then fail gracefully.
+      Anthropic__ApiKey: ${ANTHROPIC_API_KEY:-placeholder-assistant-disabled}
     depends_on:
       db:
         condition: service_healthy

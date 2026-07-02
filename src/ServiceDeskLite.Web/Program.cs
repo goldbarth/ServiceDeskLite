@@ -19,6 +19,7 @@ builder.Services.AddMudServices(config =>
 
 builder.Services
     .AddTicketsApiClient(builder.Configuration)
+    .AddAssistantApiClient(builder.Configuration)
     .AddTicketsFeature();
 
 var app = builder.Build();

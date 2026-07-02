@@ -14,3 +14,15 @@ GET http://localhost:5181/api/v1/tickets/00000000-0000-0000-0000-000000000001
 
 ### Search invalid paging -> should be 400
 GET http://localhost:5181/api/v1/tickets?page=0&pageSize=25
+
+### Assistant chat -> streams SSE, model may create a ticket via tool call
+POST http://localhost:5300/api/v1/assistant/chat
+Content-Type: application/json
+Accept: text/event-stream
+X-Api-Key: dev-api-key-not-a-secret
+
+{
+    "messages": [
+        { "role": "User", "content": "Der Drucker im 3. Stock reagiert seit heute Morgen nicht mehr, mehrere Kollegen sind betroffen. Bitte bis Freitag 9 Uhr beheben." }
+    ]
+}

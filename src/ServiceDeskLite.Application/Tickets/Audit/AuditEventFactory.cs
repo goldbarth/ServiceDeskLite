@@ -53,6 +53,23 @@ internal static class AuditEventFactory
             AuditEventTypes.AssigneeChanged, actor, occurredAt, payload);
     }
 
+    public static AuditEvent FromDetailsUpdated(
+        TicketDetailsUpdatedDomainEvent e, string? actor, DateTimeOffset occurredAt)
+    {
+        // Only fields that actually changed are present on the event (null = unchanged).
+        var payload = JsonSerializer.Serialize(new
+        {
+            newTitle = e.NewTitle,
+            newDescription = e.NewDescription,
+            newPriority = e.NewPriority?.ToString(),
+            newDueAt = e.NewDueAt
+        });
+
+        return new AuditEvent(
+            AuditEventId.New(), e.TicketId,
+            AuditEventTypes.DetailsUpdated, actor, occurredAt, payload);
+    }
+
     public static AuditEvent FromCommentAdded(
         CommentAddedDomainEvent e, DateTimeOffset occurredAt)
     {

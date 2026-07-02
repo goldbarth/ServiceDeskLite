@@ -1,6 +1,63 @@
-@ServiceDeskLite.Api_HostAddress = http://localhost:5181
+@host = http://localhost:5300
+@apiKey = dev-api-key-not-a-secret
 
-GET {{ServiceDeskLite.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Assistant chat -> streams SSE (text, tool_call, tool_result, done); model may create a ticket
+POST {{host}}/api/v1/assistant/chat
+Content-Type: application/json
+Accept: text/event-stream
+X-Api-Key: {{apiKey}}
 
-###
+{
+    "messages": [
+        { "role": "User", "content": "Der Drucker im 3. Stock reagiert seit heute Morgen nicht mehr, mehrere Kollegen sind betroffen. Bitte bis Freitag 9 Uhr beheben." }
+    ]
+}
+
+### Assistant chat -> vague time, model should ask a clarifying question instead of guessing
+POST {{host}}/api/v1/assistant/chat
+Content-Type: application/json
+Accept: text/event-stream
+X-Api-Key: {{apiKey}}
+
+{
+    "messages": [
+        { "role": "User", "content": "Das WLAN im Meetingraum ist instabil. Bis Freitag morgens muss es erledigt sein." }
+    ]
+}
+
+### Assistant chat -> multi-turn: model updates the ticket it created (replace ticket id from previous response)
+POST {{host}}/api/v1/assistant/chat
+Content-Type: application/json
+Accept: text/event-stream
+X-Api-Key: {{apiKey}}
+
+{
+    "messages": [
+        { "role": "User", "content": "Der Drucker im 3. Stock reagiert nicht mehr. Bitte bis Freitag 9 Uhr beheben." },
+        { "role": "Assistant", "content": "Ticket erstellt: 3rd floor printer unresponsive, Priorität High, fällig Freitag 09:00. Ticket-ID: 00000000-0000-0000-0000-000000000000" },
+        { "role": "User", "content": "Bitte ändere die Priorität auf Critical und die Frist auf Donnerstag 17 Uhr." }
+    ]
+}
+
+### Assistant chat -> empty messages, should be 400 ProblemDetails
+POST {{host}}/api/v1/assistant/chat
+Content-Type: application/json
+X-Api-Key: {{apiKey}}
+
+{
+    "messages": []
+}
+
+### Update ticket directly (replace id) -> partial update via PATCH
+PATCH {{host}}/api/v1/tickets/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+X-Api-Key: {{apiKey}}
+
+{
+    "priority": "Critical",
+    "dueAt": "2026-07-03T17:00:00+02:00"
+}
+
+### Verify: list tickets (assistant-created tickets appear, actor 'ai-assistant' in audit)
+GET {{host}}/api/v1/tickets?page=1&pageSize=20
+X-Api-Key: {{apiKey}}

@@ -10,6 +10,7 @@ using ServiceDeskLite.Application.Tickets.GetAuditEvents;
 using ServiceDeskLite.Application.Tickets.GetDashboardSummary;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
 using ServiceDeskLite.Application.Tickets.SearchTickets;
+using ServiceDeskLite.Application.Tickets.UpdateTicket;
 
 namespace ServiceDeskLite.Application.DependencyInjection;
 
@@ -23,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<ICommandValidator<CreateTicketCommand>, CreateTicketValidator>();
         services.AddScoped<ICommandValidator<AddCommentCommand>, AddCommentValidator>();
         services.AddScoped<ICommandValidator<AssignTicketCommand>, AssignTicketValidator>();
+        services.AddScoped<ICommandValidator<UpdateTicketCommand>, UpdateTicketValidator>();
 
         // Handlers
         services.AddScoped<CreateTicketHandler>();
@@ -31,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<ChangeTicketStatusHandler>();
         services.AddScoped<AssignTicketHandler>();
         services.AddScoped<AddCommentHandler>();
+        services.AddScoped<UpdateTicketHandler>();
         services.AddScoped<GetAuditEventsHandler>();
         services.AddScoped<GetDashboardSummaryHandler>();
 

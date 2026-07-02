@@ -229,6 +229,7 @@ public partial class TicketDetailsPage
             TicketStatusChangedPayload => Icons.Material.Outlined.SyncAlt,
             TicketAssigneeChangedPayload => Icons.Material.Outlined.PersonOutline,
             TicketCommentAddedPayload => Icons.Material.Outlined.ModeComment,
+            TicketDetailsUpdatedPayload => Icons.Material.Outlined.EditNote,
             _ => Icons.Material.Outlined.Info
         };
 
@@ -239,6 +240,7 @@ public partial class TicketDetailsPage
             TicketStatusChangedPayload => "ticket-history__marker--status",
             TicketAssigneeChangedPayload => "ticket-history__marker--assignee",
             TicketCommentAddedPayload => "ticket-history__marker--comment",
+            TicketDetailsUpdatedPayload => "ticket-history__marker--details",
             _ => "ticket-history__marker--default"
         };
 
@@ -249,6 +251,7 @@ public partial class TicketDetailsPage
             TicketStatusChangedPayload => "Status changed",
             TicketAssigneeChangedPayload => "Assignee changed",
             TicketCommentAddedPayload => "Comment added",
+            TicketDetailsUpdatedPayload => "Details updated",
             _ => "Audit event"
         };
 
@@ -259,9 +262,43 @@ public partial class TicketDetailsPage
             TicketStatusChangedPayload statusChanged => $"{FormatStatus(statusChanged.FromStatus)} -> {FormatStatus(statusChanged.ToStatus)}.",
             TicketAssigneeChangedPayload assigneeChanged => FormatAssigneeChange(assigneeChanged),
             TicketCommentAddedPayload commentAdded => $"Internal note added by {DisplayActor(commentAdded.Author)}.",
+            TicketDetailsUpdatedPayload detailsUpdated => FormatDetailsUpdate(detailsUpdated),
             RawAuditEventPayload => "Raw audit payload captured.",
             _ => "Unknown workflow event."
         };
+
+    private static string FormatDetailsUpdate(TicketDetailsUpdatedPayload payload)
+    {
+        var changes = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(payload.NewTitle))
+        {
+            changes.Add($"title changed to \"{Truncate(payload.NewTitle, 60)}\"");
+        }
+
+        if (!string.IsNullOrWhiteSpace(payload.NewDescription))
+        {
+            changes.Add("description updated");
+        }
+
+        if (!string.IsNullOrWhiteSpace(payload.NewPriority))
+        {
+            changes.Add($"priority changed to {FormatPriority(payload.NewPriority)}");
+        }
+
+        if (payload.NewDueAt is not null)
+        {
+            changes.Add($"due date changed to {FormatDateTime(payload.NewDueAt.Value)}");
+        }
+
+        if (changes.Count == 0)
+        {
+            return "Ticket details updated.";
+        }
+
+        var summary = string.Join(", ", changes);
+        return char.ToUpperInvariant(summary[0]) + summary[1..] + ".";
+    }
 
     private static string FormatAssigneeChange(TicketAssigneeChangedPayload payload)
     {

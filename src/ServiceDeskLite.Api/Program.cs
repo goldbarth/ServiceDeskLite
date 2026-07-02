@@ -45,7 +45,8 @@ builder.Services
     .AddApiDocumentation() // OpenAPI
     .AddApiErrorHandling() // ErrorHandling + ProblemDetails + Mapper
     .AddApplication() // Application Layer
-    .AddApiInfrastructure(builder.Configuration); // Infrastructure Provider Switch
+    .AddApiInfrastructure(builder.Configuration) // Infrastructure Provider Switch
+    .AddAssistant(builder.Configuration); // Anthropic client + tool-calling chat service
 
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
@@ -119,6 +120,10 @@ api.MapGroup("/tickets")
 api.MapGroup("/dashboard")
     .WithTags("Dashboard")
     .MapDashboardEndpoints();
+
+api.MapGroup("/assistant")
+    .WithTags("Assistant")
+    .MapAssistantEndpoints();
 
 app.Run();
 

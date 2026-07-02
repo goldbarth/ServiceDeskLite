@@ -12,4 +12,5 @@ public static class AuditEventTypes
     public const string StatusChanged    = "ticket.status_changed";
     public const string AssigneeChanged  = "ticket.assignee_changed";
     public const string CommentAdded     = "ticket.comment_added";
+    public const string DetailsUpdated   = "ticket.details_updated";
 }

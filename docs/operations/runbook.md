@@ -1,99 +1,125 @@
-# Local Development Runbook
+# Runbook
 
-This guide covers how to run the full application stack locally after cloning the repository.
+How to get ServiceDeskLite running locally in under five minutes. Written for reviewers and tech leads — the first section covers the web UI (the fastest way to see everything working), the second documents the API surface.
 
-## Prerequisites
+## Quick reference
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [Docker](https://docs.docker.com/get-docker/) (optional, for PostgreSQL)
+| Service | URL                     | Started with                                        |
+|---------|-------------------------|-----------------------------------------------------|
+| API     | `http://localhost:5300` | `dotnet run --project src/ServiceDeskLite.Api`      |
+| Web     | `http://localhost:5310` | `dotnet run --project src/ServiceDeskLite.Web`      |
+| Swagger | `http://localhost:5300/swagger` | included in the API (Development only)      |
 
-Verify your setup:
+| Config | Value | Where |
+|--------|-------|-------|
+| Persistence (Development) | InMemory — no database needed | `src/ServiceDeskLite.Api/appsettings.Development.json` |
+| API key header | `X-Api-Key: dev-api-key-not-a-secret` | both `appsettings.Development.json` files |
+| Anthropic API key | user-secrets, **required** (see setup) | `dotnet user-secrets` on the API project |
+| Assistant timezone | `Anthropic:UserTimeZone`, default `Europe/Berlin` | API options |
+
+## 1. Run the web UI
+
+### Prerequisites
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/download) — verify with `dotnet --version` (must be 10.x)
+- An Anthropic API key for the AI assistant — create one at [platform.claude.com](https://platform.claude.com) (Settings → API Keys; new accounts need a small credit top-up)
+
+### One-time setup
+
+The API validates the Anthropic key at startup and refuses to boot without it:
 
 ```bash
-dotnet --version   # must be 10.x
-docker --version   # optional
+cd src/ServiceDeskLite.Api
+dotnet user-secrets set Anthropic:ApiKey sk-ant-YOUR-KEY
+cd ../..
 ```
 
-## One-time Setup
+The key lives in `~/.microsoft/usersecrets/`, never in the repository.
 
-Trust the ASP.NET Core development certificate. Required because both the API and the Web frontend use HTTPS locally.
+### Start
+
+Two terminals from the repository root:
 
 ```bash
-dotnet dev-certs https --trust
+# Terminal 1 — API (InMemory persistence, seeded demo data)
+dotnet run --project src/ServiceDeskLite.Api
+
+# Terminal 2 — Web
+dotnet run --project src/ServiceDeskLite.Web
 ```
 
-Run this once after cloning. Skip if already trusted.
+Open **`http://localhost:5310`** (explicitly `http://` — the default launch profiles do not bind the HTTPS ports).
 
-## Running Locally (Recommended)
+### Suggested demo flow
 
-Start both services in separate terminals using the `https` launch profile.
+1. **Dashboard** — KPI overview of the seeded ticket queue.
+2. **Tickets / Board** — list with filtering, sorting, paging; Kanban board with status transitions.
+3. **Assistant** (the AI intake) — type a free-text issue, e.g.:
+   > *"Der Drucker im 3. Stock reagiert seit heute Morgen nicht mehr, mehrere Kollegen sind betroffen. Bitte bis Freitag morgens beheben."*
+   - The response streams live (SSE). Because "morgens" is vague, the assistant asks for a concrete time instead of guessing.
+   - Answer e.g. *"8 Uhr"* — the model calls the `create_ticket` tool; a green chip links to the created ticket.
+   - Follow up with *"Setze die Priorität auf Critical"* — the model calls `update_ticket` on the ticket it just created.
+4. **Ticket details** — open the created ticket: due date matches local time, and the audit history shows `ticket.created` / `ticket.details_updated` events with actor `ai-assistant`.
 
-**Terminal 1 — API:**
+Everything the assistant does runs through the same command handlers as the UI and API — validation, audit trail, and outbox apply unchanged.
 
-```bash
-dotnet run --project src/ServiceDeskLite.Api --launch-profile https
+## 2. API
+
+All endpoints require the `X-Api-Key` header (Development value: `dev-api-key-not-a-secret`). Interactive documentation: Swagger at `http://localhost:5300/swagger`. Ready-made requests: `src/ServiceDeskLite.Api/ServiceDeskLite.Api.http` (runnable from Rider/VS Code).
+
+### Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET    | `/api/v1/tickets` | Search tickets (filter, sort, paging) |
+| POST   | `/api/v1/tickets` | Create ticket |
+| GET    | `/api/v1/tickets/{id}` | Ticket details incl. conversation |
+| PATCH  | `/api/v1/tickets/{id}` | Partial update (title, description, priority, due date) |
+| POST   | `/api/v1/tickets/{id}/status` | Change status (workflow-validated) |
+| POST   | `/api/v1/tickets/{id}/assign` | Assign / unassign |
+| POST   | `/api/v1/tickets/{id}/comments` | Add comment |
+| GET    | `/api/v1/tickets/{id}/audit-events` | Audit history |
+| GET    | `/api/v1/dashboard/summary` | Dashboard KPIs |
+| POST   | `/api/v1/assistant/chat` | AI assistant, streams SSE |
+
+Errors follow RFC 9457 ProblemDetails with machine-readable `code` fields.
+
+### Assistant endpoint
+
+`POST /api/v1/assistant/chat` takes the full conversation transcript (the API is stateless) and streams Server-Sent Events:
+
+```json
+{
+  "messages": [
+    { "role": "User", "content": "Der Drucker im 3. Stock ist ausgefallen. Bitte bis Freitag 9 Uhr beheben." }
+  ]
+}
 ```
 
-API starts on `https://localhost:7238`. Uses InMemory persistence in Development — no database required.
+Event stream: `text` (response deltas) → `tool_call` / `tool_result` (with `ticketId`) → `done`; failures arrive as an `error` event. The model has two tools, `create_ticket` and `update_ticket`, both executing through the regular application-layer handlers.
 
-**Terminal 2 — Web:**
+### Tests
 
 ```bash
-dotnet run --project src/ServiceDeskLite.Web --launch-profile https
+dotnet test
 ```
 
-Web starts on `https://localhost:7023`.
+Runs all suites (Domain, Application, API, Integration, Web, EndToEnd) — no database or API key required; test hosts inject fakes.
 
-Open **`https://localhost:7023`** in the browser.
-
-### Why both services need the https profile
-
-The API's CORS policy (in `appsettings.Development.json`) only allows `https://localhost:7023`.  
-The Web's API client (also in `appsettings.Development.json`) targets `https://localhost:7238`.  
-Running either service on its HTTP port breaks the connection.
-
-### Port reference
-
-| Service | HTTP             | HTTPS                  |
-|---------|------------------|------------------------|
-| API     | localhost:5300   | **localhost:7238**     |
-| Web     | localhost:5310   | **localhost:7023**     |
-
-Bold = required for local dev.
-
-## Running with Docker (API + PostgreSQL)
-
-Use this when you need a real PostgreSQL database.
+### PostgreSQL instead of InMemory (optional)
 
 ```bash
-# Start API and database
 docker compose up --build
 ```
 
-API starts on `http://localhost:8080`. The Web frontend is not included in Compose and must still be started locally.
+Starts API + PostgreSQL on `http://localhost:8080` (migrations apply automatically). The web frontend must still be started locally; point it at the Docker API with `ApiClient__BaseUrl=http://localhost:8080 dotnet run --project src/ServiceDeskLite.Web`. To use the AI assistant in this setup, export `ANTHROPIC_API_KEY` before `docker compose up` — without it the API boots with a placeholder and assistant requests fail gracefully.
 
-To connect the local Web to the Docker API, override the base URL:
+## Troubleshooting
 
-```bash
-ApiClient__BaseUrl=http://localhost:8080 dotnet run --project src/ServiceDeskLite.Web
-```
-
-Note: CORS is not configured for this combination by default. Adjust `appsettings.Development.json` in the API if needed.
-
-## Common Issues
-
-### "Connection refused (localhost:7238)"
-
-The API is not running or started without the https profile.
-
-Fix: make sure `--launch-profile https` is passed when starting the API.
-
-### Browser shows certificate warning
-
-The dev certificate is not trusted yet.
-
-Fix: run `dotnet dev-certs https --trust` and restart the browser.
-
-### API starts but returns 401
-
-The API key header is missing or wrong. In Development both services use `dev-api-key-not-a-secret` — check `appsettings.Development.json` in both projects.
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| API exits at startup: `Anthropic:ApiKey is not configured` | Missing user-secret | Run the one-time setup above |
+| Browser: connection refused on `:7238` / `:7023` | HTTPS ports aren't bound by the default profiles | Use `http://localhost:5310` / `:5300` |
+| API returns 401 | `X-Api-Key` header missing/wrong | Development key: `dev-api-key-not-a-secret` |
+| Assistant shows "The AI service is currently unavailable" | Invalid Anthropic key, no credit, or no network | Check the key at platform.claude.com; API log has details |
+| Created tickets disappear after restart | InMemory persistence is per-process | Expected in Development; use the PostgreSQL setup for durability |

@@ -37,6 +37,10 @@ internal static class AuditEventMapping
                 JsonSerializer.Deserialize<TicketCommentAddedPayload>(dto.Payload, PayloadOptions)
                 ?? new TicketCommentAddedPayload(string.Empty, string.Empty),
 
+            AuditEventTypes.DetailsUpdated =>
+                JsonSerializer.Deserialize<TicketDetailsUpdatedPayload>(dto.Payload, PayloadOptions)
+                ?? new TicketDetailsUpdatedPayload(null, null, null, null),
+
             _ => new RawAuditEventPayload(dto.Payload)
         };
 }
