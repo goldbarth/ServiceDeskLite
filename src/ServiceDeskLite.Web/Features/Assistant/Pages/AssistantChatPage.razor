@@ -1,0 +1,105 @@
+@page "/assistant"
+
+@using MudBlazor
+@using ServiceDeskLite.Web.Api.V1.Assistant
+
+<PageTitle>Assistant</PageTitle>
+
+<div class="assistant-page">
+    <div class="assistant-page__header">
+        <span class="assistant-page__eyebrow">AI intake</span>
+        <h1 class="assistant-page__title">Assistant</h1>
+        <p class="assistant-page__description">
+            Describe an issue in your own words. The assistant decides whether to create a ticket
+            and files it through the regular service desk workflow.
+        </p>
+    </div>
+
+    <MudPaper Class="assistant-chat" Elevation="0">
+        <div class="assistant-chat__messages">
+            @if (_entries.Count == 0)
+            {
+                <div class="assistant-chat__empty">
+                    <MudIcon Icon="@Icons.Material.Filled.SmartToy" Size="Size.Large" />
+                    <p>Example: &ldquo;The printer on the 3rd floor stopped responding this morning, several colleagues are affected. Please fix by Friday.&rdquo;</p>
+                </div>
+            }
+
+            @foreach (var entry in _entries)
+            {
+                switch (entry.Kind)
+                {
+                    case ChatEntryKind.User:
+                        <div class="assistant-chat__bubble assistant-chat__bubble--user">@entry.Text</div>
+                        break;
+
+                    case ChatEntryKind.Assistant:
+                        <div class="assistant-chat__bubble assistant-chat__bubble--assistant">@entry.Text</div>
+                        break;
+
+                    case ChatEntryKind.ToolCall:
+                        <div class="assistant-chat__tool">
+                            <MudChip T="string" Icon="@Icons.Material.Filled.Build" Size="Size.Small" Color="Color.Default">
+                                Calling @entry.Text&hellip;
+                            </MudChip>
+                        </div>
+                        break;
+
+                    case ChatEntryKind.ToolResult:
+                        <div class="assistant-chat__tool">
+                            @if (entry.TicketId is { } ticketId)
+                            {
+                                <MudChip T="string"
+                                         Icon="@Icons.Material.Filled.ConfirmationNumber"
+                                         Size="Size.Small"
+                                         Color="Color.Success"
+                                         Href="@($"/tickets/{ticketId}")">
+                                    Ticket created &mdash; open
+                                </MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Color="Color.Warning">
+                                    @entry.Text
+                                </MudChip>
+                            }
+                        </div>
+                        break;
+
+                    case ChatEntryKind.Error:
+                        <MudAlert Severity="Severity.Error" Dense="true" Class="assistant-chat__error">@entry.Text</MudAlert>
+                        break;
+                }
+            }
+
+            @if (_isStreaming && !_hasStreamedText)
+            {
+                <div class="assistant-chat__bubble assistant-chat__bubble--assistant assistant-chat__bubble--pending">
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                </div>
+            }
+        </div>
+
+        <div class="assistant-chat__composer">
+            <MudTextField T="string"
+                          @ref="_inputRef"
+                          @bind-Value="_input"
+                          Placeholder="Describe your issue..."
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Lines="2"
+                          Immediate="true"
+                          TextUpdateSuppression="false"
+                          Disabled="_isStreaming"
+                          OnKeyUp="OnComposerKeyUpAsync"
+                          Class="assistant-chat__input" />
+
+            <MudIconButton Icon="@Icons.Material.Filled.Send"
+                           Color="Color.Primary"
+                           Variant="Variant.Filled"
+                           Disabled="@(_isStreaming || string.IsNullOrWhiteSpace(_input))"
+                           OnClick="SendAsync"
+                           aria-label="Send message" />
+        </div>
+    </MudPaper>
+</div>

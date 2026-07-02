@@ -693,6 +693,12 @@
     border-color: #e5d8ee;
 }
 
+.ticket-history__marker--details {
+    color: #2b6e75;
+    background: #eaf6f7;
+    border-color: #d2e9eb;
+}
+
 .ticket-history__marker--default {
     color: #5f6f84;
     background: #f2f5f8;

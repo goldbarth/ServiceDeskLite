@@ -16,16 +16,35 @@ The repository is organized into layered projects and mirrored test projects.
 │       └── openapi-snapshot.yml
 ├── docs
 │   ├── adr
-│   │   ├── 0001-initial-architecture.md
-│   │   ├── draft-openapi-snapshot.md
+│   │   ├── 0001-hexagonal-layered-architecture.md
+│   │   ├── 0002-result-pattern.md
+│   │   ├── 0003-problem-details.md
+│   │   ├── 0004-minimal-api-no-mediatr.md
+│   │   ├── 0005-strongly-typed-ids.md
+│   │   ├── 0006-ef-core-sqlite.md
+│   │   ├── 0007-swappable-persistence.md
+│   │   ├── 0008-unit-of-work.md
+│   │   ├── 0009-deterministic-paging.md
+│   │   ├── 0010-contracts-project.md
+│   │   ├── 0011-serilog.md
+│   │   ├── 0012-openapi-swagger.md
+│   │   ├── 0013-openapi-snapshot.md
+│   │   ├── 0014-docs-as-code.md
+│   │   ├── 0015-blazor-mudblazor.md
+│   │   ├── 0016-lock-files.md
+│   │   ├── 0017-ci-matrix.md
+│   │   ├── 0018-tickets-feature-state.md
+│   │   ├── 0019-field-level-validation.md
+│   │   ├── 0020-audit-event-payload-format.md
+│   │   ├── 0021-outbox-stub.md
+│   │   ├── 0022-security-hardening-minimal.md
+│   │   ├── 0023-ai-assistant-edge-adapter.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
 │   │   ├── openapi.md
-│   │   ├── openapi.redoc.html
+│   │   ├── openapi.swagger.html
 │   │   ├── openapi.v1.json
-│   │   ├── overview.md
-│   │   ├── redoc.standalone.js
 │   │   └── toc.yml
 │   ├── architecture
 │   │   ├── api.md
@@ -33,26 +52,11 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── contracts.md
 │   │   ├── domain.md
 │   │   ├── infrastructure-inmemory.md
+│   │   ├── infrastructure-postgres.md
 │   │   ├── infrastructure-sqlite.md
 │   │   ├── overview.md
 │   │   ├── toc.yml
 │   │   └── web.md
-│   ├── assets
-│   │   └── diagrams
-│   │       ├── api-client-call-flow.svg
-│   │       ├── client-api-result-types.svg
-│   │       ├── component-relationships-inmemory.svg
-│   │       ├── component-relationships-sqlite.svg
-│   │       ├── dependency-rules.svg
-│   │       ├── domain-model.svg
-│   │       ├── exception-handling-pipeline.svg
-│   │       ├── handler-signature-contract.svg
-│   │       ├── middleware-pipeline.svg
-│   │       ├── request-lifecycle.svg
-│   │       ├── result-error-type-model.svg
-│   │       ├── system-context.svg
-│   │       ├── ticket-workflow.svg
-│   │       └── uow-commit-boundary.svg
 │   ├── diagrams
 │   │   ├── api-client-call-flow.mmd
 │   │   ├── client-api-result-types.mmd
@@ -72,6 +76,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── ci.md
 │   │   ├── commands.md
 │   │   ├── commit-conventions.md
+│   │   ├── runbook.md
 │   │   └── toc.yml
 │   ├── structure
 │   │   ├── project-structure.md
@@ -86,16 +91,25 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   └── toc.yml
 │   ├── docfx.json
 │   ├── index.md
-│   ├── logo.svg
 │   └── toc.yml
 ├── src
 │   ├── ServiceDeskLite.Api
+│   │   ├── Assistant
+│   │   │   ├── AnthropicOptions.cs
+│   │   │   ├── AssistantChatService.cs
+│   │   │   ├── AssistantSseEvent.cs
+│   │   │   ├── CreateTicketTool.cs
+│   │   │   └── UpdateTicketTool.cs
 │   │   ├── Composition
 │   │   │   ├── ApiErrorHandlingExtensions.cs
 │   │   │   ├── ApiLoggingExtensions.cs
+│   │   │   ├── ApiSecurityExtensions.cs
+│   │   │   ├── AssistantComposition.cs
 │   │   │   ├── InfrastructureComposition.cs
 │   │   │   └── OpenApi.cs
 │   │   ├── Endpoints
+│   │   │   ├── AssistantEndpoints.cs
+│   │   │   ├── DashboardEndpoints.cs
 │   │   │   └── TicketsEndpoints.cs
 │   │   ├── Http
 │   │   │   ├── ExceptionHandling
@@ -105,14 +119,19 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── Observability
 │   │   │   │   ├── Correlation.cs
 │   │   │   │   └── LogEvents.cs
-│   │   │   └── ProblemDetails
-│   │   │       ├── ApiProblemDetailsConventions.cs
-│   │   │       ├── ApiProblemDetailsFactory.cs
-│   │   │       ├── HttpContextAccessorHolder.cs
-│   │   │       ├── ResultMappingExtensions.cs
-│   │   │       └── ResultToProblemDetailsMapper.cs
+│   │   │   ├── ProblemDetails
+│   │   │   │   ├── ApiProblemDetailsConventions.cs
+│   │   │   │   ├── ApiProblemDetailsFactory.cs
+│   │   │   │   ├── HttpContextAccessorHolder.cs
+│   │   │   │   ├── ResultMappingExtensions.cs
+│   │   │   │   └── ResultToProblemDetailsMapper.cs
+│   │   │   └── Security
+│   │   │       └── ApiKeyMiddleware.cs
 │   │   ├── Mapping
+│   │   │   ├── Dashboard
+│   │   │   │   └── DashboardMapping.cs
 │   │   │   └── Tickets
+│   │   │       ├── AuditEventMapping.cs
 │   │   │       ├── SearchTicketsMapping.cs
 │   │   │       ├── TicketEnumMapping.cs
 │   │   │       └── TicketsMapping.cs
@@ -126,57 +145,104 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── packages.lock.json
 │   │   ├── Program.cs
 │   │   ├── ServiceDeskLite.Api.csproj
-│   │   ├── ServiceDeskLite.Api.http
-│   │   └── servicedesklite.db
+│   │   └── ServiceDeskLite.Api.http
 │   ├── ServiceDeskLite.Application
 │   │   ├── Abstractions
 │   │   │   └── Persistence
+│   │   │       ├── IAuditEventRepository.cs
+│   │   │       ├── IDashboardRepository.cs
+│   │   │       ├── IOutboxRepository.cs
 │   │   │       ├── ITicketRepository.cs
 │   │   │       └── IUnitOfWork.cs
 │   │   ├── Common
+│   │   │   ├── Validation
+│   │   │   │   ├── FieldValidationBuilder.cs
+│   │   │   │   ├── FieldValidationResult.cs
+│   │   │   │   └── ICommandValidator.cs
 │   │   │   ├── ApplicationError.cs
 │   │   │   ├── DomainExceptionMapper.cs
 │   │   │   ├── ErrorType.cs
+│   │   │   ├── IClock.cs
 │   │   │   ├── PagingPolicy.cs
 │   │   │   ├── PersistenceExceptionMapper.cs
 │   │   │   ├── Result.cs
-│   │   │   └── ResultOfT.cs
+│   │   │   ├── ResultOfT.cs
+│   │   │   └── SystemClock.cs
 │   │   ├── DependencyInjection
 │   │   │   └── DependencyInjection.cs
 │   │   ├── Tickets
+│   │   │   ├── AddComment
+│   │   │   │   ├── AddCommentCommand.cs
+│   │   │   │   ├── AddCommentHandler.cs
+│   │   │   │   ├── AddCommentResult.cs
+│   │   │   │   └── AddCommentValidator.cs
+│   │   │   ├── AssignTicket
+│   │   │   │   ├── AssignTicketCommand.cs
+│   │   │   │   ├── AssignTicketHandler.cs
+│   │   │   │   └── AssignTicketValidator.cs
+│   │   │   ├── Audit
+│   │   │   │   └── AuditEventFactory.cs
 │   │   │   ├── ChangeTicketStatus
 │   │   │   │   ├── ChangeTicketStatusCommand.cs
 │   │   │   │   └── ChangeTicketStatusHandler.cs
 │   │   │   ├── CreateTicket
 │   │   │   │   ├── CreateTicketCommand.cs
 │   │   │   │   ├── CreateTicketHandler.cs
-│   │   │   │   └── CreateTicketResult.cs
+│   │   │   │   ├── CreateTicketResult.cs
+│   │   │   │   └── CreateTicketValidator.cs
+│   │   │   ├── GetAuditEvents
+│   │   │   │   ├── AuditEventDto.cs
+│   │   │   │   ├── GetAuditEventsHandler.cs
+│   │   │   │   └── GetAuditEventsQuery.cs
+│   │   │   ├── GetDashboardSummary
+│   │   │   │   ├── DashboardSummaryDto.cs
+│   │   │   │   ├── GetDashboardSummaryHandler.cs
+│   │   │   │   └── GetDashboardSummaryQuery.cs
 │   │   │   ├── GetTicketById
+│   │   │   │   ├── ConversationItemDto.cs
 │   │   │   │   ├── GetTicketByIdHandler.cs
 │   │   │   │   ├── GetTicketByIdQuery.cs
-│   │   │   │   └── TicketDetailsDto.cs
+│   │   │   │   ├── TicketDetailsDto.cs
+│   │   │   │   └── TicketDetailsDtoMapping.cs
+│   │   │   ├── Outbox
+│   │   │   │   └── OutboxMessageFactory.cs
 │   │   │   ├── SearchTickets
-│   │   │   │   ├── SearchTickesResult.cs
 │   │   │   │   ├── SearchTicketsHandler.cs
-│   │   │   │   └── SearchTicketsQuery.cs
+│   │   │   │   ├── SearchTicketsQuery.cs
+│   │   │   │   └── SearchTicketsResult.cs
 │   │   │   ├── Seeding
 │   │   │   │   └── ITicketSeeder.cs
-│   │   │   └── Shared
-│   │   │       ├── PagedResult.cs
-│   │   │       ├── Paging.cs
-│   │   │       ├── SortSpec.cs
-│   │   │       ├── TicketListItemDto.cs
-│   │   │       └── TicketSearchCriteria.cs
+│   │   │   ├── Shared
+│   │   │   │   ├── CommentDto.cs
+│   │   │   │   ├── PagedResult.cs
+│   │   │   │   ├── Paging.cs
+│   │   │   │   ├── SortSpec.cs
+│   │   │   │   ├── TicketListItemDto.cs
+│   │   │   │   └── TicketSearchCriteria.cs
+│   │   │   └── UpdateTicket
+│   │   │       ├── UpdateTicketCommand.cs
+│   │   │       ├── UpdateTicketHandler.cs
+│   │   │       └── UpdateTicketValidator.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Application.csproj
 │   ├── ServiceDeskLite.Contracts
 │   │   ├── V1
+│   │   │   ├── Assistant
+│   │   │   │   └── AssistantChatRequest.cs
 │   │   │   ├── Common
-│   │   │   │   ├── ContractsProblemDetailsConventions.cs
 │   │   │   │   ├── PagedResponse.cs
+│   │   │   │   ├── ProblemDetailsContract.cs
 │   │   │   │   └── SortDirection.cs
+│   │   │   ├── Dashboard
+│   │   │   │   └── DashboardSummaryResponse.cs
 │   │   │   └── Tickets
+│   │   │       ├── AddCommentRequest.cs
+│   │   │       ├── AssignTicketRequest.cs
+│   │   │       ├── AuditEventPayload.cs
+│   │   │       ├── AuditEventResponse.cs
 │   │   │       ├── ChangeTicketStatusRequest.cs
+│   │   │       ├── CommentResponse.cs
+│   │   │       ├── ConversationItemResponse.cs
 │   │   │       ├── CreateTicketRequest.cs
 │   │   │       ├── CreateTicketResponse.cs
 │   │   │       ├── SearchTicketsRequest.cs
@@ -184,15 +250,34 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │       ├── TicketPriority.cs
 │   │   │       ├── TicketResponse.cs
 │   │   │       ├── TicketSortField.cs
-│   │   │       └── TicketStatus.cs
+│   │   │       ├── TicketStatus.cs
+│   │   │       └── UpdateTicketRequest.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Contracts.csproj
 │   ├── ServiceDeskLite.Domain
+│   │   ├── Audit
+│   │   │   ├── AuditEvent.cs
+│   │   │   ├── AuditEventId.cs
+│   │   │   └── AuditEventTypes.cs
 │   │   ├── Common
 │   │   │   ├── DomainError.cs
 │   │   │   ├── DomainException.cs
-│   │   │   └── Guard.cs
+│   │   │   ├── Guard.cs
+│   │   │   └── IDomainEvent.cs
+│   │   ├── Outbox
+│   │   │   ├── OutboxMessage.cs
+│   │   │   ├── OutboxMessageId.cs
+│   │   │   └── OutboxMessageStatus.cs
 │   │   ├── Tickets
+│   │   │   ├── Events
+│   │   │   │   ├── AssigneeChangedDomainEvent.cs
+│   │   │   │   ├── CommentAddedDomainEvent.cs
+│   │   │   │   ├── StatusChangedDomainEvent.cs
+│   │   │   │   ├── TicketCreatedDomainEvent.cs
+│   │   │   │   └── TicketDetailsUpdatedDomainEvent.cs
+│   │   │   ├── Assignee.cs
+│   │   │   ├── Comment.cs
+│   │   │   ├── CommentId.cs
 │   │   │   ├── Ticket.cs
 │   │   │   ├── TicketErrors.cs
 │   │   │   ├── TicketId.cs
@@ -204,15 +289,24 @@ The repository is organized into layered projects and mirrored test projects.
 │   ├── ServiceDeskLite.Infrastructure
 │   │   ├── Persistence
 │   │   │   ├── Configurations
+│   │   │   │   ├── AuditEventConfiguration.cs
+│   │   │   │   ├── AuditEventIdConverter.cs
+│   │   │   │   ├── OutboxMessageConfiguration.cs
+│   │   │   │   ├── OutboxMessageIdConverter.cs
 │   │   │   │   ├── TicketConfiguration.cs
 │   │   │   │   └── TicketIdConverter.cs
 │   │   │   ├── DependencyInjection
 │   │   │   │   └── InfrastructureServiceCollectionExtensions.cs
 │   │   │   ├── Migrations
-│   │   │   │   ├── 20260219091433_InitialCreate.cs
-│   │   │   │   ├── 20260219091433_InitialCreate.Designer.cs
+│   │   │   │   ├── 20260310143617_InitialCreate.cs
+│   │   │   │   ├── 20260310143617_InitialCreate.Designer.cs
+│   │   │   │   ├── 20260311000756_AddOutboxMessages.cs
+│   │   │   │   ├── 20260311000756_AddOutboxMessages.Designer.cs
 │   │   │   │   └── ServiceDeskLiteDbContextModelSnapshot.cs
 │   │   │   ├── Repositories
+│   │   │   │   ├── EfAuditEventRepository.cs
+│   │   │   │   ├── EfDashboardRepository.cs
+│   │   │   │   ├── EfOutboxRepository.cs
 │   │   │   │   └── EfTicketRepository.cs
 │   │   │   ├── Seeding
 │   │   │   │   └── TicketSeeder.cs
@@ -226,6 +320,9 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── DependencyInjection
 │   │   │   └── InMemoryServiceCollectionExtensions.cs
 │   │   ├── Persistence
+│   │   │   ├── InMemoryAuditEventRepository.cs
+│   │   │   ├── InMemoryDashboardRepository.cs
+│   │   │   ├── InMemoryOutboxRepository.cs
 │   │   │   ├── InMemoryStore.cs
 │   │   │   ├── InMemoryTicketRepository.cs
 │   │   │   └── InMemoryUnitOfWork.cs
@@ -234,8 +331,13 @@ The repository is organized into layered projects and mirrored test projects.
 │   └── ServiceDeskLite.Web
 │       ├── Api
 │       │   └── V1
+│       │       ├── Assistant
+│       │       │   ├── AssistantApiClient.cs
+│       │       │   ├── AssistantStreamEvent.cs
+│       │       │   └── IAssistantApiClient.cs
 │       │       ├── ApiClientOptions.cs
 │       │       ├── ApiError.cs
+│       │       ├── ApiKeyDelegatingHandler.cs
 │       │       ├── ApiResult.cs
 │       │       ├── ITicketsApiClient.cs
 │       │       ├── ProblemDetailsDto.cs
@@ -252,7 +354,9 @@ The repository is organized into layered projects and mirrored test projects.
 │       │   │   ├── NavMenu.razor.css
 │       │   │   ├── ReconnectModal.razor
 │       │   │   ├── ReconnectModal.razor.css
-│       │   │   └── ReconnectModal.razor.js
+│       │   │   ├── ReconnectModal.razor.js
+│       │   │   ├── TopSearch.razor
+│       │   │   └── TopSearch.razor.css
 │       │   ├── Pages
 │       │   │   ├── Error.razor
 │       │   │   └── NotFound.razor
@@ -266,26 +370,58 @@ The repository is organized into layered projects and mirrored test projects.
 │       ├── Features
 │       │   ├── Admin
 │       │   │   ├── Layouts
-│       │   │   │   └── AdminLayout.razor
+│       │   │   │   ├── AdminLayout.razor
+│       │   │   │   └── AdminLayout.razor.css
 │       │   │   ├── Settings
 │       │   │   │   └── Pages
 │       │   │   │       └── SettingsPage.razor
 │       │   │   └── Users
 │       │   │       └── Pages
 │       │   │           └── UsersPage.razor
+│       │   ├── Assistant
+│       │   │   └── Pages
+│       │   │       ├── AssistantChatPage.razor
+│       │   │       ├── AssistantChatPage.razor.cs
+│       │   │       └── AssistantChatPage.razor.css
+│       │   ├── Dashboard
+│       │   │   ├── Components
+│       │   │   │   ├── DashboardHero.razor
+│       │   │   │   ├── DashboardHero.razor.css
+│       │   │   │   ├── DashboardHeroStat.cs
+│       │   │   │   ├── KpiCard.razor
+│       │   │   │   └── KpiCard.razor.css
+│       │   │   └── Pages
+│       │   │       ├── DashboardPage.razor
+│       │   │       ├── DashboardPage.razor.cs
+│       │   │       └── DashboardPage.razor.css
 │       │   ├── Tickets
 │       │   │   ├── Components
+│       │   │   │   ├── AssignTicketDialog.razor
 │       │   │   │   └── ChangeStatusDialog.razor
 │       │   │   ├── Pages
 │       │   │   │   ├── CreateTicketPage.razor
+│       │   │   │   ├── CreateTicketPage.razor.css
+│       │   │   │   ├── TicketBoardPage.razor
+│       │   │   │   ├── TicketBoardPage.razor.cs
+│       │   │   │   ├── TicketBoardPage.razor.css
 │       │   │   │   ├── TicketDetailsPage.razor
+│       │   │   │   ├── TicketDetailsPage.razor.cs
+│       │   │   │   ├── TicketDetailsPage.razor.css
 │       │   │   │   ├── TicketsListPage.razor
 │       │   │   │   ├── TicketsListPage.razor.cs
-│       │   │   │   └── TicketsPageState.cs
-│       │   │   └── StatusTransitionHelper.cs
+│       │   │   │   └── TicketsListPage.razor.css
+│       │   │   ├── State
+│       │   │   │   ├── TicketBoardFeatureState.cs
+│       │   │   │   ├── TicketBoardState.cs
+│       │   │   │   ├── TicketQueryParams.cs
+│       │   │   │   ├── TicketsListFeatureState.cs
+│       │   │   │   └── TicketsListState.cs
+│       │   │   └── TicketsFeatureComposition.cs
 │       │   └── _Imports.razor
 │       ├── Properties
 │       │   └── launchSettings.json
+│       ├── Theme
+│       │   └── AppTheme.cs
 │       ├── wwwroot
 │       │   ├── lib
 │       │   │   └── bootstrap
@@ -345,15 +481,22 @@ The repository is organized into layered projects and mirrored test projects.
 │       └── ServiceDeskLite.Web.csproj
 ├── tests
 │   ├── ServiceDeskLite.Tests.Api
+│   │   ├── Assistant
+│   │   │   ├── CreateTicketToolInputTests.cs
+│   │   │   └── UpdateTicketToolInputTests.cs
+│   │   ├── Dashboard
+│   │   │   └── DashboardEndpointTests.cs
 │   │   ├── ErrorHandling
 │   │   │   ├── BadRequest_Binding_Tests.cs
 │   │   │   ├── DomainException_Fallback_Tests.cs
+│   │   │   ├── QueryBinding_ProblemDetails_Tests.cs
 │   │   │   └── UnhandledException_Logging_Tests.cs
 │   │   ├── Infrastructure
 │   │   │   ├── ApiWebApplicationFactory.cs
 │   │   │   ├── InMemorySink.cs
 │   │   │   └── TestEndpointFilter.cs
 │   │   ├── Tickets
+│   │   │   ├── AuditEventMappingTests.cs
 │   │   │   └── ChangeTicketStatusEndpointTests.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Tests.Api.csproj
@@ -361,18 +504,30 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── Common
 │   │   │   └── ResultTests.cs
 │   │   ├── Tickets
+│   │   │   ├── AddComment
+│   │   │   │   └── AddCommentHandlerTest.cs
+│   │   │   ├── AssignTicket
+│   │   │   │   └── AssignTicketHandlerTests.cs
 │   │   │   ├── ChangeTicketStatus
 │   │   │   │   └── ChangeTicketStatusHandlerTests.cs
 │   │   │   ├── CreateTicket
 │   │   │   │   └── CreateTicketHandlerTests.cs
+│   │   │   ├── GetAuditEvents
+│   │   │   │   └── GetAuditEventsHandlerTests.cs
+│   │   │   ├── GetDashboardSummary
+│   │   │   │   └── GetDashboardSummaryHandlerTests.cs
 │   │   │   ├── GetTicketById
 │   │   │   │   └── GetTicketByIdHandlerTests.cs
-│   │   │   └── SearchTickets
-│   │   │       └── SearchTicketsHandlerTests.cs
+│   │   │   ├── SearchTickets
+│   │   │   │   └── SearchTicketsHandlerTests.cs
+│   │   │   └── UpdateTicket
+│   │   │       └── UpdateTicketHandlerTests.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Tests.Application.csproj
 │   ├── ServiceDeskLite.Tests.Domain
 │   │   ├── Tickets
+│   │   │   ├── AssigneeTests.cs
+│   │   │   ├── TicketDomainEventsTests.cs
 │   │   │   ├── TicketTests.cs
 │   │   │   └── TicketWorkflowTests.cs
 │   │   ├── packages.lock.json
@@ -391,19 +546,27 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Tests.EndToEnd.csproj
 │   ├── ServiceDeskLite.Tests.Infrastructure.InMemory
+│   │   ├── InMemoryOutboxRepositoryTests.cs
 │   │   ├── InMemoryTicketRepositoryTests.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Tests.Infrastructure.InMemory.csproj
 │   ├── ServiceDeskLite.Tests.Integration
-│   │   ├── Common
 │   │   ├── Tickets
 │   │   │   ├── ApiFactory.cs
+│   │   │   ├── ChangeTicketStatusIntegrationTests.cs
+│   │   │   ├── CreateTicketGetTicketTests.cs
 │   │   │   └── TicketsSearchQueryBindingTests.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Tests.Integration.csproj
 │   └── ServiceDeskLite.Tests.Web
 │       ├── Api
 │       │   └── TicketsApiClientTests.cs
+│       ├── Features
+│       │   └── Tickets
+│       │       └── State
+│       │           ├── TicketBoardFeatureStateTests.cs
+│       │           ├── TicketQueryParamsTests.cs
+│       │           └── TicketsListFeatureStateTests.cs
 │       ├── packages.lock.json
 │       └── ServiceDeskLite.Tests.Web.csproj
 ├── tools

@@ -76,6 +76,48 @@ public sealed class Ticket
         _domainEvents.Add(new AssigneeChangedDomainEvent(Id, previousAssignee?.Name, assignee?.Name));
     }
 
+    /// <summary>
+    /// Partially updates editable fields; null = keep current value. Raises a single
+    /// event carrying only the fields that actually changed; no event on a no-op.
+    /// </summary>
+    public void UpdateDetails(
+        string? title = null,
+        string? description = null,
+        TicketPriority? priority = null,
+        DateTimeOffset? dueAt = null)
+    {
+        if (Status == TicketStatus.Closed)
+            throw new DomainException(TicketErrors.CannotUpdateClosed());
+
+        if (title is not null)
+        {
+            Guard.NotNullOrWhiteSpace(title, nameof(title));
+            Guard.MaxLength(title, MaxTitleLength, nameof(title));
+        }
+
+        if (description is not null)
+        {
+            Guard.NotNullOrWhiteSpace(description, nameof(description));
+            Guard.MaxLength(description, MaxDescriptionLength, nameof(description));
+        }
+
+        var changedTitle = title is not null && title != Title ? title : null;
+        var changedDescription = description is not null && description != Description ? description : null;
+        TicketPriority? changedPriority = priority is not null && priority != Priority ? priority : null;
+        DateTimeOffset? changedDueAt = dueAt is not null && dueAt != DueAt ? dueAt : null;
+
+        if (changedTitle is null && changedDescription is null && changedPriority is null && changedDueAt is null)
+            return;
+
+        Title = changedTitle ?? Title;
+        Description = changedDescription ?? Description;
+        Priority = changedPriority ?? Priority;
+        DueAt = changedDueAt ?? DueAt;
+
+        _domainEvents.Add(new TicketDetailsUpdatedDomainEvent(
+            Id, changedTitle, changedDescription, changedPriority, changedDueAt));
+    }
+
     public Comment AddComment(string content, DateTimeOffset createdAt, string? author = null)
     {
         var comment = new Comment(CommentId.New(), content, createdAt, author);

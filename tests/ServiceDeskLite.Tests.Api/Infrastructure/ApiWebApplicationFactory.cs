@@ -23,7 +23,9 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Persistence:Provider"] = "InMemory",
-                ["Auth:ApiKey"] = TestApiKey
+                ["Auth:ApiKey"] = TestApiKey,
+                // Satisfies the assistant options' fail-fast validation; tests never call Anthropic
+                ["Anthropic:ApiKey"] = "test-anthropic-key"
             });
         });
 

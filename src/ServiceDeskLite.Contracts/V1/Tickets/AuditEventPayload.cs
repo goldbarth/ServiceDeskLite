@@ -7,6 +7,7 @@ namespace ServiceDeskLite.Contracts.V1.Tickets;
 [JsonDerivedType(typeof(TicketStatusChangedPayload),    "ticket.status_changed")]
 [JsonDerivedType(typeof(TicketAssigneeChangedPayload),  "ticket.assignee_changed")]
 [JsonDerivedType(typeof(TicketCommentAddedPayload),     "ticket.comment_added")]
+[JsonDerivedType(typeof(TicketDetailsUpdatedPayload),   "ticket.details_updated")]
 [JsonDerivedType(typeof(RawAuditEventPayload),          "unknown")]
 public abstract record AuditEventPayload;
 
@@ -25,6 +26,13 @@ public sealed record TicketAssigneeChangedPayload(
 public sealed record TicketCommentAddedPayload(
     string Author,
     string Content) : AuditEventPayload;
+
+// Partial update: only fields that actually changed are set, null = unchanged.
+public sealed record TicketDetailsUpdatedPayload(
+    string? NewTitle,
+    string? NewDescription,
+    string? NewPriority,
+    DateTimeOffset? NewDueAt) : AuditEventPayload;
 
 // Fallback for unknown or unrecognized event types – preserves the raw JSON string
 // so the UI can still display something meaningful without crashing.

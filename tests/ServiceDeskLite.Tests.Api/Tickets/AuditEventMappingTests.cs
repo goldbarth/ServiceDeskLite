@@ -186,6 +186,30 @@ public class AuditEventMappingTests
     }
 
     // -----------------------------------------------------------------------
+    // ticket.details_updated
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task UpdateTicket_AuditEvent_HasDetailsUpdatedPayload_WithOnlyChangedFields()
+    {
+        var client = CreateClient();
+        var ticketId = await CreateTicketAsync(client);
+
+        var response = await client.PatchAsync($"/api/v1/tickets/{ticketId}",
+            JsonContent.Create(new UpdateTicketRequest(Priority: TicketPriority.Critical), options: SerializeOptions));
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var events = await GetAuditEventsAsync(client, ticketId);
+
+        var updateEvent = events.Should().ContainSingle(e => e.EventType == "ticket.details_updated").Subject;
+        var payload = updateEvent.Payload.Should().BeOfType<TicketDetailsUpdatedPayload>().Subject;
+        payload.NewPriority.Should().Be("Critical");
+        payload.NewTitle.Should().BeNull();
+        payload.NewDescription.Should().BeNull();
+        payload.NewDueAt.Should().BeNull();
+    }
+
+    // -----------------------------------------------------------------------
     // Chronological ordering
     // -----------------------------------------------------------------------
 

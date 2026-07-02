@@ -12,6 +12,7 @@ using ServiceDeskLite.Application.Tickets.GetAuditEvents;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
 using ServiceDeskLite.Application.Tickets.SearchTickets;
 using ServiceDeskLite.Application.Tickets.Shared;
+using ServiceDeskLite.Application.Tickets.UpdateTicket;
 using ServiceDeskLite.Contracts.V1.Common;
 using ServiceDeskLite.Contracts.V1.Tickets;
 using ServiceDeskLite.Domain.Tickets;
@@ -66,6 +67,17 @@ public static class TicketsEndpoints
             .Produces<CommentResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+
+        // PATCH /api/v1/tickets/{id}
+        tickets.MapPatch("/{id:guid}", UpdateTicketAsync)
+            .WithName("Tickets_Update")
+            .WithSummary("Update ticket details")
+            .WithDescription("Partial update of title, description, priority, or due date. Omitted fields stay unchanged.")
+            .Produces<TicketResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         // GET /api/v1/tickets/{id}/audit-events
@@ -170,6 +182,26 @@ public static class TicketsEndpoints
             var body = new CommentResponse(c.Id.Value, c.Content, c.Author, c.CreatedAt);
             return Results.Created($"/api/v1/tickets/{id}/comments/{c.Id.Value}", body);
         });
+    }
+
+    private static async Task<IResult> UpdateTicketAsync(
+        HttpContext ctx,
+        Guid id,
+        [FromBody] UpdateTicketRequest request,
+        UpdateTicketHandler handler,
+        ResultToProblemDetailsMapper mapper,
+        CancellationToken ct)
+    {
+        var cmd = new UpdateTicketCommand(
+            Id: new TicketId(id),
+            Title: request.Title,
+            Description: request.Description,
+            Priority: request.Priority?.ToDomain(),
+            DueAt: request.DueAt);
+
+        var result = await handler.HandleAsync(cmd, ct);
+
+        return result.ToHttpResult(ctx, mapper, dto => Results.Ok(dto.ToResponse()));
     }
 
     private static async Task<IResult> AssignTicketAsync(
