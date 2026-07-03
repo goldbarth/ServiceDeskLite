@@ -16,7 +16,6 @@ public static class InfrastructureComposition
         {
             case "InMemory":
                 services.AddInfrastructureInMemory();
-                services.AddScoped<ITicketSeeder, TicketSeeder>();
                 break;
 
             case "Postgres":
@@ -27,6 +26,10 @@ public static class InfrastructureComposition
                 throw new InvalidOperationException(
                     $"Unknown Persistence:Provider '{provider}'. Expected 'InMemory' or 'Postgres'.");
         }
+
+        // Provider-agnostic (works via ITicketRepository) and idempotent — used
+        // by the Development seeding block in Program.cs for both providers.
+        services.AddScoped<ITicketSeeder, TicketSeeder>();
 
         return services;
     }
