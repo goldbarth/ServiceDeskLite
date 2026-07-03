@@ -11,8 +11,12 @@ public sealed class AnthropicOptions
 
     public int MaxTokens { get; init; } = 8192;
 
-    /// <summary>Upper bound on model→tool→model round trips per request.</summary>
-    public int MaxToolIterations { get; init; } = 3;
+    /// <summary>
+    /// Upper bound on model→tool→model round trips per request. The
+    /// duplicate-check flow needs two (find_similar_tickets, then
+    /// create_ticket) plus headroom for one correction round.
+    /// </summary>
+    public int MaxToolIterations { get; init; } = 4;
 
     /// <summary>
     /// IANA/Windows timezone the model uses to resolve relative dates ("by Friday

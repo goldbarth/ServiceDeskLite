@@ -44,7 +44,9 @@ public sealed class TestServiceProvider : IAsyncDisposable
                 break;
 
             case PersistenceProvider.Postgres:
-                container = new PostgreSqlBuilder("postgres:17")
+                // pgvector image: the TicketEmbeddings migration runs CREATE EXTENSION
+                // vector, which plain postgres:17 does not ship. Mirrors docker-compose.
+                container = new PostgreSqlBuilder("pgvector/pgvector:pg17")
                     .WithDatabase("servicedesklite")
                     .WithUsername("postgres")
                     .WithPassword("postgres")

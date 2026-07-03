@@ -16,6 +16,7 @@ How to get ServiceDeskLite running locally in under five minutes. Written for re
 | API key header | `X-Api-Key: dev-api-key-not-a-secret` | both `appsettings.Development.json` files |
 | Anthropic API key | user-secrets, **required** (see setup) | `dotnet user-secrets` on the API project |
 | Assistant timezone | `Anthropic:UserTimeZone`, default `Europe/Berlin` | API options |
+| Voyage API key | user-secrets, *optional* — enables semantic ticket search (RAG) | `dotnet user-secrets` on the API project |
 
 ## 1. Run the web UI
 
@@ -35,6 +36,16 @@ cd ../..
 ```
 
 The key lives in `~/.microsoft/usersecrets/`, never in the repository.
+
+Optional — semantic ticket search (RAG): the assistant can check for duplicate
+tickets via embeddings (Voyage AI + pgvector). This needs the Postgres
+provider (Docker setup below) and a [Voyage AI key](https://dashboard.voyageai.com)
+(free tier is plenty). Without the key, or on the InMemory provider, the
+assistant simply works without the duplicate check:
+
+```bash
+dotnet user-secrets set Voyage:ApiKey pa-YOUR-KEY --project src/ServiceDeskLite.Api
+```
 
 ### Start
 
@@ -112,7 +123,7 @@ Runs all suites (Domain, Application, API, Integration, Web, EndToEnd) — no da
 docker compose up --build
 ```
 
-Starts API + PostgreSQL on `http://localhost:8080` (migrations apply automatically). The web frontend must still be started locally; point it at the Docker API with `ApiClient__BaseUrl=http://localhost:8080 dotnet run --project src/ServiceDeskLite.Web`. To use the AI assistant in this setup, export `ANTHROPIC_API_KEY` before `docker compose up` — without it the API boots with a placeholder and assistant requests fail gracefully.
+Starts API + PostgreSQL (with pgvector) on `http://localhost:8080` (migrations apply automatically). The web frontend must still be started locally; point it at the Docker API with `ApiClient__BaseUrl=http://localhost:8080 dotnet run --project src/ServiceDeskLite.Web`. To use the AI assistant in this setup, export `ANTHROPIC_API_KEY` before `docker compose up` — without it the API boots with a placeholder and assistant requests fail gracefully. Additionally export `VOYAGE_API_KEY` to enable semantic ticket search: a background worker then embeds all (seeded and new) tickets, and the assistant checks for duplicates via the `find_similar_tickets` tool before creating a ticket (see ADR 0024).
 
 ## Troubleshooting
 
@@ -123,3 +134,5 @@ Starts API + PostgreSQL on `http://localhost:8080` (migrations apply automatical
 | API returns 401 | `X-Api-Key` header missing/wrong | Development key: `dev-api-key-not-a-secret` |
 | Assistant shows "The AI service is currently unavailable" | Invalid Anthropic key, no credit, or no network | Check the key at platform.claude.com; API log has details |
 | Created tickets disappear after restart | InMemory persistence is per-process | Expected in Development; use the PostgreSQL setup for durability |
+| Assistant says semantic search is unavailable | InMemory provider, or `Voyage:ApiKey` not set | Use the PostgreSQL setup and set the Voyage key (optional feature) |
+| Log: `Ticket embedding batch failed` | Invalid Voyage key or no network | Check the key at dashboard.voyageai.com; worker retries next poll |

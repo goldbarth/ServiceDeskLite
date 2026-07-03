@@ -1,7 +1,7 @@
 services:
 
   db:
-    image: postgres:17
+    image: pgvector/pgvector:pg17
     environment:
       POSTGRES_DB: servicedesklite
       POSTGRES_USER: postgres
@@ -30,6 +30,9 @@ services:
       # AI assistant: export ANTHROPIC_API_KEY before `docker compose up` to enable it.
       # The placeholder lets the API boot without a key; assistant requests then fail gracefully.
       Anthropic__ApiKey: ${ANTHROPIC_API_KEY:-placeholder-assistant-disabled}
+      # Semantic ticket search (RAG): export VOYAGE_API_KEY to enable embeddings.
+      # The placeholder disables the embedding worker and similarity search gracefully.
+      Voyage__ApiKey: ${VOYAGE_API_KEY:-placeholder-rag-disabled}
     depends_on:
       db:
         condition: service_healthy
