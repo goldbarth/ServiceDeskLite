@@ -10,7 +10,7 @@
   </a>
 </p>
 
-A .NET 10 service-desk reference application built on Clean Architecture: explicit domain rules, result-based error handling, swappable persistence, and an AI assistant that turns free-text problem reports into tickets via LLM tool calling — streamed live to a Blazor frontend. The goal is not feature breadth, but structural clarity, explicit boundaries, and reviewable design decisions.
+A .NET 10 service-desk reference application built on Clean Architecture: explicit domain rules, result-based error handling, swappable persistence, and an AI assistant that turns free-text problem reports into tickets via LLM tool calling — checking for duplicates first through semantic search (RAG), streamed live to a Blazor frontend. The goal is not feature breadth, but structural clarity, explicit boundaries, and reviewable design decisions.
 
 > **See it running:** the [runbook](docs/operations/runbook.md) gets you from clone to the web UI (including the AI assistant) in under five minutes.
 > **Full documentation** — architecture, all ADRs, API reference, testing strategy — lives on the [documentation site](https://goldbarth.github.io/ServiceDeskLite/).
@@ -19,6 +19,7 @@ A .NET 10 service-desk reference application built on Clean Architecture: explic
 
 - **Ticket workflow** — create, search (filter/sort/paging), partial update, workflow-validated status transitions, assignment, and comments, enforced by an explicit domain state machine
 - **AI intake assistant** — users describe issues in free text; Claude decides via tool calling whether to create or update a ticket, and every tool call executes through the same application-layer command handlers as the REST API
+- **Semantic ticket search (RAG)** — before creating a ticket, the assistant checks for duplicates by meaning, not keywords: queries are embedded (Voyage AI) and matched against ticket embeddings in PostgreSQL/pgvector by cosine similarity — cross-lingual, so a German query finds English tickets
 - **Streaming end to end** — model output reaches the browser token by token over Server-Sent Events; tool activity is surfaced as typed events while the stream stays open
 - **Audit trail** — every state change raises a domain event that is persisted as an audit record, including changes made by the assistant (actor `ai-assistant`)
 - **Transactional outbox (stub)** — domain events are staged as outbox messages in the same transaction as the state change; deliberately without a dispatcher ([ADR-0021](docs/adr/0021-outbox-stub.md))
@@ -43,7 +44,7 @@ A .NET 10 service-desk reference application built on Clean Architecture: explic
 
 Dependency direction is strictly inward: Domain knows nothing about Application, Application nothing about API or Infrastructure. The LLM integration lives entirely at the edge (API layer) — a deep dive is in the [architecture overview](https://goldbarth.github.io/ServiceDeskLite/architecture/overview.html).
 
-## AI assistant — tool calling & streaming
+## AI assistant — tool calling, streaming & RAG
 
 `POST /api/v1/assistant/chat` drives an agentic loop against the Anthropic Messages API (official .NET SDK) and re-streams the result as Server-Sent Events. The design goal: the model decides *what* to do, but *can only act* through the existing application layer.
 
@@ -52,13 +53,16 @@ Browser ──POST transcript──▶ API adapter ──stream──▶ Anthrop
    ▲                             │
    │  SSE: text / tool_call /    │  stop_reason: tool_use?
    │  tool_result / done         ▼
-   └───────────────────── CreateTicketHandler / UpdateTicketHandler
-                          (validation, audit, outbox — unchanged)
+   │              ┌─ find_similar_tickets ─▶ Voyage embeddings + pgvector
+   └──────────────┴─ CreateTicketHandler / UpdateTicketHandler
+                     (validation, audit, outbox — unchanged)
 ```
 
 **Non-blocking token streaming.** Text deltas are forwarded to the browser the moment they arrive — the stream is never buffered until completion. Tool-use blocks arrive interleaved in the same stream as partial JSON fragments (`input_json_delta`); the adapter accumulates them per content block and parses the input only when the block closes. Streaming text and assembling tool calls happen concurrently on one pass over the stream, so the user watches the model "think aloud" while its tool arguments are still being assembled.
 
-**The loop.** When a turn ends with `stop_reason: tool_use`, the adapter executes each requested tool through the corresponding command handler, appends the assistant turn plus all tool results to the message history, and calls the model again — up to a configurable iteration cap. Two tools are exposed: `create_ticket` (file a ticket from the user's description) and `update_ticket` (correct a ticket created earlier in the conversation, partial update by ticket id).
+**The loop.** When a turn ends with `stop_reason: tool_use`, the adapter executes each requested tool, appends the assistant turn plus all tool results to the message history, and calls the model again — up to a configurable iteration cap. Three tools are exposed: `find_similar_tickets` (semantic search over existing tickets), `create_ticket` (file a ticket from the user's description) and `update_ticket` (correct a ticket created earlier in the conversation, partial update by ticket id).
+
+**RAG as an agent tool.** Before creating a ticket, the model is instructed to check for duplicates: the query is embedded (Voyage AI, `voyage-3.5` — Anthropic has no embeddings endpoint) and ranked by cosine distance against ticket embeddings stored in pgvector, inside the existing PostgreSQL. Retrieval is cross-lingual — a German problem description matches English tickets. Indexing is asynchronous: a poll-based background worker embeds new, edited (content-hash staleness check), and backfilled tickets in batches, so the ticket write path gains no network dependency. Without a Voyage key — or on the InMemory provider — the tool honestly reports search as unavailable instead of faking empty results. Design and deliberate scope cuts (no chunking, no re-ranking, no separate vector DB): [ADR-0024](docs/adr/0024-semantic-ticket-search-rag.md).
 
 **Self-correction instead of silent failure.** Tool inputs are parsed and guarded before touching the domain (schema shape, priority enum, due dates in the past). A rejected input — or a handler `Result` failure — is returned to the model as a `tool_result` with `is_error: true`, including the reason; the model then retries with corrected arguments within the same loop. LLM output is treated as untrusted input, never piped raw into business logic.
 
@@ -66,7 +70,7 @@ Browser ──POST transcript──▶ API adapter ──stream──▶ Anthrop
 
 ## Architecture decisions
 
-Every non-obvious choice is recorded as an ADR — 23 records, browsable on the [ADR index](https://goldbarth.github.io/ServiceDeskLite/adr/index.html). A selection:
+Every non-obvious choice is recorded as an ADR — 24 records, browsable on the [ADR index](https://goldbarth.github.io/ServiceDeskLite/adr/index.html). A selection:
 
 | ADR | Decision | In short |
 |-----|----------|----------|
@@ -81,6 +85,7 @@ Every non-obvious choice is recorded as an ADR — 23 records, browsable on the 
 | [0020](docs/adr/0020-audit-event-payload-format.md) | Audit payload format | JSON payloads, schema-free event types |
 | [0021](docs/adr/0021-outbox-stub.md) | Outbox stub | Transactional staging now, dispatch later |
 | [0023](docs/adr/0023-ai-assistant-edge-adapter.md) | AI assistant as edge adapter | LLM orchestration at the edge; the model acts only through command handlers |
+| [0024](docs/adr/0024-semantic-ticket-search-rag.md) | Semantic ticket search (RAG) | pgvector in the existing Postgres, async embedding worker, RAG as agent tool |
 
 ## Tech stack
 
@@ -89,8 +94,9 @@ Every non-obvious choice is recorded as an ADR — 23 records, browsable on the 
 | Runtime / language | .NET 10, C# |
 | HTTP API | ASP.NET Core Minimal API, RFC 9457 ProblemDetails, SSE via `TypedResults.ServerSentEvents` |
 | LLM integration | Anthropic Messages API (official `Anthropic` .NET SDK), streaming tool calling |
+| Semantic search (RAG) | Voyage AI embeddings (`voyage-3.5`) + pgvector, cosine similarity, async indexing worker |
 | Frontend | Blazor Server, MudBlazor, `System.Net.ServerSentEvents` client |
-| Persistence | EF Core + PostgreSQL, swappable InMemory implementation |
+| Persistence | EF Core + PostgreSQL (`pgvector/pgvector:pg17`), swappable InMemory implementation |
 | Logging | Serilog (console, enriched with trace ids) |
 | API documentation | OpenAPI/Swagger, snapshot-checked in CI |
 | Testing | xUnit, FluentAssertions, `WebApplicationFactory`-based integration and end-to-end suites |
@@ -120,6 +126,7 @@ CI runs all suites on every push and additionally guards the OpenAPI contract ag
 - Outbox dispatching — messages are staged transactionally but not yet relayed to a broker (ADR-0021)
 - Conversation persistence for the assistant — transcripts live in the browser session only
 - LLM prompt caching and multi-tenant rate limiting
+- RAG refinements — chunking (tickets are short), hybrid FTS+vector search, re-ranking, and a vector index (HNSW/IVFFlat) are deliberately cut at this data size ([ADR-0024](docs/adr/0024-semantic-ticket-search-rag.md))
 - Multi-language localization of the UI
 
 ## Documentation
@@ -128,7 +135,7 @@ The complete documentation is published on GitHub Pages (DocFX, docs-as-code):
 
 - [Documentation hub](https://goldbarth.github.io/ServiceDeskLite/) — entry point
 - [Architecture overview](https://goldbarth.github.io/ServiceDeskLite/architecture/overview.html)
-- [ADR index](https://goldbarth.github.io/ServiceDeskLite/adr/index.html) — all 23 decision records
+- [ADR index](https://goldbarth.github.io/ServiceDeskLite/adr/index.html) — all 24 decision records
 - [OpenAPI reference and Swagger UI](https://goldbarth.github.io/ServiceDeskLite/api/openapi.html)
 - [Testing overview](https://goldbarth.github.io/ServiceDeskLite/testing/overview.html)
 - [Runbook](docs/operations/runbook.md) — local setup for reviewers
