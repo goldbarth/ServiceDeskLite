@@ -39,6 +39,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── 0021-outbox-stub.md
 │   │   ├── 0022-security-hardening-minimal.md
 │   │   ├── 0023-ai-assistant-edge-adapter.md
+│   │   ├── 0024-semantic-ticket-search-rag.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
@@ -78,6 +79,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── commit-conventions.md
 │   │   ├── runbook.md
 │   │   └── toc.yml
+│   ├── releases
+│   │   └── v1.1.0.md
 │   ├── structure
 │   │   ├── project-structure.md
 │   │   ├── solution-map.md
@@ -99,6 +102,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── AssistantChatService.cs
 │   │   │   ├── AssistantSseEvent.cs
 │   │   │   ├── CreateTicketTool.cs
+│   │   │   ├── FindSimilarTicketsTool.cs
 │   │   │   └── UpdateTicketTool.cs
 │   │   ├── Composition
 │   │   │   ├── ApiErrorHandlingExtensions.cs
@@ -148,12 +152,14 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   └── ServiceDeskLite.Api.http
 │   ├── ServiceDeskLite.Application
 │   │   ├── Abstractions
-│   │   │   └── Persistence
-│   │   │       ├── IAuditEventRepository.cs
-│   │   │       ├── IDashboardRepository.cs
-│   │   │       ├── IOutboxRepository.cs
-│   │   │       ├── ITicketRepository.cs
-│   │   │       └── IUnitOfWork.cs
+│   │   │   ├── Persistence
+│   │   │   │   ├── IAuditEventRepository.cs
+│   │   │   │   ├── IDashboardRepository.cs
+│   │   │   │   ├── IOutboxRepository.cs
+│   │   │   │   ├── ITicketRepository.cs
+│   │   │   │   └── IUnitOfWork.cs
+│   │   │   └── Search
+│   │   │       └── ITicketSimilaritySearch.cs
 │   │   ├── Common
 │   │   │   ├── Validation
 │   │   │   │   ├── FieldValidationBuilder.cs
@@ -287,6 +293,14 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Domain.csproj
 │   ├── ServiceDeskLite.Infrastructure
+│   │   ├── Embeddings
+│   │   │   ├── IEmbeddingClient.cs
+│   │   │   ├── PgVectorTicketSimilaritySearch.cs
+│   │   │   ├── TicketEmbedding.cs
+│   │   │   ├── TicketEmbeddingContent.cs
+│   │   │   ├── TicketEmbeddingWorker.cs
+│   │   │   ├── VoyageEmbeddingClient.cs
+│   │   │   └── VoyageOptions.cs
 │   │   ├── Persistence
 │   │   │   ├── Configurations
 │   │   │   │   ├── AuditEventConfiguration.cs
@@ -294,6 +308,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── OutboxMessageConfiguration.cs
 │   │   │   │   ├── OutboxMessageIdConverter.cs
 │   │   │   │   ├── TicketConfiguration.cs
+│   │   │   │   ├── TicketEmbeddingConfiguration.cs
 │   │   │   │   └── TicketIdConverter.cs
 │   │   │   ├── DependencyInjection
 │   │   │   │   └── InfrastructureServiceCollectionExtensions.cs
@@ -302,6 +317,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── 20260310143617_InitialCreate.Designer.cs
 │   │   │   │   ├── 20260311000756_AddOutboxMessages.cs
 │   │   │   │   ├── 20260311000756_AddOutboxMessages.Designer.cs
+│   │   │   │   ├── 20260703084946_AddTicketEmbeddings.cs
+│   │   │   │   ├── 20260703084946_AddTicketEmbeddings.Designer.cs
 │   │   │   │   └── ServiceDeskLiteDbContextModelSnapshot.cs
 │   │   │   ├── Repositories
 │   │   │   │   ├── EfAuditEventRepository.cs
@@ -326,6 +343,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── InMemoryStore.cs
 │   │   │   ├── InMemoryTicketRepository.cs
 │   │   │   └── InMemoryUnitOfWork.cs
+│   │   ├── Search
+│   │   │   └── UnavailableTicketSimilaritySearch.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Infrastructure.InMemory.csproj
 │   └── ServiceDeskLite.Web
@@ -483,6 +502,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   ├── ServiceDeskLite.Tests.Api
 │   │   ├── Assistant
 │   │   │   ├── CreateTicketToolInputTests.cs
+│   │   │   ├── FindSimilarTicketsToolInputTests.cs
 │   │   │   └── UpdateTicketToolInputTests.cs
 │   │   ├── Dashboard
 │   │   │   └── DashboardEndpointTests.cs

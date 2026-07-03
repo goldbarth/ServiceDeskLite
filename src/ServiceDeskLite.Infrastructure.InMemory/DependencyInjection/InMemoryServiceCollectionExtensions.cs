@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
 using ServiceDeskLite.Application.Abstractions.Persistence;
+using ServiceDeskLite.Application.Abstractions.Search;
 using ServiceDeskLite.Infrastructure.InMemory.Persistence;
+using ServiceDeskLite.Infrastructure.InMemory.Search;
 
 namespace ServiceDeskLite.Infrastructure.InMemory.DependencyInjection;
 
@@ -20,6 +22,8 @@ public static class InMemoryServiceCollectionExtensions
         services.AddScoped<IAuditEventRepository, InMemoryAuditEventRepository>();
         services.AddScoped<IOutboxRepository, InMemoryOutboxRepository>();
         services.AddScoped<IDashboardRepository, InMemoryDashboardRepository>();
+
+        services.AddScoped<ITicketSimilaritySearch, UnavailableTicketSimilaritySearch>();
 
         return services;
     } 

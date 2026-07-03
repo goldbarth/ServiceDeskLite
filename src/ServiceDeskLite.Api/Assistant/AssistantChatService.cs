@@ -29,11 +29,13 @@ public sealed class AssistantChatService
     // dates in the past — or express times in UTC that render shifted in the UI.
     private static string BuildSystemPrompt(DateTimeOffset localNow, string timeZoneId) =>
         "You are the ServiceDeskLite assistant. Users describe IT problems or requests in free text. " +
-        "When the user reports an actionable issue, create a ticket with the create_ticket tool, then " +
-        "confirm briefly what was created (title, priority, ticket id). If the request is not actionable " +
-        "or too vague, ask one short clarifying question instead. Reply in the user's language. " +
-        "You can also update a ticket created earlier in this conversation with the update_ticket tool, " +
-        "using the ticket id from the create_ticket result. " +
+        "When the user reports an actionable issue, first check for existing similar tickets with the " +
+        "find_similar_tickets tool. If a highly similar open ticket exists, tell the user about it and " +
+        "ask whether to create a new ticket anyway. Otherwise create a ticket with the create_ticket " +
+        "tool, then confirm briefly what was created (title, priority, ticket id). If the request is " +
+        "not actionable or too vague, ask one short clarifying question instead. Reply in the user's " +
+        "language. You can also update a ticket created earlier in this conversation with the " +
+        "update_ticket tool, using the ticket id from the create_ticket result. " +
         $"The user's local date and time is {localNow.ToString("dddd, yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)} " +
         $"({timeZoneId}, UTC{localNow:zzz}). Resolve relative dates like 'by Friday' against this, and always " +
         $"express dueAt values with the user's UTC offset ({localNow:zzz}), not as UTC. " +
@@ -43,6 +45,7 @@ public sealed class AssistantChatService
     private readonly AnthropicClient _client;
     private readonly CreateTicketTool _createTool;
     private readonly UpdateTicketTool _updateTool;
+    private readonly FindSimilarTicketsTool _findSimilarTool;
     private readonly AnthropicOptions _options;
     private readonly IClock _clock;
     private readonly ILogger<AssistantChatService> _logger;
@@ -51,6 +54,7 @@ public sealed class AssistantChatService
         AnthropicClient client,
         CreateTicketTool createTool,
         UpdateTicketTool updateTool,
+        FindSimilarTicketsTool findSimilarTool,
         IOptions<AnthropicOptions> options,
         IClock clock,
         ILogger<AssistantChatService> logger)
@@ -58,6 +62,7 @@ public sealed class AssistantChatService
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _createTool = createTool ?? throw new ArgumentNullException(nameof(createTool));
         _updateTool = updateTool ?? throw new ArgumentNullException(nameof(updateTool));
+        _findSimilarTool = findSimilarTool ?? throw new ArgumentNullException(nameof(findSimilarTool));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -86,7 +91,7 @@ public sealed class AssistantChatService
                 Model = _options.Model,
                 MaxTokens = _options.MaxTokens,
                 System = systemPrompt,
-                Tools = [CreateTicketTool.Definition, UpdateTicketTool.Definition],
+                Tools = [CreateTicketTool.Definition, UpdateTicketTool.Definition, FindSimilarTicketsTool.Definition],
                 Messages = messages,
             };
 
@@ -183,6 +188,7 @@ public sealed class AssistantChatService
         {
             CreateTicketTool.Name => _createTool.ExecuteAsync(call.Input, ct),
             UpdateTicketTool.Name => _updateTool.ExecuteAsync(call.Input, _clock.UtcNow, ct),
+            FindSimilarTicketsTool.Name => _findSimilarTool.ExecuteAsync(call.Input, ct),
             _ => Task.FromResult(($"Unknown tool '{call.Name}'.", true, (Guid?)null)),
         };
 
