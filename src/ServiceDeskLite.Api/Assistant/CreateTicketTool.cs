@@ -13,7 +13,7 @@ namespace ServiceDeskLite.Api.Assistant;
 /// CreateTicketHandler so validation, audit trail and outbox all apply —
 /// the model only supplies arguments, it never bypasses the application layer.
 /// </summary>
-public sealed class CreateTicketTool
+public sealed partial class CreateTicketTool
 {
     public const string Name = "create_ticket";
     private const string AssistantActor = "ai-assistant";
@@ -30,10 +30,7 @@ public sealed class CreateTicketTool
     public static Tool Definition => new()
     {
         Name = Name,
-        Description =
-            "Create a support ticket from the user's description. Use this when the user " +
-            "reports a problem or requests work. Derive a concise title and pick a priority " +
-            "matching the impact described.",
+        Description = ToolDescription,
         InputSchema = new()
         {
             Properties = new Dictionary<string, JsonElement>
@@ -41,24 +38,24 @@ public sealed class CreateTicketTool
                 ["title"] = JsonSerializer.SerializeToElement(new
                 {
                     type = "string",
-                    description = "Short summary of the issue (max ~80 chars).",
+                    description = TitleDescription,
                 }),
                 ["description"] = JsonSerializer.SerializeToElement(new
                 {
                     type = "string",
-                    description = "Full problem description, based on what the user reported.",
+                    description = DescriptionDescription,
                 }),
                 ["priority"] = JsonSerializer.SerializeToElement(new
                 {
                     type = "string",
                     @enum = new[] { "Low", "Medium", "High", "Critical" },
-                    description = "Impact-based priority.",
+                    description = PriorityDescription,
                 }),
                 ["dueAt"] = JsonSerializer.SerializeToElement(new
                 {
                     type = "string",
                     format = "date-time",
-                    description = "Optional due date (ISO 8601), only if the user mentioned a deadline.",
+                    description = DueAtDescription,
                 }),
             },
             Required = ["title", "description", "priority"],
