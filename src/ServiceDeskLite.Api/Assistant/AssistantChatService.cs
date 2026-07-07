@@ -26,6 +26,7 @@ public sealed partial class AssistantChatService
     private readonly CreateTicketTool _createTool;
     private readonly UpdateTicketTool _updateTool;
     private readonly FindSimilarTicketsTool _findSimilarTool;
+    private readonly SearchTicketsTool _searchTool;
     private readonly AnthropicOptions _options;
     private readonly IClock _clock;
     private readonly ILogger<AssistantChatService> _logger;
@@ -35,6 +36,7 @@ public sealed partial class AssistantChatService
         CreateTicketTool createTool,
         UpdateTicketTool updateTool,
         FindSimilarTicketsTool findSimilarTool,
+        SearchTicketsTool searchTool,
         IOptions<AnthropicOptions> options,
         IClock clock,
         ILogger<AssistantChatService> logger)
@@ -43,6 +45,7 @@ public sealed partial class AssistantChatService
         _createTool = createTool ?? throw new ArgumentNullException(nameof(createTool));
         _updateTool = updateTool ?? throw new ArgumentNullException(nameof(updateTool));
         _findSimilarTool = findSimilarTool ?? throw new ArgumentNullException(nameof(findSimilarTool));
+        _searchTool = searchTool ?? throw new ArgumentNullException(nameof(searchTool));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -71,7 +74,13 @@ public sealed partial class AssistantChatService
                 Model = _options.Model,
                 MaxTokens = _options.MaxTokens,
                 System = systemPrompt,
-                Tools = [CreateTicketTool.Definition, UpdateTicketTool.Definition, FindSimilarTicketsTool.Definition],
+                Tools =
+                [
+                    CreateTicketTool.Definition,
+                    UpdateTicketTool.Definition,
+                    FindSimilarTicketsTool.Definition,
+                    SearchTicketsTool.Definition,
+                ],
                 Messages = messages,
             };
 
@@ -169,6 +178,7 @@ public sealed partial class AssistantChatService
             CreateTicketTool.Name => _createTool.ExecuteAsync(call.Input, ct),
             UpdateTicketTool.Name => _updateTool.ExecuteAsync(call.Input, _clock.UtcNow, ct),
             FindSimilarTicketsTool.Name => _findSimilarTool.ExecuteAsync(call.Input, ct),
+            SearchTicketsTool.Name => _searchTool.ExecuteAsync(call.Input, ct),
             _ => Task.FromResult(($"Unknown tool '{call.Name}'.", true, (Guid?)null)),
         };
 

@@ -54,13 +54,14 @@ Browser ──POST transcript──▶ API adapter ──stream──▶ Anthrop
    │  SSE: text / tool_call /    │  stop_reason: tool_use?
    │  tool_result / done         ▼
    │              ┌─ find_similar_tickets ─▶ Voyage embeddings + pgvector
+   │              ├─ search_tickets ───────▶ SearchTicketsHandler (filter/sort/page)
    └──────────────┴─ CreateTicketHandler / UpdateTicketHandler
                      (validation, audit, outbox — unchanged)
 ```
 
 **Non-blocking token streaming.** Text deltas are forwarded to the browser the moment they arrive — the stream is never buffered until completion. Tool-use blocks arrive interleaved in the same stream as partial JSON fragments (`input_json_delta`); the adapter accumulates them per content block and parses the input only when the block closes. Streaming text and assembling tool calls happen concurrently on one pass over the stream, so the user watches the model "think aloud" while its tool arguments are still being assembled.
 
-**The loop.** When a turn ends with `stop_reason: tool_use`, the adapter executes each requested tool, appends the assistant turn plus all tool results to the message history, and calls the model again — up to a configurable iteration cap. Three tools are exposed: `find_similar_tickets` (semantic search over existing tickets), `create_ticket` (file a ticket from the user's description) and `update_ticket` (correct a ticket created earlier in the conversation, partial update by ticket id).
+**The loop.** When a turn ends with `stop_reason: tool_use`, the adapter executes each requested tool, appends the assistant turn plus all tool results to the message history, and calls the model again — up to a configurable iteration cap. Four tools are exposed: `find_similar_tickets` (semantic duplicate check before creating a ticket), `search_tickets` (find existing tickets by structured filter — status, priority, assignee — plus free text, returning a compact list to act on by id), `create_ticket` (file a ticket from the user's description) and `update_ticket` (correct a ticket created earlier in the conversation, partial update by ticket id).
 
 **RAG as an agent tool.** Before creating a ticket, the model is instructed to check for duplicates: the query is embedded (Voyage AI, `voyage-3.5` — Anthropic has no embeddings endpoint) and ranked by cosine distance against ticket embeddings stored in pgvector, inside the existing PostgreSQL. Retrieval is cross-lingual — a German problem description matches English tickets. Indexing is asynchronous: a poll-based background worker embeds new, edited (content-hash staleness check), and backfilled tickets in batches, so the ticket write path gains no network dependency. Without a Voyage key — or on the InMemory provider — the tool honestly reports search as unavailable instead of faking empty results. Design and deliberate scope cuts (no chunking, no re-ranking, no separate vector DB): [ADR-0024](docs/adr/0024-semantic-ticket-search-rag.md).
 
