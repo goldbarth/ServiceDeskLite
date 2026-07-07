@@ -11,7 +11,7 @@ src/
   ServiceDeskLite.Domain/                  # Aggregate, enums, Guard, domain exceptions
   ServiceDeskLite.Application/             # Use-case handlers, Result<T>, abstractions
   ServiceDeskLite.Contracts/               # Versioned HTTP DTOs (V1/)
-  ServiceDeskLite.Infrastructure/          # EF Core + SQLite persistence
+  ServiceDeskLite.Infrastructure/          # EF Core + PostgreSQL/pgvector persistence
   ServiceDeskLite.Infrastructure.InMemory/ # In-memory persistence (dev/test)
   ServiceDeskLite.Api/                     # Minimal API host + composition root
   ServiceDeskLite.Web/                     # Blazor Server UI + API client
@@ -101,7 +101,7 @@ docs(adr): add ADR 0018 for authentication strategy
 |----------|-----------------------------------------|
 | `domain` | Domain layer                            |
 | `app`    | Application layer (handlers, Result)    |
-| `infra`  | Infrastructure (EF Core, SQLite)        |
+| `infra`  | Infrastructure (EF Core, PostgreSQL)    |
 | `api`    | API host, endpoints, composition root   |
 | `web`    | Blazor UI, API client                   |
 | `ci`     | CI/CD workflows                         |
