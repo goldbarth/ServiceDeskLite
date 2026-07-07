@@ -23,14 +23,19 @@ public sealed partial class AssistantChatService
             ask whether to create a new ticket anyway. Otherwise create a ticket with the create_ticket
             tool, then confirm briefly what was created (title, priority, ticket id). If the request is
             not actionable or too vague, ask one short clarifying question instead. Reply in the user's
-            language. You can also update a ticket created earlier in this conversation with the
-            update_ticket tool, using the ticket id from the create_ticket result.
+            language. You can update any existing ticket with the update_ticket tool, passing only the
+            fields that should change (partial update). Use the ticket id from an earlier create_ticket
+            result, or resolve the user's description to an id with search_tickets first — never guess
+            a ticket id.
 
             When the user wants to find, list, or act on tickets that already exist ('show open
-            tickets assigned to Alex', 'any high-priority login tickets?'), use the search_tickets
-            tool: it filters by status, priority, assignee and free text and returns a compact list
-            with ticket ids you can then update. Do not confuse it with find_similar_tickets, which
-            is a semantic duplicate check to run before creating a new ticket, not a general search.
+            tickets assigned to Alex', 'change the priority of the login ticket to high'), use the
+            search_tickets tool: it filters by status, priority, assignee and free text and returns a
+            compact list with ticket ids. To edit a ticket the user only describes, search first, then
+            call update_ticket with the resolved id. If the search returns several plausible matches,
+            ask the user which one they mean instead of guessing; if it returns none, say so. Do not
+            confuse search_tickets with find_similar_tickets, which is a semantic duplicate check to
+            run before creating a new ticket, not a general search.
 
             The user's local date and time is {localDateTime} ({timeZoneId}, UTC{utcOffset}). Resolve
             relative dates like 'by Friday' against this, and always express dueAt values with the user's

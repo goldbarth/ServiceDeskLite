@@ -4,12 +4,14 @@ public sealed partial class UpdateTicketTool
 {
     private const string ToolDescription =
         """
-        Update an existing ticket, e.g. to correct the due date, priority, title or description
-        after the user clarifies. Only pass the fields that should change. Requires the ticket id
-        from an earlier create_ticket result in this conversation.
+        Update any existing ticket, e.g. to correct the due date, priority, title or description.
+        Only pass the fields that should change; omitted fields stay unchanged. Requires the
+        ticket id, obtained either from an earlier create_ticket result in this conversation or
+        by resolving the user's description with search_tickets first. Do not guess an id.
         """;
 
-    private const string TicketIdDescription = "Id of the ticket to update.";
+    private const string TicketIdDescription =
+        "Id of the ticket to update, from a create_ticket or search_tickets result.";
     private const string TitleDescription = "New title. Omit to keep the current one.";
     private const string DescriptionDescription = "New description. Omit to keep the current one.";
     private const string PriorityDescription = "New priority. Omit to keep the current one.";
