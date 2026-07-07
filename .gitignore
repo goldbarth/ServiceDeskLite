@@ -430,6 +430,7 @@ fabric.properties
 # Claude Code
 .claude/
 CLAUDE.md
+CLAUDE.original.md
 
 # DocFX output
 docs/_site/
