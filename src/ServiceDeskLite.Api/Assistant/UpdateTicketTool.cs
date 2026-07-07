@@ -8,9 +8,10 @@ using ServiceDeskLite.Domain.Tickets;
 namespace ServiceDeskLite.Api.Assistant;
 
 /// <summary>
-/// Lets the model correct a ticket it created earlier in the conversation
-/// (e.g. fix a due time after the user clarifies). Executes through
-/// UpdateTicketHandler, so domain rules and audit trail apply unchanged.
+/// Lets the model apply a partial update to any existing ticket — one it created
+/// earlier in the conversation, or one resolved from the user's description via
+/// search_tickets (find-then-update). Executes through UpdateTicketHandler, so
+/// domain rules and audit trail (actor "ai-assistant") apply unchanged.
 /// </summary>
 public sealed partial class UpdateTicketTool
 {
@@ -84,7 +85,8 @@ public sealed partial class UpdateTicketTool
             || idEl.ValueKind is not JsonValueKind.String
             || !Guid.TryParse(idEl.GetString(), out var ticketId))
         {
-            error = "Missing or invalid required property 'ticketId' (must be a UUID from a previous create_ticket result).";
+            error = "Missing or invalid required property 'ticketId' (must be a UUID from a previous " +
+                    "create_ticket or search_tickets result).";
             return false;
         }
 

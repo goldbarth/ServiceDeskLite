@@ -49,6 +49,16 @@ public sealed class UpdateTicketToolInputTests
     }
 
     [Fact]
+    public void TryParseInput_MissingTicketId_ErrorNamesResolvableSources()
+    {
+        var input = Json("""{ "priority": "High" }""");
+
+        UpdateTicketTool.TryParseInput(input, Now, out _, out var error);
+
+        error.Should().Contain("create_ticket").And.Contain("search_tickets");
+    }
+
+    [Fact]
     public void TryParseInput_InvalidTicketId_Fails()
     {
         var input = Json("""{ "ticketId": "not-a-guid", "priority": "High" }""");
