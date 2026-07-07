@@ -1,3 +1,4 @@
+using ServiceDeskLite.Domain.Agents;
 using FluentAssertions;
 
 using ServiceDeskLite.Domain.Common;
@@ -83,7 +84,7 @@ public sealed class TicketDomainEventsTests
         var ticket = CreateTicket();
         ticket.ClearDomainEvents();
 
-        ticket.Assign(new Assignee("Alice"));
+        ticket.Assign(AgentId.New(), "Alice", previousAssigneeName: null);
 
         ticket.DomainEvents.Should().ContainSingle()
             .Which.Should().BeOfType<AssigneeChangedDomainEvent>();
@@ -93,10 +94,10 @@ public sealed class TicketDomainEventsTests
     public void Assign_AssigneeChangedEvent_CarriesPreviousAndNewAssignee()
     {
         var ticket = CreateTicket();
-        ticket.Assign(new Assignee("Alice"));
+        ticket.Assign(AgentId.New(), "Alice", previousAssigneeName: null);
         ticket.ClearDomainEvents();
 
-        ticket.Assign(new Assignee("Bob"));
+        ticket.Assign(AgentId.New(), "Bob", previousAssigneeName: "Alice");
 
         var e = ticket.DomainEvents.OfType<AssigneeChangedDomainEvent>().Single();
         e.PreviousAssignee.Should().Be("Alice");
@@ -107,10 +108,10 @@ public sealed class TicketDomainEventsTests
     public void Assign_ToNull_AssigneeChangedEvent_HasNullNewAssignee()
     {
         var ticket = CreateTicket();
-        ticket.Assign(new Assignee("Alice"));
+        ticket.Assign(AgentId.New(), "Alice", previousAssigneeName: null);
         ticket.ClearDomainEvents();
 
-        ticket.Assign(null);
+        ticket.Assign(agentId: null, assigneeName: null, previousAssigneeName: "Alice");
 
         var e = ticket.DomainEvents.OfType<AssigneeChangedDomainEvent>().Single();
         e.PreviousAssignee.Should().Be("Alice");

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
+using ServiceDeskLite.Domain.Agents;
 using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Outbox;
 using ServiceDeskLite.Domain.Tickets;
@@ -9,8 +10,26 @@ namespace ServiceDeskLite.Infrastructure.InMemory.Persistence;
 internal sealed class InMemoryStore
 {
     private readonly ConcurrentDictionary<TicketId, Ticket> _tickets = new();
+    private readonly ConcurrentDictionary<AgentId, Agent> _agents = new();
     private readonly ConcurrentBag<AuditEvent> _auditEvents = new();
     private readonly ConcurrentBag<OutboxMessage> _outboxMessages = new();
+
+    public bool TryGetAgent(AgentId id, out Agent? agent)
+        => _agents.TryGetValue(id, out agent);
+
+    public bool AnyAgents() => !_agents.IsEmpty;
+
+    public IReadOnlyCollection<Agent> SnapshotAgents()
+        => _agents.Values.ToArray();
+
+    public void ApplyAgentAdds(IEnumerable<Agent> adds)
+    {
+        foreach (var agent in adds)
+        {
+            if (!_agents.TryAdd(agent.Id, agent))
+                throw new InvalidOperationException($"Agent already exists: {agent.Id}");
+        }
+    }
 
     public bool TryGetTicket(TicketId id, out Ticket? ticket)
         => _tickets.TryGetValue(id, out ticket);

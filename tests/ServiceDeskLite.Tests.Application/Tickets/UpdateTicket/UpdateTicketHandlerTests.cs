@@ -1,3 +1,4 @@
+using ServiceDeskLite.Tests.Application.Fakes;
 using FluentAssertions;
 
 using ServiceDeskLite.Application.Abstractions.Persistence;
@@ -127,6 +128,7 @@ public class UpdateTicketHandlerTests
         var repo = new FakeTicketRepository(existingTicket);
         return new UpdateTicketHandler(
             repo,
+            new EmptyAgentRepository(),
             audit ?? new FakeAuditEventRepository(),
             uow ?? new FakeUnitOfWork(),
             new UpdateTicketValidator(),

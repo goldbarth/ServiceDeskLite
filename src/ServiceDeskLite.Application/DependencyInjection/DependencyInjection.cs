@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
+using ServiceDeskLite.Application.Agents.GetAgents;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Common.Validation;
 using ServiceDeskLite.Application.Tickets.AddComment;
@@ -36,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<UpdateTicketHandler>();
         services.AddScoped<GetAuditEventsHandler>();
         services.AddScoped<GetDashboardSummaryHandler>();
+        services.AddScoped<GetAgentsHandler>();
 
         return services;
     }

@@ -11,7 +11,7 @@ public record TicketDetailsDto(
     TicketPriority Priority,
     DateTimeOffset CreatedAt,
     DateTimeOffset? DueAt,
-    Assignee? Assignee,
+    string? Assignee,
     IReadOnlyList<ConversationItemDto> Conversation,
     IReadOnlyList<TicketStatus> AllowedTransitions,
     bool IsOverdue,

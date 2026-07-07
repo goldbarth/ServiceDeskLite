@@ -1,3 +1,4 @@
+using ServiceDeskLite.Application.Agents.Seeding;
 using ServiceDeskLite.Application.Tickets.Seeding;
 using ServiceDeskLite.Infrastructure.InMemory.DependencyInjection;
 using ServiceDeskLite.Infrastructure.Persistence.DependencyInjection;
@@ -30,6 +31,7 @@ public static class InfrastructureComposition
         // Provider-agnostic (works via ITicketRepository) and idempotent — used
         // by the Development seeding block in Program.cs for both providers.
         services.AddScoped<ITicketSeeder, TicketSeeder>();
+        services.AddScoped<IAgentSeeder, AgentSeeder>();
 
         return services;
     }

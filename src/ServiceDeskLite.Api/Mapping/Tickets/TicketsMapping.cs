@@ -18,7 +18,7 @@ public static class TicketsMapping
             Status: dto.Status.ToContract(),
             CreatedAt: dto.CreatedAt,
             DueAt: dto.DueAt,
-            Assignee: dto.Assignee?.Name,
+            Assignee: dto.Assignee,
             Conversation: dto.Conversation
                 .Select(item => new ConversationItemResponse(
                     item.Timestamp,

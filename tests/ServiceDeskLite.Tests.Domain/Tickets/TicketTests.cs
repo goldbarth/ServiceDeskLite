@@ -1,4 +1,5 @@
-﻿using ServiceDeskLite.Domain.Common;
+﻿using ServiceDeskLite.Domain.Agents;
+using ServiceDeskLite.Domain.Common;
 using ServiceDeskLite.Domain.Tickets;
 using FluentAssertions;
 
@@ -79,25 +80,26 @@ public sealed class TicketTests
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void Assign_ValidAssignee_SetsAssignee()
+    public void Assign_ValidAgent_SetsAssignedAgentId()
     {
         var ticket = CreateTicket();
-        var assignee = new Assignee("Alice");
+        var agentId = AgentId.New();
 
-        ticket.Assign(assignee);
+        ticket.Assign(agentId, "Alice", previousAssigneeName: null);
 
-        ticket.Assignee.Should().Be(assignee);
+        ticket.AssignedAgentId.Should().Be(agentId);
     }
 
     [Fact]
-    public void Assign_NullAssignee_ClearsAssignee()
+    public void Assign_NullAgent_ClearsAssignment()
     {
         var ticket = CreateTicket();
-        ticket.Assign(new Assignee("Alice"));
+        var agentId = AgentId.New();
+        ticket.Assign(agentId, "Alice", previousAssigneeName: null);
 
-        ticket.Assign(null);
+        ticket.Assign(agentId: null, assigneeName: null, previousAssigneeName: "Alice");
 
-        ticket.Assignee.Should().BeNull();
+        ticket.AssignedAgentId.Should().BeNull();
     }
 
     [Fact]
@@ -105,18 +107,18 @@ public sealed class TicketTests
     {
         var ticket = CreateClosedTicket();
 
-        var act = () => ticket.Assign(new Assignee("Alice"));
+        var act = () => ticket.Assign(AgentId.New(), "Alice", previousAssigneeName: null);
 
         act.Should().Throw<DomainException>()
             .Which.Error.Code.Should().Be(TicketErrors.CannotAssignClosedCode);
     }
 
     [Fact]
-    public void NewTicket_HasNoAssignee()
+    public void NewTicket_HasNoAssignment()
     {
         var ticket = CreateTicket();
 
-        ticket.Assignee.Should().BeNull();
+        ticket.AssignedAgentId.Should().BeNull();
     }
 
     // -----------------------------------------------------------------------

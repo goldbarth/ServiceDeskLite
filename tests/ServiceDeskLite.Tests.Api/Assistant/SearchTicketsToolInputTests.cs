@@ -57,6 +57,18 @@ public sealed class SearchTicketsToolInputTests
     }
 
     [Fact]
+    public void TryParseInput_Reference_MapsToCriteria()
+    {
+        var input = Json("""{ "reference": "#ABC123" }""");
+
+        var ok = SearchTicketsTool.TryParseInput(input, out var query, out var error);
+
+        ok.Should().BeTrue();
+        error.Should().BeNull();
+        query!.Criteria.Reference.Should().Be("#ABC123");
+    }
+
+    [Fact]
     public void TryParseInput_EnumsAreCaseInsensitive()
     {
         var input = Json("""{ "status": ["new"], "priority": ["high"] }""");

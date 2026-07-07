@@ -24,6 +24,31 @@ namespace ServiceDeskLite.Infrastructure.Persistence.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ServiceDeskLite.Domain.Agents.Agent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Active");
+
+                    b.ToTable("Agents", (string)null);
+                });
+
             modelBuilder.Entity("ServiceDeskLite.Domain.Audit.AuditEvent", b =>
                 {
                     b.Property<Guid>("Id")
@@ -91,9 +116,8 @@ namespace ServiceDeskLite.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Assignee")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.Property<Guid?>("AssignedAgentId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -109,6 +133,11 @@ namespace ServiceDeskLite.Infrastructure.Persistence.Migrations
                     b.Property<int>("Priority")
                         .HasColumnType("integer");
 
+                    b.Property<string>("RefSuffix")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("text")
+                        .HasComputedColumnSql("right(\"Id\"::text, 6)", true);
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -119,7 +148,11 @@ namespace ServiceDeskLite.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AssignedAgentId");
+
                     b.HasIndex("CreatedAt");
+
+                    b.HasIndex("RefSuffix");
 
                     b.HasIndex("Status");
 

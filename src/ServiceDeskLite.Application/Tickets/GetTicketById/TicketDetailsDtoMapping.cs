@@ -9,7 +9,8 @@ internal static class TicketDetailsDtoMapping
     public static TicketDetailsDto ToDetailsDto(
         this Ticket ticket,
         IReadOnlyList<AuditEventDto> auditEvents,
-        DateTimeOffset utcNow)
+        DateTimeOffset utcNow,
+        string? assigneeName)
     {
         ArgumentNullException.ThrowIfNull(ticket);
 
@@ -24,12 +25,12 @@ internal static class TicketDetailsDtoMapping
             ticket.Priority,
             ticket.CreatedAt,
             ticket.DueAt,
-            ticket.Assignee,
+            assigneeName,
             conversation,
             allowedTransitions,
             IsOverdue: ticket.DueAt is not null && ticket.DueAt.Value < utcNow
                 && ticket.Status is not TicketStatus.Resolved and not TicketStatus.Closed,
-            DisplayRef: "#" + $"{ticket.Id.Value:N}"[^6..].ToUpperInvariant(),
+            DisplayRef: TicketReference.Format(ticket.Id),
             StatusGuidance: BuildStatusGuidance(ticket.Status),
             SuggestedNextSteps: BuildSuggestedNextSteps(ticket, allowedTransitions));
     }
@@ -52,7 +53,7 @@ internal static class TicketDetailsDtoMapping
     {
         var suggestions = new List<string>();
 
-        if (ticket.Assignee is null && ticket.Status is not TicketStatus.Closed)
+        if (ticket.AssignedAgentId is null && ticket.Status is not TicketStatus.Closed)
             suggestions.Add("Assign an owner so responsibility and next handling steps are explicit.");
 
         if (ticket.DueAt is null && ticket.Status is not TicketStatus.Resolved and not TicketStatus.Closed)

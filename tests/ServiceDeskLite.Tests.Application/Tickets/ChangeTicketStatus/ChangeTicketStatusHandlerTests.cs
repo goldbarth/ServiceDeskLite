@@ -1,3 +1,4 @@
+using ServiceDeskLite.Tests.Application.Fakes;
 using FluentAssertions;
 
 using ServiceDeskLite.Application.Abstractions.Persistence;
@@ -88,7 +89,7 @@ public class ChangeTicketStatusHandlerTests
         FakeUnitOfWork? uow = null)
     {
         var repo = new FakeTicketRepository(existingTicket);
-        return new ChangeTicketStatusHandler(repo, new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork(), new FakeClock());
+        return new ChangeTicketStatusHandler(repo, new EmptyAgentRepository(), new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork(), new FakeClock());
     }
 
     private static Ticket CreateTicket(TicketStatus status)

@@ -199,7 +199,10 @@ public partial class TicketDetailsPage
         DateTimeOffset? dueAt = null;
         if (_editDueAt is { } due)
         {
-            var candidate = new DateTimeOffset(due.Date, TimeSpan.Zero);
+            // The date picker's value carries a local Kind; force Unspecified so the
+            // DateTimeOffset ctor accepts the zero offset (mirrors the create flow).
+            var date = DateTime.SpecifyKind(due.Date, DateTimeKind.Unspecified);
+            var candidate = new DateTimeOffset(date, TimeSpan.Zero);
             if (_ticket.DueAt is null || candidate.Date != _ticket.DueAt.Value.Date)
             {
                 dueAt = candidate;

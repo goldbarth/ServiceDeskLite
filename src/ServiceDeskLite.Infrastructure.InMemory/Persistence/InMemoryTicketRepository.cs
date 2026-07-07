@@ -42,7 +42,10 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
         ct.ThrowIfCancellationRequested();
 
         IEnumerable<Ticket> q = _store.SnapshotTickets();
-        
+
+        // Resolve assignee display names from the agent roster (FK, ADR-0025).
+        var agentNames = _store.SnapshotAgents().ToDictionary(a => a.Id, a => a.Name);
+
         if (!string.IsNullOrWhiteSpace(criteria.Text))
         {
             var term = criteria.Text.Trim();
@@ -58,9 +61,14 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
         if (!string.IsNullOrWhiteSpace(criteria.AssigneeName))
         {
             var name = criteria.AssigneeName.Trim();
-            q = q.Where(t => t.Assignee != null &&
-                              t.Assignee.Value.Name.Contains(name, StringComparison.OrdinalIgnoreCase));
+            q = q.Where(t => t.AssignedAgentId is { } id
+                              && agentNames.TryGetValue(id, out var n)
+                              && n.Contains(name, StringComparison.OrdinalIgnoreCase));
         }
+
+        var reference = TicketReference.Normalize(criteria.Reference);
+        if (reference is not null)
+            q = q.Where(t => TicketReference.Suffix(t.Id) == reference);
 
         if (criteria.CreatedFrom is not null)
             q = q.Where(t => t.CreatedAt >= criteria.CreatedFrom);
@@ -101,11 +109,11 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
                 t.Priority,
                 t.CreatedAt,
                 t.DueAt,
-                t.Assignee?.Name,
+                t.AssignedAgentId is { } aid && agentNames.TryGetValue(aid, out var an) ? an : null,
                 TicketWorkflow.GetAllowedTransitions(t.Status),
                 t.DueAt is not null && t.DueAt.Value < utcNow
                     && t.Status is not TicketStatus.Resolved and not TicketStatus.Closed,
-                "#" + $"{t.Id.Value:N}"[^6..].ToUpperInvariant()))
+                TicketReference.Format(t.Id)))
             .ToList();
 
         return Task.FromResult(new PagedResult<TicketListItemDto>(items, total, paging));

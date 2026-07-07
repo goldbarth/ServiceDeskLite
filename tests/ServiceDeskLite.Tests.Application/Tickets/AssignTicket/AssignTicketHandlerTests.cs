@@ -5,6 +5,7 @@ using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Common.Validation;
 using ServiceDeskLite.Application.Tickets.AssignTicket;
 using ServiceDeskLite.Application.Tickets.Shared;
+using ServiceDeskLite.Domain.Agents;
 using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
@@ -12,9 +13,12 @@ namespace ServiceDeskLite.Tests.Application.Tickets.AssignTicket;
 
 public sealed class AssignTicketHandlerTests
 {
-    // -----------------------------------------------------------------------
-    // Guard: input validation
-    // -----------------------------------------------------------------------
+    private static readonly Agent Alice =
+        new(AgentId.New(), "Alice", "alice@servicedesk.example");
+    private static readonly Agent Bob =
+        new(AgentId.New(), "Bob", "bob@servicedesk.example");
+    private static readonly Agent Inactive =
+        new(AgentId.New(), "Retired", "retired@servicedesk.example", active: false);
 
     [Fact]
     public async Task HandleAsync_NullCommand_ReturnsValidationFailure()
@@ -28,15 +32,11 @@ public sealed class AssignTicketHandlerTests
         result.Error.Code.Should().Be("assign_ticket.command.null");
     }
 
-    // -----------------------------------------------------------------------
-    // Not Found
-    // -----------------------------------------------------------------------
-
     [Fact]
     public async Task HandleAsync_TicketNotFound_ReturnsNotFound()
     {
         var handler = CreateHandler(existingTicket: null);
-        var cmd = new AssignTicketCommand(TicketId.New(), "Alice");
+        var cmd = new AssignTicketCommand(TicketId.New(), Alice.Id);
 
         var result = await handler.HandleAsync(cmd);
 
@@ -45,99 +45,77 @@ public sealed class AssignTicketHandlerTests
         result.Error.Code.Should().Be("ticket.not_found");
     }
 
-    // -----------------------------------------------------------------------
-    // Success paths
-    // -----------------------------------------------------------------------
-
     [Fact]
-    public async Task HandleAsync_ValidAssigneeName_ReturnsSuccessWithAssignee()
+    public async Task HandleAsync_ValidAgent_ReturnsSuccessWithAssigneeName()
     {
         var ticket = CreateTicket();
         var uow = new FakeUnitOfWork();
         var handler = CreateHandler(existingTicket: ticket, uow: uow);
-        var cmd = new AssignTicketCommand(ticket.Id, "Alice");
+        var cmd = new AssignTicketCommand(ticket.Id, Alice.Id);
 
         var result = await handler.HandleAsync(cmd);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value!.Assignee!.Value.Name.Should().Be("Alice");
+        result.Value!.Assignee.Should().Be("Alice");
+        ticket.AssignedAgentId.Should().Be(Alice.Id);
         uow.SaveCalls.Should().Be(1);
     }
 
     [Fact]
-    public async Task HandleAsync_NullAssigneeName_ReturnsSuccessWithNullAssignee()
+    public async Task HandleAsync_NullAgent_ReturnsSuccessWithNullAssignee()
     {
         var ticket = CreateTicket();
-        ticket.Assign(new Assignee("Alice"));
-        ticket.ClearDomainEvents(); // clear setup event so only the unassign event remains
+        ticket.Assign(Alice.Id, "Alice", previousAssigneeName: null);
+        ticket.ClearDomainEvents();
         var handler = CreateHandler(existingTicket: ticket);
-        var cmd = new AssignTicketCommand(ticket.Id, AssigneeName: null);
+        var cmd = new AssignTicketCommand(ticket.Id, AgentId: null);
 
         var result = await handler.HandleAsync(cmd);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Assignee.Should().BeNull();
+        ticket.AssignedAgentId.Should().BeNull();
     }
 
     [Fact]
-    public async Task HandleAsync_ValidAssign_TicketAssigneeIsUpdated()
+    public async Task HandleAsync_UnknownAgent_ReturnsValidationFailure()
     {
         var ticket = CreateTicket();
         var handler = CreateHandler(existingTicket: ticket);
-        var cmd = new AssignTicketCommand(ticket.Id, "Bob");
+        var cmd = new AssignTicketCommand(ticket.Id, AgentId.New());
 
-        await handler.HandleAsync(cmd);
+        var result = await handler.HandleAsync(cmd);
 
-        ticket.Assignee!.Value.Name.Should().Be("Bob");
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Type.Should().Be(ErrorType.Validation);
+        result.Error.Code.Should().Be("assign_ticket.agent.unknown");
     }
 
-    // -----------------------------------------------------------------------
-    // Domain violations
-    // -----------------------------------------------------------------------
+    [Fact]
+    public async Task HandleAsync_InactiveAgent_ReturnsValidationFailure()
+    {
+        var ticket = CreateTicket();
+        var handler = CreateHandler(existingTicket: ticket);
+        var cmd = new AssignTicketCommand(ticket.Id, Inactive.Id);
+
+        var result = await handler.HandleAsync(cmd);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("assign_ticket.agent.unknown");
+    }
 
     [Fact]
     public async Task HandleAsync_ClosedTicket_ReturnsConflict()
     {
         var ticket = CreateClosedTicket();
         var handler = CreateHandler(existingTicket: ticket);
-        var cmd = new AssignTicketCommand(ticket.Id, "Alice");
+        var cmd = new AssignTicketCommand(ticket.Id, Alice.Id);
 
         var result = await handler.HandleAsync(cmd);
 
         result.IsFailure.Should().BeTrue();
         result.Error!.Type.Should().Be(ErrorType.Conflict);
         result.Error.Code.Should().Be("domain.ticket.assign.closed");
-    }
-
-    [Fact]
-    public async Task HandleAsync_AssigneeNameTooLong_ReturnsValidationFailure()
-    {
-        var ticket = CreateTicket();
-        var handler = CreateHandler(existingTicket: ticket, validator: new AssignTicketValidator());
-        var tooLong = new string('x', Assignee.MaxNameLength + 1);
-        var cmd = new AssignTicketCommand(ticket.Id, tooLong);
-
-        var result = await handler.HandleAsync(cmd);
-
-        result.IsFailure.Should().BeTrue();
-        result.Error!.Type.Should().Be(ErrorType.Validation);
-        result.Error.Code.Should().Be("assign_ticket.validation_failed");
-        result.Error.FieldErrors.Should().ContainKey("assigneeName");
-    }
-
-    [Fact]
-    public async Task HandleAsync_EmptyAssigneeName_ReturnsValidationFailure()
-    {
-        var ticket = CreateTicket();
-        var handler = CreateHandler(existingTicket: ticket, validator: new AssignTicketValidator());
-        var cmd = new AssignTicketCommand(ticket.Id, AssigneeName: "");
-
-        var result = await handler.HandleAsync(cmd);
-
-        result.IsFailure.Should().BeTrue();
-        result.Error!.Type.Should().Be(ErrorType.Validation);
-        result.Error.Code.Should().Be("assign_ticket.validation_failed");
-        result.Error.FieldErrors.Should().ContainKey("assigneeName");
     }
 
     // -----------------------------------------------------------------------
@@ -150,7 +128,10 @@ public sealed class AssignTicketHandlerTests
         ICommandValidator<AssignTicketCommand>? validator = null)
     {
         var repo = new FakeTicketRepository(existingTicket);
-        return new AssignTicketHandler(repo, new FakeAuditEventRepository(), uow ?? new FakeUnitOfWork(), validator ?? new FakeValidator(), new FakeClock());
+        var agents = new FakeAgentRepository(Alice, Bob, Inactive);
+        return new AssignTicketHandler(
+            repo, agents, new FakeAuditEventRepository(),
+            uow ?? new FakeUnitOfWork(), validator ?? new FakeValidator(), new FakeClock());
     }
 
     private static Ticket CreateTicket() =>
@@ -182,6 +163,20 @@ public sealed class AssignTicketHandlerTests
             => Task.FromResult(new PagedResult<TicketListItemDto>([], 0, paging));
     }
 
+    private sealed class FakeAgentRepository(params Agent[] agents) : IAgentRepository
+    {
+        public Task AddAsync(Agent agent, CancellationToken ct = default) => Task.CompletedTask;
+
+        public Task<Agent?> GetByIdAsync(AgentId id, CancellationToken ct = default)
+            => Task.FromResult(agents.FirstOrDefault(a => a.Id == id));
+
+        public Task<IReadOnlyList<Agent>> GetActiveAsync(CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<Agent>>(agents.Where(a => a.Active).ToList());
+
+        public Task<bool> AnyAsync(CancellationToken ct = default)
+            => Task.FromResult(agents.Length > 0);
+    }
+
     private sealed class FakeUnitOfWork : IUnitOfWork
     {
         public int SaveCalls { get; private set; }
@@ -192,7 +187,7 @@ public sealed class AssignTicketHandlerTests
             return Task.CompletedTask;
         }
     }
-    
+
     private sealed class FakeAuditEventRepository : IAuditEventRepository
     {
         public Task AddAsync(AuditEvent auditEvent, CancellationToken ct = default)
@@ -201,7 +196,7 @@ public sealed class AssignTicketHandlerTests
         public Task<IReadOnlyList<AuditEvent>> GetByTicketIdAsync(TicketId ticketId, CancellationToken ct = default)
             => Task.FromResult<IReadOnlyList<AuditEvent>>([]);
     }
-    
+
     private sealed class FakeValidator : ICommandValidator<AssignTicketCommand>
     {
         public FieldValidationResult Validate(AssignTicketCommand command) => FieldValidationResult.Ok;

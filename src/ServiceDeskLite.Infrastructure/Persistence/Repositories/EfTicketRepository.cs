@@ -4,6 +4,7 @@ using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Domain.Tickets;
+using ServiceDeskLite.Infrastructure.Persistence.Configurations;
 
 namespace ServiceDeskLite.Infrastructure.Persistence.Repositories;
 
@@ -47,7 +48,17 @@ public class EfTicketRepository : ITicketRepository
         if (!string.IsNullOrWhiteSpace(criteria.AssigneeName))
         {
             var name = criteria.AssigneeName.Trim();
-            q = q.Where(t => t.Assignee != null && t.Assignee.Value.Name.Contains(name));
+            // Filter by the assigned agent's name via the roster (FK, ADR-0025).
+            q = q.Where(t => t.AssignedAgentId != null
+                && _dbContext.Agents.Any(a => a.Id == t.AssignedAgentId && a.Name.Contains(name)));
+        }
+
+        var reference = TicketReference.Normalize(criteria.Reference);
+        if (reference is not null)
+        {
+            // Match the display ref against a computed column (right("Id"::text, 6)); the
+            // strongly-typed id can't be turned into text in a translatable LINQ expression.
+            q = q.Where(t => EF.Property<string>(t, TicketConfiguration.RefSuffixColumn) == reference);
         }
 
         if (criteria.CreatedFrom is not null)
@@ -88,7 +99,10 @@ public class EfTicketRepository : ITicketRepository
                 t.Priority,
                 t.CreatedAt,
                 t.DueAt,
-                AssigneeName = t.Assignee != null ? t.Assignee.Value.Name : null
+                AssigneeName = _dbContext.Agents
+                    .Where(a => a.Id == t.AssignedAgentId)
+                    .Select(a => a.Name)
+                    .FirstOrDefault()
             })
             .ToListAsync(ct);
 
@@ -105,7 +119,7 @@ public class EfTicketRepository : ITicketRepository
                 TicketWorkflow.GetAllowedTransitions(t.Status),
                 t.DueAt is not null && t.DueAt.Value < utcNow
                     && t.Status is not TicketStatus.Resolved and not TicketStatus.Closed,
-                "#" + $"{t.Id.Value:N}"[^6..].ToUpperInvariant()))
+                TicketReference.Format(t.Id)))
             .ToList();
 
         return new PagedResult<TicketListItemDto>(items, total, paging);

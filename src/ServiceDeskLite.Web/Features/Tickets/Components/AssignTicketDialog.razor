@@ -1,15 +1,29 @@
 @using MudBlazor
+@using ServiceDeskLite.Contracts.V1.Agents
 
 <MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h6">Assign Ticket</MudText>
     </TitleContent>
     <DialogContent>
-        <MudTextField T="string" Label="Assignee" @bind-Value="_assigneeName"
-                      Placeholder="Leave empty to unassign"
-                      Disabled="_isSubmitting"
-                      MaxLength="100"
-                      Class="mb-4" />
+        @if (_isLoadingAgents)
+        {
+            <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+        }
+        else
+        {
+            <MudSelect T="Guid?" Label="Assignee" @bind-Value="_selectedAgentId"
+                       Placeholder="Unassigned"
+                       Clearable="true"
+                       Disabled="_isSubmitting"
+                       Class="mb-4">
+                <MudSelectItem T="Guid?" Value="@((Guid?)null)">Unassigned</MudSelectItem>
+                @foreach (var agent in _agents)
+                {
+                    <MudSelectItem T="Guid?" Value="@((Guid?)agent.Id)">@agent.Name</MudSelectItem>
+                }
+            </MudSelect>
+        }
         @if (_error is not null)
         {
             <AppErrorPanel Error="_error" />
@@ -19,7 +33,7 @@
         <MudButton OnClick="Cancel" Disabled="_isSubmitting">Cancel</MudButton>
         <MudButton Color="Color.Primary" Variant="Variant.Filled"
                    OnClick="SubmitAsync"
-                   Disabled="_isSubmitting">
+                   Disabled="@(_isSubmitting || _isLoadingAgents)">
             @if (_isSubmitting)
             {
                 <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
@@ -36,13 +50,27 @@
     [Parameter] public Guid TicketId { get; set; }
     [Parameter] public string? CurrentAssignee { get; set; }
 
-    private string? _assigneeName;
+    private IReadOnlyList<AgentResponse> _agents = [];
+    private Guid? _selectedAgentId;
+    private bool _isLoadingAgents = true;
     private bool _isSubmitting;
     private ApiError? _error;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _assigneeName = CurrentAssignee;
+        var result = await TicketsApi.GetAgentsAsync();
+        if (result.IsSuccess)
+        {
+            _agents = result.Value!;
+            // Preselect the current assignee by name (roster names are unique).
+            _selectedAgentId = _agents.FirstOrDefault(a => a.Name == CurrentAssignee)?.Id;
+        }
+        else
+        {
+            _error = result.Error;
+        }
+
+        _isLoadingAgents = false;
     }
 
     private void Cancel() => MudDialog.Cancel();
@@ -52,12 +80,10 @@
         _isSubmitting = true;
         _error = null;
 
-        // Empty string → treat as unassign (null)
-        var name = string.IsNullOrWhiteSpace(_assigneeName) ? null : _assigneeName.Trim();
-
+        // null selection → unassign
         var result = await TicketsApi.AssignAsync(
             TicketId,
-            new AssignTicketRequest(name));
+            new AssignTicketRequest(_selectedAgentId));
 
         _isSubmitting = false;
 
