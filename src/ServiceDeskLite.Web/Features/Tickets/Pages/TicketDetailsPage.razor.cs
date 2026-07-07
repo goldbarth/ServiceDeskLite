@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 
 using MudBlazor;
 
+using ServiceDeskLite.Contracts.V1.Agents;
 using ServiceDeskLite.Contracts.V1.Tickets;
 using ServiceDeskLite.Web.Api.V1;
 using ServiceDeskLite.Web.Features.Tickets.Components;
@@ -28,6 +29,11 @@ public partial class TicketDetailsPage
     private bool _isSubmittingComment;
     private ApiError? _commentError;
 
+    // Roster for the comment author picker. No real login yet — in production the
+    // author would be the signed-in user rather than a chosen account.
+    private IReadOnlyList<AgentResponse> _agents = [];
+    private bool _isLoadingAgents = true;
+
     private MudForm _editForm = default!;
     private bool _isEditing;
     private bool _isEditFormValid;
@@ -47,6 +53,17 @@ public partial class TicketDetailsPage
 
     private int HistoryCount
         => _ticket?.Conversation.Count(x => x.Kind == ConversationItemKind.SystemEvent) ?? 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await TicketsApi.GetAgentsAsync();
+        if (result.IsSuccess)
+        {
+            _agents = result.Value!;
+        }
+
+        _isLoadingAgents = false;
+    }
 
     protected override async Task OnParametersSetAsync()
     {

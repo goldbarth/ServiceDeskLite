@@ -322,14 +322,20 @@ else
                                 </div>
 
                                 <div class="ticket-reply__form">
-                                    <MudTextField T="string"
-                                                  Label="Author (optional)"
-                                                  @bind-Value="_commentAuthor"
-                                                  Variant="Variant.Outlined"
-                                                  Margin="Margin.None"
-                                                  MaxLength="100"
-                                                  Class="ticket-reply__author"
-                                                  Disabled="_isSubmittingComment" />
+                                    <MudSelect T="string"
+                                               Label="Author (optional)"
+                                               @bind-Value="_commentAuthor"
+                                               Placeholder="Anonymous"
+                                               Variant="Variant.Outlined"
+                                               Margin="Margin.None"
+                                               Clearable="true"
+                                               Class="ticket-reply__author"
+                                               Disabled="@(_isSubmittingComment || _isLoadingAgents)">
+                                        @foreach (var agent in _agents)
+                                        {
+                                            <MudSelectItem T="string" Value="@agent.Name">@agent.Name</MudSelectItem>
+                                        }
+                                    </MudSelect>
 
                                     <MudTextField T="string"
                                                   Label="Internal note"
