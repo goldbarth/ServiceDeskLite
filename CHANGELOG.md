@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.2.0
+## v1.2.0 — Semantic Search (RAG) & Agent Roster
 
 ### Summary
 
