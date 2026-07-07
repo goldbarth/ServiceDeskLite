@@ -26,6 +26,12 @@ public sealed partial class AssistantChatService
             language. You can also update a ticket created earlier in this conversation with the
             update_ticket tool, using the ticket id from the create_ticket result.
 
+            When the user wants to find, list, or act on tickets that already exist ('show open
+            tickets assigned to Alex', 'any high-priority login tickets?'), use the search_tickets
+            tool: it filters by status, priority, assignee and free text and returns a compact list
+            with ticket ids you can then update. Do not confuse it with find_similar_tickets, which
+            is a semantic duplicate check to run before creating a new ticket, not a general search.
+
             The user's local date and time is {localDateTime} ({timeZoneId}, UTC{utcOffset}). Resolve
             relative dates like 'by Friday' against this, and always express dueAt values with the user's
             UTC offset ({utcOffset}), not as UTC. If the user gives a vague time of day (like 'morning' or

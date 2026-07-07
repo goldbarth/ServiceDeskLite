@@ -30,6 +30,7 @@ public static class AssistantComposition
         services.AddScoped<CreateTicketTool>();
         services.AddScoped<UpdateTicketTool>();
         services.AddScoped<FindSimilarTicketsTool>();
+        services.AddScoped<SearchTicketsTool>();
         services.AddScoped<AssistantChatService>();
 
         return services;

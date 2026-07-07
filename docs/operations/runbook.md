@@ -107,7 +107,7 @@ Errors follow RFC 9457 ProblemDetails with machine-readable `code` fields.
 }
 ```
 
-Event stream: `text` (response deltas) → `tool_call` / `tool_result` (with `ticketId`) → `done`; failures arrive as an `error` event. The model has two tools, `create_ticket` and `update_ticket`, both executing through the regular application-layer handlers.
+Event stream: `text` (response deltas) → `tool_call` / `tool_result` (with `ticketId`) → `done`; failures arrive as an `error` event. The model has four tools — `create_ticket`, `update_ticket`, `search_tickets` (find existing tickets by filter) and `find_similar_tickets` (semantic dedup) — all executing through the regular application-layer handlers.
 
 ### Tests
 
