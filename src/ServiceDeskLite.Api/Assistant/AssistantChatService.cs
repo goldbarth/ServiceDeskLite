@@ -27,6 +27,7 @@ public sealed partial class AssistantChatService
     private readonly UpdateTicketTool _updateTool;
     private readonly FindSimilarTicketsTool _findSimilarTool;
     private readonly SearchTicketsTool _searchTool;
+    private readonly ChangeTicketStatusTool _changeStatusTool;
     private readonly AnthropicOptions _options;
     private readonly IClock _clock;
     private readonly ILogger<AssistantChatService> _logger;
@@ -37,6 +38,7 @@ public sealed partial class AssistantChatService
         UpdateTicketTool updateTool,
         FindSimilarTicketsTool findSimilarTool,
         SearchTicketsTool searchTool,
+        ChangeTicketStatusTool changeStatusTool,
         IOptions<AnthropicOptions> options,
         IClock clock,
         ILogger<AssistantChatService> logger)
@@ -46,6 +48,7 @@ public sealed partial class AssistantChatService
         _updateTool = updateTool ?? throw new ArgumentNullException(nameof(updateTool));
         _findSimilarTool = findSimilarTool ?? throw new ArgumentNullException(nameof(findSimilarTool));
         _searchTool = searchTool ?? throw new ArgumentNullException(nameof(searchTool));
+        _changeStatusTool = changeStatusTool ?? throw new ArgumentNullException(nameof(changeStatusTool));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -80,6 +83,7 @@ public sealed partial class AssistantChatService
                     UpdateTicketTool.Definition,
                     FindSimilarTicketsTool.Definition,
                     SearchTicketsTool.Definition,
+                    ChangeTicketStatusTool.Definition,
                 ],
                 Messages = messages,
             };
@@ -179,6 +183,7 @@ public sealed partial class AssistantChatService
             UpdateTicketTool.Name => _updateTool.ExecuteAsync(call.Input, _clock.UtcNow, ct),
             FindSimilarTicketsTool.Name => _findSimilarTool.ExecuteAsync(call.Input, ct),
             SearchTicketsTool.Name => _searchTool.ExecuteAsync(call.Input, ct),
+            ChangeTicketStatusTool.Name => _changeStatusTool.ExecuteAsync(call.Input, ct),
             _ => Task.FromResult(($"Unknown tool '{call.Name}'.", true, (Guid?)null)),
         };
 

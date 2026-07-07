@@ -37,6 +37,11 @@ public sealed partial class AssistantChatService
             confuse search_tickets with find_similar_tickets, which is a semantic duplicate check to
             run before creating a new ticket, not a general search.
 
+            To move a ticket through the workflow ('mark it in progress', 'close the printer ticket'),
+            use the change_ticket_status tool with the resolved ticket id and the target status. The
+            workflow state machine decides which transitions are allowed; if a change is rejected,
+            tell the user the reason it returns instead of guessing another status or retrying blindly.
+
             The user's local date and time is {localDateTime} ({timeZoneId}, UTC{utcOffset}). Resolve
             relative dates like 'by Friday' against this, and always express dueAt values with the user's
             UTC offset ({utcOffset}), not as UTC. If the user gives a vague time of day (like 'morning' or
