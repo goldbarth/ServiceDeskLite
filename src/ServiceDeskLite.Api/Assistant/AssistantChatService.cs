@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Net.ServerSentEvents;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -21,27 +20,8 @@ namespace ServiceDeskLite.Api.Assistant;
 /// assembled from partial-JSON deltas, executed against the application
 /// layer, and fed back to the model until it stops requesting tools.
 /// </summary>
-public sealed class AssistantChatService
+public sealed partial class AssistantChatService
 {
-    // The current date/time (with weekday, in the configured user timezone) is
-    // injected per request: the model has no calendar and would otherwise resolve
-    // relative dates like "by Friday" from its training data — producing due
-    // dates in the past — or express times in UTC that render shifted in the UI.
-    private static string BuildSystemPrompt(DateTimeOffset localNow, string timeZoneId) =>
-        "You are the ServiceDeskLite assistant. Users describe IT problems or requests in free text. " +
-        "When the user reports an actionable issue, first check for existing similar tickets with the " +
-        "find_similar_tickets tool. If a highly similar open ticket exists, tell the user about it and " +
-        "ask whether to create a new ticket anyway. Otherwise create a ticket with the create_ticket " +
-        "tool, then confirm briefly what was created (title, priority, ticket id). If the request is " +
-        "not actionable or too vague, ask one short clarifying question instead. Reply in the user's " +
-        "language. You can also update a ticket created earlier in this conversation with the " +
-        "update_ticket tool, using the ticket id from the create_ticket result. " +
-        $"The user's local date and time is {localNow.ToString("dddd, yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)} " +
-        $"({timeZoneId}, UTC{localNow:zzz}). Resolve relative dates like 'by Friday' against this, and always " +
-        $"express dueAt values with the user's UTC offset ({localNow:zzz}), not as UTC. " +
-        "If the user gives a vague time of day (like 'morning' or 'afternoon') for a deadline, ask once for " +
-        "the concrete time instead of guessing; a date without any time of day may default to end of business (17:00).";
-
     private readonly AnthropicClient _client;
     private readonly CreateTicketTool _createTool;
     private readonly UpdateTicketTool _updateTool;
