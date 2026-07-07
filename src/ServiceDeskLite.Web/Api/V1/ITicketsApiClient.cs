@@ -1,4 +1,5 @@
-﻿using ServiceDeskLite.Contracts.V1.Common;
+﻿using ServiceDeskLite.Contracts.V1.Agents;
+using ServiceDeskLite.Contracts.V1.Common;
 using ServiceDeskLite.Contracts.V1.Dashboard;
 using ServiceDeskLite.Contracts.V1.Tickets;
 
@@ -6,6 +7,9 @@ namespace ServiceDeskLite.Web.Api.V1;
 
 public interface ITicketsApiClient
 {
+    Task<ApiResult<IReadOnlyList<AgentResponse>>> GetAgentsAsync(
+        CancellationToken ct = default);
+
     Task<ApiResult<PagedResponse<TicketListItemResponse>>> SearchAsync(
         SearchTicketsRequest request,
         CancellationToken ct = default);

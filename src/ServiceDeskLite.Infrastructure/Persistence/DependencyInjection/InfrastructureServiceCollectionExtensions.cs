@@ -22,6 +22,7 @@ public static class InfrastructureServiceCollectionExtensions
                 npgsql => npgsql.UseVector()));
         
         services.AddScoped<ITicketRepository, EfTicketRepository>();
+        services.AddScoped<IAgentRepository, EfAgentRepository>();
         services.AddScoped<IAuditEventRepository, EfAuditEventRepository>();
         services.AddScoped<IOutboxRepository, EfOutboxRepository>();
         services.AddScoped<IDashboardRepository, EfDashboardRepository>();

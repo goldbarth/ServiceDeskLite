@@ -1,3 +1,4 @@
+using ServiceDeskLite.Tests.Application.Fakes;
 ﻿using FluentAssertions;
 
 using ServiceDeskLite.Application.Abstractions.Persistence;
@@ -15,7 +16,7 @@ public class GetTicketByIdHandlerTests
     public async Task Returns_not_found_when_ticket_missing()
     {
         var repo =  new FakeTicketRepository(null);
-        var handler = new GetTicketByIdHandler(repo, new FakeAuditEventRepository(), new FakeClock());
+        var handler = new GetTicketByIdHandler(repo, new EmptyAgentRepository(), new FakeAuditEventRepository(), new FakeClock());
         
         var result = await handler.HandleAsync(new GetTicketByIdQuery(TicketId.New()));
         
@@ -36,7 +37,7 @@ public class GetTicketByIdHandlerTests
             DateTimeOffset.UtcNow);
         
         var repo =  new FakeTicketRepository(ticket);
-        var handler = new GetTicketByIdHandler(repo, new FakeAuditEventRepository(), new FakeClock());
+        var handler = new GetTicketByIdHandler(repo, new EmptyAgentRepository(), new FakeAuditEventRepository(), new FakeClock());
         
         var result = await handler.HandleAsync(new GetTicketByIdQuery(id));
 

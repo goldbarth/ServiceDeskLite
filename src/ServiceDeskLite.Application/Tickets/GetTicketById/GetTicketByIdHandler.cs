@@ -8,15 +8,18 @@ namespace ServiceDeskLite.Application.Tickets.GetTicketById;
 public sealed class GetTicketByIdHandler
 {
     private readonly ITicketRepository _repository;
+    private readonly IAgentRepository _agentRepository;
     private readonly IAuditEventRepository _auditRepository;
     private readonly IClock _clock;
 
     public GetTicketByIdHandler(
         ITicketRepository repository,
+        IAgentRepository agentRepository,
         IAuditEventRepository auditRepository,
         IClock clock)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _agentRepository = agentRepository ?? throw new ArgumentNullException(nameof(agentRepository));
         _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
@@ -45,7 +48,11 @@ public sealed class GetTicketByIdHandler
             .Select(e => new AuditEventDto(e.Id.Value, e.EventType, e.Actor, e.OccurredAt, e.Payload))
             .ToList();
 
-        var dto = ticket.ToDetailsDto(auditEventDtos, _clock.UtcNow);
+        var assigneeName = ticket.AssignedAgentId is { } agentId
+            ? (await _agentRepository.GetByIdAsync(agentId, ct))?.Name
+            : null;
+
+        var dto = ticket.ToDetailsDto(auditEventDtos, _clock.UtcNow, assigneeName);
 
         return Result<TicketDetailsDto>.Success(dto);
     }

@@ -27,3 +27,4 @@
 | 0022 | [ADR 0022: Security/Hardening – Minimal (Demo-Grade)](0022-security-hardening-minimal.md) |
 | 0023 | [ADR 0023: AI Assistant as Edge Adapter (LLM Tool Calling)](0023-ai-assistant-edge-adapter.md) |
 | 0024 | [ADR 0024: Semantic Ticket Search (RAG via pgvector + Voyage)](0024-semantic-ticket-search-rag.md) |
+| 0025 | [ADR 0025: Agent Roster Entity and Assignee Storage (FK, name snapshot in audit)](0025-agent-roster-and-assignee-storage.md) |

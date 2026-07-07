@@ -42,6 +42,11 @@ public sealed partial class AssistantChatService
             workflow state machine decides which transitions are allowed; if a change is rejected,
             tell the user the reason it returns instead of guessing another status or retrying blindly.
 
+            To assign, reassign or unassign a ticket, use the assign_ticket tool with the resolved
+            ticket id and the agent's name from the roster. If the name does not match an active
+            agent, the tool returns the list of valid agents — relay it and ask the user to choose
+            rather than inventing a name. Omit the agent name to unassign.
+
             The user's local date and time is {localDateTime} ({timeZoneId}, UTC{utcOffset}). Resolve
             relative dates like 'by Friday' against this, and always express dueAt values with the user's
             UTC offset ({utcOffset}), not as UTC. If the user gives a vague time of day (like 'morning' or

@@ -1,4 +1,5 @@
 ﻿using ServiceDeskLite.Application.Abstractions.Persistence;
+using ServiceDeskLite.Domain.Agents;
 using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Outbox;
 using ServiceDeskLite.Domain.Tickets;
@@ -21,6 +22,10 @@ internal sealed class InMemoryUnitOfWork : IUnitOfWork
         var ticketAdds = PendingAdds.OfType<Ticket>().ToArray();
         if (ticketAdds.Length > 0)
             _store.ApplyAdds(ticketAdds);
+
+        var agentAdds = PendingAdds.OfType<Agent>().ToArray();
+        if (agentAdds.Length > 0)
+            _store.ApplyAgentAdds(agentAdds);
 
         var auditEventAdds = PendingAdds.OfType<AuditEvent>().ToArray();
         if (auditEventAdds.Length > 0)

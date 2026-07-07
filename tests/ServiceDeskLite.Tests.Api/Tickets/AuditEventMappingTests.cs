@@ -7,6 +7,7 @@ using FluentAssertions;
 
 using Microsoft.AspNetCore.Hosting;
 
+using ServiceDeskLite.Contracts.V1.Agents;
 using ServiceDeskLite.Contracts.V1.Tickets;
 using ServiceDeskLite.Tests.Api.Infrastructure;
 
@@ -54,6 +55,15 @@ public class AuditEventMappingTests
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var events = await response.Content.ReadFromJsonAsync<List<AuditEventResponse>>(DeserializeOptions);
         return events!;
+    }
+
+    private async Task<AgentResponse> GetFirstAgentAsync(HttpClient client)
+    {
+        var response = await client.GetAsync("/api/v1/agents");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var agents = await response.Content.ReadFromJsonAsync<List<AgentResponse>>(DeserializeOptions);
+        agents.Should().NotBeNullOrEmpty("the agent roster is seeded in Development");
+        return agents![0];
     }
 
     // -----------------------------------------------------------------------
@@ -148,9 +158,10 @@ public class AuditEventMappingTests
     {
         var client = CreateClient();
         var ticketId = await CreateTicketAsync(client);
+        var agent = await GetFirstAgentAsync(client);
 
         await PostJsonAsync(client, $"/api/v1/tickets/{ticketId}/assign",
-            new AssignTicketRequest("bob"));
+            new AssignTicketRequest(agent.Id));
 
         var events = await GetAuditEventsAsync(client, ticketId);
 
@@ -158,7 +169,7 @@ public class AuditEventMappingTests
         assignEvent.Payload.Should().BeOfType<TicketAssigneeChangedPayload>();
 
         var payload = (TicketAssigneeChangedPayload)assignEvent.Payload;
-        payload.NewAssignee.Should().Be("bob");
+        payload.NewAssignee.Should().Be(agent.Name);
         payload.PreviousAssignee.Should().BeNull();
     }
 
@@ -167,9 +178,10 @@ public class AuditEventMappingTests
     {
         var client = CreateClient();
         var ticketId = await CreateTicketAsync(client);
+        var agent = await GetFirstAgentAsync(client);
 
         await PostJsonAsync(client, $"/api/v1/tickets/{ticketId}/assign",
-            new AssignTicketRequest("carol"));
+            new AssignTicketRequest(agent.Id));
         await PostJsonAsync(client, $"/api/v1/tickets/{ticketId}/assign",
             new AssignTicketRequest(null));
 
@@ -181,7 +193,7 @@ public class AuditEventMappingTests
             .And.Subject.Last();
 
         var payload = unassignEvent.Payload.Should().BeOfType<TicketAssigneeChangedPayload>().Subject;
-        payload.PreviousAssignee.Should().Be("carol");
+        payload.PreviousAssignee.Should().Be(agent.Name);
         payload.NewAssignee.Should().BeNull();
     }
 

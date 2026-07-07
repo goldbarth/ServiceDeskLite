@@ -7,6 +7,7 @@ using Serilog;
 
 using ServiceDeskLite.Api.Composition;
 using ServiceDeskLite.Api.Endpoints;
+using ServiceDeskLite.Application.Agents.Seeding;
 using ServiceDeskLite.Application.DependencyInjection;
 using ServiceDeskLite.Application.Tickets.Seeding;
 using ServiceDeskLite.Infrastructure.Persistence;
@@ -103,6 +104,9 @@ if (app.Environment.IsDevelopment())
 
     // goldbarth: seeder for testing purpose
     using var scope = app.Services.CreateScope();
+    // Agents first: tickets may reference them once assignment is wired up.
+    var agentSeeder = scope.ServiceProvider.GetRequiredService<IAgentSeeder>();
+    await agentSeeder.SeedAsync();
     var seeder = scope.ServiceProvider.GetRequiredService<ITicketSeeder>();
     await seeder.SeedAsync();
 }
@@ -116,6 +120,10 @@ var api = app.MapGroup("/api/v1");
 api.MapGroup("/tickets")
     .WithTags("Tickets")
     .MapTicketsEndpoints();
+
+api.MapGroup("/agents")
+    .WithTags("Agents")
+    .MapAgentsEndpoints();
 
 api.MapGroup("/dashboard")
     .WithTags("Dashboard")

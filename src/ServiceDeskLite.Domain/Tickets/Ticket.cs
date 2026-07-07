@@ -1,3 +1,4 @@
+using ServiceDeskLite.Domain.Agents;
 using ServiceDeskLite.Domain.Common;
 using ServiceDeskLite.Domain.Tickets.Events;
 
@@ -15,7 +16,11 @@ public sealed class Ticket
     public TicketStatus Status { get; private set; }
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset? DueAt { get; private set; }
-    public Assignee? Assignee { get; private set; }
+
+    // FK to the assigned agent (ADR-0025). null = unassigned. The display name is
+    // resolved from the Agents roster; the name at change time is snapshotted into
+    // the audit trail via AssigneeChangedDomainEvent, not stored on the ticket.
+    public AgentId? AssignedAgentId { get; private set; }
 
     private readonly List<Comment> _comments = [];
     public IReadOnlyList<Comment> Comments => _comments.AsReadOnly();
@@ -65,15 +70,19 @@ public sealed class Ticket
         _domainEvents.Add(new StatusChangedDomainEvent(Id, previousStatus, newStatus));
     }
 
-    public void Assign(Assignee? assignee)
+    /// <summary>
+    /// Assigns (or, with a null agent, unassigns) the ticket. Existence/active
+    /// validation of the agent is the handler's responsibility; the names are passed
+    /// in only to snapshot a readable, stable record into the audit trail (ADR-0025).
+    /// </summary>
+    public void Assign(AgentId? agentId, string? assigneeName, string? previousAssigneeName)
     {
         if (Status == TicketStatus.Closed)
             throw new DomainException(TicketErrors.CannotAssignClosed());
 
-        var previousAssignee = Assignee;
-        Assignee = assignee;
+        AssignedAgentId = agentId;
 
-        _domainEvents.Add(new AssigneeChangedDomainEvent(Id, previousAssignee?.Name, assignee?.Name));
+        _domainEvents.Add(new AssigneeChangedDomainEvent(Id, previousAssigneeName, assigneeName));
     }
 
     /// <summary>

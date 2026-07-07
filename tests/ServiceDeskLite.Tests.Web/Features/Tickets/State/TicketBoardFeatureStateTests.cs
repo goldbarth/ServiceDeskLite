@@ -1,5 +1,6 @@
 using FluentAssertions;
 
+using ServiceDeskLite.Contracts.V1.Agents;
 using ServiceDeskLite.Contracts.V1.Common;
 using ServiceDeskLite.Contracts.V1.Dashboard;
 using ServiceDeskLite.Contracts.V1.Tickets;
@@ -282,6 +283,9 @@ public sealed class TicketBoardFeatureStateTests
         }
 
         // ── Unused interface members ──────────────────────────────────────────
+
+        public Task<ApiResult<IReadOnlyList<AgentResponse>>> GetAgentsAsync(CancellationToken ct = default)
+            => throw new NotImplementedException();
 
         public Task<ApiResult<TicketResponse>> GetByIdAsync(Guid id, CancellationToken ct = default)
             => throw new NotImplementedException();

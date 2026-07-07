@@ -15,6 +15,7 @@ using ServiceDeskLite.Application.Tickets.Shared;
 using ServiceDeskLite.Application.Tickets.UpdateTicket;
 using ServiceDeskLite.Contracts.V1.Common;
 using ServiceDeskLite.Contracts.V1.Tickets;
+using ServiceDeskLite.Domain.Agents;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Api.Endpoints;
@@ -214,7 +215,7 @@ public static class TicketsEndpoints
     {
         var cmd = new AssignTicketCommand(
             Id: new TicketId(id),
-            AssigneeName: request.AssigneeName);
+            AgentId: request.AgentId is { } agentId ? new AgentId(agentId) : null);
 
         var result = await handler.HandleAsync(cmd, ct);
 

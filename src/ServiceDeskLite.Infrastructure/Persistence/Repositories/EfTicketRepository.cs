@@ -47,7 +47,9 @@ public class EfTicketRepository : ITicketRepository
         if (!string.IsNullOrWhiteSpace(criteria.AssigneeName))
         {
             var name = criteria.AssigneeName.Trim();
-            q = q.Where(t => t.Assignee != null && t.Assignee.Value.Name.Contains(name));
+            // Filter by the assigned agent's name via the roster (FK, ADR-0025).
+            q = q.Where(t => t.AssignedAgentId != null
+                && _dbContext.Agents.Any(a => a.Id == t.AssignedAgentId && a.Name.Contains(name)));
         }
 
         if (criteria.CreatedFrom is not null)
@@ -88,7 +90,10 @@ public class EfTicketRepository : ITicketRepository
                 t.Priority,
                 t.CreatedAt,
                 t.DueAt,
-                AssigneeName = t.Assignee != null ? t.Assignee.Value.Name : null
+                AssigneeName = _dbContext.Agents
+                    .Where(a => a.Id == t.AssignedAgentId)
+                    .Select(a => a.Name)
+                    .FirstOrDefault()
             })
             .ToListAsync(ct);
 

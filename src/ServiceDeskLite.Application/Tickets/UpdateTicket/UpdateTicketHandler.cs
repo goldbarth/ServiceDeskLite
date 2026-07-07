@@ -13,6 +13,7 @@ namespace ServiceDeskLite.Application.Tickets.UpdateTicket;
 public sealed class UpdateTicketHandler
 {
     private readonly ITicketRepository _repository;
+    private readonly IAgentRepository _agentRepository;
     private readonly IAuditEventRepository _auditRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICommandValidator<UpdateTicketCommand> _validator;
@@ -20,12 +21,14 @@ public sealed class UpdateTicketHandler
 
     public UpdateTicketHandler(
         ITicketRepository repository,
+        IAgentRepository agentRepository,
         IAuditEventRepository auditRepository,
         IUnitOfWork unitOfWork,
         ICommandValidator<UpdateTicketCommand> validator,
         IClock clock)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _agentRepository = agentRepository ?? throw new ArgumentNullException(nameof(agentRepository));
         _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _validator = validator ?? throw new ArgumentNullException(nameof(validator));
@@ -77,7 +80,12 @@ public sealed class UpdateTicketHandler
                 .Select(e => new AuditEventDto(e.Id.Value, e.EventType, e.Actor, e.OccurredAt, e.Payload))
                 .ToList();
 
-            return Result<TicketDetailsDto>.Success(ticket.ToDetailsDto(auditEventDtos, _clock.UtcNow));
+            var assigneeName = ticket.AssignedAgentId is { } agentId
+                ? (await _agentRepository.GetByIdAsync(agentId, ct))?.Name
+                : null;
+
+            return Result<TicketDetailsDto>.Success(
+                ticket.ToDetailsDto(auditEventDtos, _clock.UtcNow, assigneeName));
         }
         catch (DomainException ex) when (ex.Error.Code == TicketErrors.CannotUpdateClosedCode)
         {

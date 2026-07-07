@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 using Microsoft.AspNetCore.WebUtilities;
 
+using ServiceDeskLite.Contracts.V1.Agents;
 using ServiceDeskLite.Contracts.V1.Common;
 using ServiceDeskLite.Contracts.V1.Dashboard;
 using ServiceDeskLite.Contracts.V1.Tickets;
@@ -67,6 +68,13 @@ public sealed class TicketsApiClient : ITicketsApiClient
         var httpRequest = new HttpRequestMessage(HttpMethod.Get, url);
 
         return await SendAsync<PagedResponse<TicketListItemResponse>>(httpRequest, ct);
+    }
+
+    public async Task<ApiResult<IReadOnlyList<AgentResponse>>> GetAgentsAsync(
+        CancellationToken ct = default)
+    {
+        var httpRequest = new HttpRequestMessage(HttpMethod.Get, "api/v1/agents");
+        return await SendAsync<IReadOnlyList<AgentResponse>>(httpRequest, ct);
     }
 
     public async Task<ApiResult<TicketResponse>> GetByIdAsync(
