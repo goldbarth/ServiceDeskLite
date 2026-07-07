@@ -18,6 +18,11 @@ public interface ITicketsApiClient
         CreateTicketRequest request,
         CancellationToken ct = default);
 
+    Task<ApiResult<TicketResponse>> UpdateAsync(
+        Guid id,
+        UpdateTicketRequest request,
+        CancellationToken ct = default);
+
     Task<ApiResult<TicketResponse>> ChangeStatusAsync(
         Guid id,
         ChangeTicketStatusRequest request,

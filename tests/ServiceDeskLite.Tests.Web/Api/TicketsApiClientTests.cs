@@ -131,6 +131,57 @@ public class TicketsApiClientTests
         await act.Should().ThrowAsync<OperationCanceledException>();
     }
 
+    // ───────── UpdateAsync ─────────
+
+    [Fact]
+    public async Task UpdateAsync_sends_patch_to_ticket_endpoint_with_partial_body()
+    {
+        var ticketId = Guid.NewGuid();
+        var body = new TicketResponse(
+            ticketId, "Updated", "Desc", TicketPriority.High, TicketStatus.New,
+            DateTimeOffset.UtcNow, null, null, [], [TicketStatus.Triaged],
+            IsOverdue: false, DisplayRef: "#ABC1234", StatusGuidance: string.Empty, SuggestedNextSteps: []);
+
+        HttpRequestMessage? captured = null;
+        string? capturedContent = null;
+        var handler = FakeHttpMessageHandler.Capturing(
+            HttpStatusCode.OK, JsonSerializer.Serialize(body),
+            (req, content) => { captured = req; capturedContent = content; });
+        var client = CreateClient(handler);
+
+        var result = await client.UpdateAsync(ticketId, new UpdateTicketRequest(Priority: TicketPriority.High));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Priority.Should().Be(TicketPriority.High);
+
+        captured!.Method.Should().Be(HttpMethod.Patch);
+        captured.RequestUri!.AbsolutePath.Should().Be($"/api/v1/tickets/{ticketId}");
+        // Partial update: only the changed field is serialized as a value, others null.
+        capturedContent.Should().Contain("\"priority\":\"High\"");
+        capturedContent.Should().Contain("\"title\":null");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_returns_failure_on_problem_details()
+    {
+        var problemJson = JsonSerializer.Serialize(new
+        {
+            title = "Conflict",
+            status = 409,
+            detail = "Closed tickets cannot be updated.",
+            code = "ticket.cannot_update_closed",
+        });
+
+        var handler = FakeHttpMessageHandler.WithRawJson(HttpStatusCode.Conflict, problemJson);
+        var client = CreateClient(handler);
+
+        var result = await client.UpdateAsync(Guid.NewGuid(), new UpdateTicketRequest(Title: "x"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error!.Status.Should().Be(409);
+        result.Error.Code.Should().Be("ticket.cannot_update_closed");
+    }
+
     // ───────── Fake Handler ─────────
 
     private sealed class FakeHttpMessageHandler : HttpMessageHandler
@@ -164,6 +215,21 @@ public class TicketsApiClientTests
                     Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
                 };
                 return Task.FromResult(response);
+            });
+        }
+
+        public static FakeHttpMessageHandler Capturing(
+            HttpStatusCode status, string json, Action<HttpRequestMessage, string?> capture)
+        {
+            return new FakeHttpMessageHandler(async (request, ct) =>
+            {
+                var content = request.Content is null ? null : await request.Content.ReadAsStringAsync(ct);
+                capture(request, content);
+
+                return new HttpResponseMessage(status)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+                };
             });
         }
 

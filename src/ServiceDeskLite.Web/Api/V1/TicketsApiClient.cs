@@ -94,6 +94,21 @@ public sealed class TicketsApiClient : ITicketsApiClient
         return await SendAsync<CreateTicketResponse>(httpRequest, ct);
     }
 
+    public async Task<ApiResult<TicketResponse>> UpdateAsync(
+        Guid id,
+        UpdateTicketRequest request,
+        CancellationToken ct = default)
+    {
+        var httpRequest = new HttpRequestMessage(
+            HttpMethod.Patch,
+            $"api/v1/tickets/{id}")
+        {
+            Content = JsonContent.Create(request, options: _sendOptions)
+        };
+
+        return await SendAsync<TicketResponse>(httpRequest, ct);
+    }
+
     public async Task<ApiResult<TicketResponse>> ChangeStatusAsync(
         Guid id,
         ChangeTicketStatusRequest request,
