@@ -66,6 +66,10 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
                               && n.Contains(name, StringComparison.OrdinalIgnoreCase));
         }
 
+        var reference = TicketReference.Normalize(criteria.Reference);
+        if (reference is not null)
+            q = q.Where(t => TicketReference.Suffix(t.Id) == reference);
+
         if (criteria.CreatedFrom is not null)
             q = q.Where(t => t.CreatedAt >= criteria.CreatedFrom);
         if (criteria.CreatedTo is not null)
@@ -109,7 +113,7 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
                 TicketWorkflow.GetAllowedTransitions(t.Status),
                 t.DueAt is not null && t.DueAt.Value < utcNow
                     && t.Status is not TicketStatus.Resolved and not TicketStatus.Closed,
-                "#" + $"{t.Id.Value:N}"[^6..].ToUpperInvariant()))
+                TicketReference.Format(t.Id)))
             .ToList();
 
         return Task.FromResult(new PagedResult<TicketListItemDto>(items, total, paging));

@@ -8,11 +8,21 @@ namespace ServiceDeskLite.Infrastructure.Persistence.Configurations;
 
 public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
 {
+    /// <summary>
+    /// Shadow computed column holding the display-ref suffix (last 6 hex chars of the id,
+    /// lower-cased) so tickets can be looked up by reference number in translatable SQL.
+    /// </summary>
+    public const string RefSuffixColumn = "RefSuffix";
+
     public void Configure(EntityTypeBuilder<Ticket> builder)
     {
         builder.ToTable("Tickets");
 
         builder.HasKey(t => t.Id);
+
+        builder.Property<string>(RefSuffixColumn)
+            .HasComputedColumnSql("right(\"Id\"::text, 6)", stored: true);
+        builder.HasIndex(RefSuffixColumn);
 
         builder.Property(t => t.Id)
             .HasConversion(new TicketIdConverter())

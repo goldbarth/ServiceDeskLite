@@ -70,6 +70,11 @@ public sealed partial class SearchTicketsTool
                     type = "string",
                     description = AssigneeDescription,
                 }),
+                ["reference"] = JsonSerializer.SerializeToElement(new
+                {
+                    type = "string",
+                    description = ReferenceDescription,
+                }),
                 ["sortBy"] = JsonSerializer.SerializeToElement(new
                 {
                     type = "string",
@@ -137,6 +142,19 @@ public sealed partial class SearchTicketsTool
             assignee = string.IsNullOrWhiteSpace(value) ? null : value;
         }
 
+        string? reference = null;
+        if (input.TryGetProperty("reference", out var referenceEl) && referenceEl.ValueKind is not JsonValueKind.Null)
+        {
+            if (referenceEl.ValueKind is not JsonValueKind.String)
+            {
+                error = "Property 'reference' must be a string.";
+                return false;
+            }
+
+            var value = referenceEl.GetString();
+            reference = string.IsNullOrWhiteSpace(value) ? null : value;
+        }
+
         if (!TryParseSort(input, out var sort, out error))
             return false;
 
@@ -158,7 +176,8 @@ public sealed partial class SearchTicketsTool
             Text: text,
             Statuses: statuses,
             Priorities: priorities,
-            AssigneeName: assignee);
+            AssigneeName: assignee,
+            Reference: reference);
 
         query = new SearchTicketsQuery(criteria, new Paging(PagingPolicy.MinPage, limit), sort);
         error = null;

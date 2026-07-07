@@ -31,8 +31,10 @@ public sealed partial class AssistantChatService
             When the user wants to find, list, or act on tickets that already exist ('show open
             tickets assigned to Alex', 'change the priority of the login ticket to high'), use the
             search_tickets tool: it filters by status, priority, assignee and free text and returns a
-            compact list with ticket ids. To edit a ticket the user only describes, search first, then
-            call update_ticket with the resolved id. If the search returns several plausible matches,
+            compact list with ticket ids. If the user identifies a ticket by its reference number
+            (like '#ABC123'), pass it as the 'reference' argument to look up that exact ticket. To
+            edit a ticket the user only describes, search first, then call update_ticket with the
+            resolved id. If the search returns several plausible matches,
             ask the user which one they mean instead of guessing; if it returns none, say so. Do not
             confuse search_tickets with find_similar_tickets, which is a semantic duplicate check to
             run before creating a new ticket, not a general search.
