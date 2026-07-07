@@ -273,6 +273,9 @@ public class TicketsListFeatureStateTests
         public Task<ApiResult<CreateTicketResponse>> CreateAsync(CreateTicketRequest request, CancellationToken ct = default)
             => throw new NotImplementedException();
 
+        public Task<ApiResult<TicketResponse>> UpdateAsync(Guid id, UpdateTicketRequest request, CancellationToken ct = default)
+            => throw new NotImplementedException();
+
         public Task<ApiResult<TicketResponse>> ChangeStatusAsync(Guid id, ChangeTicketStatusRequest request, CancellationToken ct = default)
             => throw new NotImplementedException();
 

@@ -28,6 +28,18 @@ public partial class TicketDetailsPage
     private bool _isSubmittingComment;
     private ApiError? _commentError;
 
+    private MudForm _editForm = default!;
+    private bool _isEditing;
+    private bool _isEditFormValid;
+    private bool _isSavingEdit;
+    private ApiError? _editError;
+    private string _editTitle = string.Empty;
+    private string _editDescription = string.Empty;
+    private TicketPriority _editPriority;
+    private DateTime? _editDueAt;
+
+    private bool CanEdit => _ticket is not null && _ticket.Status != TicketStatus.Closed;
+
     private TicketDetailsTab _activeTab = TicketDetailsTab.Details;
 
     private int CommentCount
@@ -43,6 +55,8 @@ public partial class TicketDetailsPage
         _ticket = null;
         _commentError = null;
         _activeTab = TicketDetailsTab.Details;
+        _isEditing = false;
+        _editError = null;
 
         await LoadPageAsync();
 
@@ -109,6 +123,95 @@ public partial class TicketDetailsPage
             TicketsListState.Invalidate();
             Snackbar.Add("Assignee updated.", Severity.Success);
         }
+    }
+
+    private void BeginEdit()
+    {
+        if (!CanEdit)
+        {
+            return;
+        }
+
+        _editTitle = _ticket!.Title;
+        _editDescription = _ticket.Description;
+        _editPriority = _ticket.Priority;
+        _editDueAt = _ticket.DueAt?.LocalDateTime;
+        _editError = null;
+        _isEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+        _isEditing = false;
+        _editError = null;
+    }
+
+    private async Task SaveEditAsync()
+    {
+        await _editForm.Validate();
+
+        if (!_isEditFormValid)
+        {
+            return;
+        }
+
+        var request = BuildUpdateRequest();
+        if (request is null)
+        {
+            // Nothing changed — leave edit mode without a redundant round-trip.
+            _isEditing = false;
+            Snackbar.Add("No changes to save.", Severity.Info);
+            return;
+        }
+
+        _isSavingEdit = true;
+        _editError = null;
+
+        var result = await TicketsApi.UpdateAsync(_ticket!.Id, request);
+
+        _isSavingEdit = false;
+
+        if (result.IsSuccess)
+        {
+            _ticket = result.Value;
+            TicketsListState.Invalidate();
+            _isEditing = false;
+            Snackbar.Add("Ticket updated.", Severity.Success);
+            return;
+        }
+
+        _editError = result.Error;
+    }
+
+    // Partial update: only send fields that actually changed, matching
+    // UpdateTicketHandler semantics (null = keep current). Returns null when
+    // nothing changed. Clearing an existing due date is not expressible via the
+    // partial contract and is intentionally not attempted here.
+    private UpdateTicketRequest? BuildUpdateRequest()
+    {
+        var newTitle = _editTitle.Trim();
+        var newDescription = _editDescription.Trim();
+
+        var title = newTitle != _ticket!.Title ? newTitle : null;
+        var description = newDescription != _ticket.Description ? newDescription : null;
+        TicketPriority? priority = _editPriority != _ticket.Priority ? _editPriority : null;
+
+        DateTimeOffset? dueAt = null;
+        if (_editDueAt is { } due)
+        {
+            var candidate = new DateTimeOffset(due.Date, TimeSpan.Zero);
+            if (_ticket.DueAt is null || candidate.Date != _ticket.DueAt.Value.Date)
+            {
+                dueAt = candidate;
+            }
+        }
+
+        if (title is null && description is null && priority is null && dueAt is null)
+        {
+            return null;
+        }
+
+        return new UpdateTicketRequest(title, description, priority, dueAt);
     }
 
     private async Task SubmitCommentAsync()

@@ -69,45 +69,137 @@ else
 {
     <div class="ticket-detail-page">
         <MudPaper Class="ticket-detail-surface ticket-detail-header" Elevation="0">
-            <div class="ticket-detail-header__content">
-                <span class="ticket-detail-header__ref">@_ticket.DisplayRef</span>
-                <h1 class="ticket-detail-header__title">@_ticket.Title</h1>
-                <p class="ticket-detail-header__summary">@BuildHeaderSummary(_ticket.Description)</p>
+            @if (!_isEditing)
+            {
+                <div class="ticket-detail-header__content">
+                    <span class="ticket-detail-header__ref">@_ticket.DisplayRef</span>
+                    <h1 class="ticket-detail-header__title">@_ticket.Title</h1>
+                    <p class="ticket-detail-header__summary">@BuildHeaderSummary(_ticket.Description)</p>
 
-                <div class="ticket-detail-header__signals">
-                    <span class="@($"ticket-detail-badge ticket-detail-badge--status {StatusBadgeClass(_ticket.Status)}")">
-                        @FormatStatus(_ticket.Status)
-                    </span>
-                    <span class="@($"ticket-detail-badge ticket-detail-badge--priority {PriorityBadgeClass(_ticket.Priority)}")">
-                        @FormatPriority(_ticket.Priority)
-                    </span>
-                </div>
-            </div>
-
-            <div class="ticket-detail-header__actions">
-                <div class="ticket-detail-header__actions-copy">
-                    <span class="ticket-detail-header__actions-label">Workflow actions</span>
-                    <p class="ticket-detail-header__actions-note">@(_ticket.SuggestedNextSteps.FirstOrDefault() ?? string.Empty)</p>
+                    <div class="ticket-detail-header__signals">
+                        <span class="@($"ticket-detail-badge ticket-detail-badge--status {StatusBadgeClass(_ticket.Status)}")">
+                            @FormatStatus(_ticket.Status)
+                        </span>
+                        <span class="@($"ticket-detail-badge ticket-detail-badge--priority {PriorityBadgeClass(_ticket.Priority)}")">
+                            @FormatPriority(_ticket.Priority)
+                        </span>
+                    </div>
                 </div>
 
-                <div class="ticket-detail-header__buttons">
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Default"
-                               Class="ticket-detail-header__button ticket-detail-header__button--primary"
-                               OnClick="OpenChangeStatusDialogAsync"
-                               Disabled="@(_ticket.AllowedTransitions.Count == 0)">
-                        Change Status
-                    </MudButton>
+                <div class="ticket-detail-header__actions">
+                    <div class="ticket-detail-header__actions-copy">
+                        <span class="ticket-detail-header__actions-label">Workflow actions</span>
+                        <p class="ticket-detail-header__actions-note">@(_ticket.SuggestedNextSteps.FirstOrDefault() ?? string.Empty)</p>
+                    </div>
 
-                    <MudButton Variant="Variant.Outlined"
-                               Color="Color.Default"
-                               Class="ticket-detail-header__button"
-                               OnClick="OpenAssignDialogAsync"
-                               Disabled="@(_ticket.Status == TicketStatus.Closed)">
-                        @(_ticket.Assignee is null ? "Assign" : "Reassign")
-                    </MudButton>
+                    <div class="ticket-detail-header__buttons">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Default"
+                                   Class="ticket-detail-header__button ticket-detail-header__button--primary"
+                                   OnClick="OpenChangeStatusDialogAsync"
+                                   Disabled="@(_ticket.AllowedTransitions.Count == 0)">
+                            Change Status
+                        </MudButton>
+
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Default"
+                                   Class="ticket-detail-header__button"
+                                   OnClick="OpenAssignDialogAsync"
+                                   Disabled="@(_ticket.Status == TicketStatus.Closed)">
+                            @(_ticket.Assignee is null ? "Assign" : "Reassign")
+                        </MudButton>
+
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit"
+                                       Variant="Variant.Outlined"
+                                       Color="Color.Default"
+                                       Class="ticket-detail-header__button ticket-detail-header__edit-toggle"
+                                       OnClick="BeginEdit"
+                                       Disabled="@(!CanEdit)"
+                                       aria-label="Edit ticket details"
+                                       title="@(CanEdit ? "Edit ticket details" : "Closed tickets cannot be edited")" />
+                    </div>
                 </div>
-            </div>
+            }
+            else
+            {
+                <div class="ticket-detail-header__edit">
+                    <span class="ticket-detail-header__ref">@_ticket.DisplayRef</span>
+                    <h2 class="ticket-detail-header__edit-title">Edit ticket</h2>
+
+                    <MudForm @ref="_editForm" @bind-IsValid="_isEditFormValid" Class="ticket-detail-edit-form">
+                        <MudTextField T="string"
+                                      Label="Title"
+                                      @bind-Value="_editTitle"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.None"
+                                      Required="true"
+                                      RequiredError="Title is required."
+                                      MaxLength="200"
+                                      Disabled="_isSavingEdit" />
+
+                        <MudTextField T="string"
+                                      Label="Description"
+                                      @bind-Value="_editDescription"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.None"
+                                      Required="true"
+                                      RequiredError="Description is required."
+                                      MaxLength="2000"
+                                      Lines="6"
+                                      Disabled="_isSavingEdit" />
+
+                        <div class="ticket-detail-edit-form__meta">
+                            <MudSelect T="TicketPriority"
+                                       Label="Priority"
+                                       @bind-Value="_editPriority"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.None"
+                                       Disabled="_isSavingEdit">
+                                @foreach (var p in Enum.GetValues<TicketPriority>())
+                                {
+                                    <MudSelectItem Value="@p">@FormatPriority(p)</MudSelectItem>
+                                }
+                            </MudSelect>
+
+                            <MudDatePicker Label="Due Date"
+                                           @bind-Date="_editDueAt"
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.None"
+                                           Editable="true"
+                                           Placeholder="Optional"
+                                           Disabled="_isSavingEdit" />
+                        </div>
+
+                        @if (_editError is not null)
+                        {
+                            <AppErrorPanel Error="_editError" />
+                        }
+
+                        <div class="ticket-detail-edit-form__actions">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       OnClick="SaveEditAsync"
+                                       Disabled="_isSavingEdit">
+                                @if (_isSavingEdit)
+                                {
+                                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                    <span>Saving...</span>
+                                }
+                                else
+                                {
+                                    <span>Save</span>
+                                }
+                            </MudButton>
+
+                            <MudButton Variant="Variant.Text"
+                                       OnClick="CancelEdit"
+                                       Disabled="_isSavingEdit">
+                                Cancel
+                            </MudButton>
+                        </div>
+                    </MudForm>
+                </div>
+            }
         </MudPaper>
 
         <div class="ticket-detail-layout">
