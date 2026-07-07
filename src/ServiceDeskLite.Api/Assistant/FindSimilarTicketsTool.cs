@@ -15,7 +15,7 @@ namespace ServiceDeskLite.Api.Assistant;
 /// can ground its answer in existing tickets — e.g. to flag duplicates before
 /// creating a new one.
 /// </summary>
-public sealed class FindSimilarTicketsTool
+public sealed partial class FindSimilarTicketsTool
 {
     public const string Name = "find_similar_tickets";
 
@@ -34,11 +34,7 @@ public sealed class FindSimilarTicketsTool
     public static Tool Definition => new()
     {
         Name = Name,
-        Description =
-            "Semantic search over existing tickets. Use this before creating a ticket to check " +
-            "for duplicates or related work, or when the user asks whether an issue is already " +
-            "known. The query is matched by meaning, not keywords, so describe the problem in a " +
-            "full sentence.",
+        Description = ToolDescription,
         InputSchema = new()
         {
             Properties = new Dictionary<string, JsonElement>
@@ -46,14 +42,14 @@ public sealed class FindSimilarTicketsTool
                 ["query"] = JsonSerializer.SerializeToElement(new
                 {
                     type = "string",
-                    description = "The problem description to search for, e.g. \"printer on 3rd floor not printing\".",
+                    description = QueryDescription,
                 }),
                 ["limit"] = JsonSerializer.SerializeToElement(new
                 {
                     type = "integer",
                     minimum = 1,
                     maximum = MaxLimit,
-                    description = $"Maximum number of matches to return (default {DefaultLimit}).",
+                    description = LimitDescription,
                 }),
             },
             Required = ["query"],

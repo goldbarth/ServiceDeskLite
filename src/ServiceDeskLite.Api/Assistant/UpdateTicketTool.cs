@@ -12,7 +12,7 @@ namespace ServiceDeskLite.Api.Assistant;
 /// (e.g. fix a due time after the user clarifies). Executes through
 /// UpdateTicketHandler, so domain rules and audit trail apply unchanged.
 /// </summary>
-public sealed class UpdateTicketTool
+public sealed partial class UpdateTicketTool
 {
     public const string Name = "update_ticket";
     private const string AssistantActor = "ai-assistant";
@@ -27,10 +27,7 @@ public sealed class UpdateTicketTool
     public static Tool Definition => new()
     {
         Name = Name,
-        Description =
-            "Update an existing ticket, e.g. to correct the due date, priority, title or description " +
-            "after the user clarifies. Only pass the fields that should change. Requires the ticket id " +
-            "from an earlier create_ticket result in this conversation.",
+        Description = ToolDescription,
         InputSchema = new()
         {
             Properties = new Dictionary<string, JsonElement>
@@ -39,29 +36,29 @@ public sealed class UpdateTicketTool
                 {
                     type = "string",
                     format = "uuid",
-                    description = "Id of the ticket to update.",
+                    description = TicketIdDescription,
                 }),
                 ["title"] = JsonSerializer.SerializeToElement(new
                 {
                     type = "string",
-                    description = "New title. Omit to keep the current one.",
+                    description = TitleDescription,
                 }),
                 ["description"] = JsonSerializer.SerializeToElement(new
                 {
                     type = "string",
-                    description = "New description. Omit to keep the current one.",
+                    description = DescriptionDescription,
                 }),
                 ["priority"] = JsonSerializer.SerializeToElement(new
                 {
                     type = "string",
                     @enum = new[] { "Low", "Medium", "High", "Critical" },
-                    description = "New priority. Omit to keep the current one.",
+                    description = PriorityDescription,
                 }),
                 ["dueAt"] = JsonSerializer.SerializeToElement(new
                 {
                     type = "string",
                     format = "date-time",
-                    description = "New due date (ISO 8601, include the user's UTC offset). Omit to keep the current one.",
+                    description = DueAtDescription,
                 }),
             },
             Required = ["ticketId"],
