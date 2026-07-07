@@ -1,5 +1,63 @@
 # Changelog
 
+## v1.2.0
+
+### Summary
+
+Broadens the AI assistant into a full read-and-write toolbelt and adds
+optional semantic ticket search. The assistant can now search tickets, update
+any ticket via find-then-update, change workflow status, and assign work to
+seeded roster accounts — all through the same guarded command handlers as the
+REST API. Free-text assignees are replaced by a real agent roster across API,
+web UI, and assistant.
+
+### Highlights
+
+- Semantic ticket search (RAG) via pgvector + Voyage embeddings, indexed by a background worker (ADR 0024)
+- Agent roster with seeded accounts; assignees are real entities, not free text (ADR 0025)
+- New assistant tools: `search_tickets`, `change_ticket_status`, `assign_ticket`, and update-any-ticket via find-then-update
+- Web: inline edit of ticket fields on the details page (pencil → edit mode)
+- Web: comment author chosen from the roster instead of typed free text
+- Model-facing text centralized in `*.prompt.cs` partials for easier tuning
+- Ticket seeder registered for both persistence providers (InMemory / PostgreSQL parity)
+
+### Known limitations
+
+- Still no real auth — the roster is seeded fictitious accounts, not authenticated identities
+- RAG is intentionally minimal (no chunking, hybrid FTS, re-ranking, or vector index tuning) and requires PostgreSQL + a Voyage API key
+
+_Full notes: [docs/releases/v1.2.0.md](docs/releases/v1.2.0.md)_
+
+## v1.1.0
+
+### Summary
+
+Adds an AI intake assistant: users describe an issue in free text and a Claude
+model decides via tool calling whether to create or update a ticket, with the
+response streamed live to the browser (SSE). Built as an edge adapter — Domain
+and Application stay free of any LLM dependency, and AI-driven writes go
+through the same command handlers, validation, and audit trail as regular API
+requests.
+
+### Highlights
+
+- AI intake assistant with live-streamed chat (SSE)
+- LLM tool calling for ticket creation and updates (Claude)
+- New `UpdateTicket` use case with validation and audit events
+- Tool inputs treated as untrusted input: parsed and guarded before touching the domain
+- Model self-correction loop on rejected inputs (bounded iterations)
+- Full audit trail for AI actions (actor `ai-assistant`)
+- Docker Compose support: assistant enabled via `ANTHROPIC_API_KEY`, boots without it
+- ADR 0023 documenting the edge-adapter decision
+
+### Known limitations
+
+- No conversation persistence — transcripts live in the browser session
+- No prompt caching, rate limiting, or multi-provider abstraction
+- Requires an Anthropic API key; without one the assistant fails gracefully and the rest of the app is unaffected
+
+_Full notes: [docs/releases/v1.1.0.md](docs/releases/v1.1.0.md)_
+
 ## v1.0.0
 
 ### Summary
