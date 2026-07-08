@@ -12,11 +12,18 @@ public sealed class AnthropicOptions
     public int MaxTokens { get; init; } = 8192;
 
     /// <summary>
-    /// Upper bound on model→tool→model round trips per request. The
-    /// duplicate-check flow needs two (find_similar_tickets, then
-    /// create_ticket) plus headroom for one correction round.
+    /// Upper bound on model→tool→model round trips per request. A full autonomous
+    /// chain (find_similar_tickets → create_ticket → assign_ticket) needs three,
+    /// plus headroom for a correction/retry round; kept configurable so longer
+    /// sequences can raise it.
     /// </summary>
-    public int MaxToolIterations { get; init; } = 4;
+    public int MaxToolIterations { get; init; } = 6;
+
+    /// <summary>Max transient-failure retries per tool call before the failure is surfaced to the model.</summary>
+    public int MaxToolRetries { get; init; } = 2;
+
+    /// <summary>Base delay for the tool retry's exponential backoff (base × 2^attempt).</summary>
+    public int ToolRetryBaseDelayMs { get; init; } = 200;
 
     /// <summary>
     /// IANA/Windows timezone the model uses to resolve relative dates ("by Friday

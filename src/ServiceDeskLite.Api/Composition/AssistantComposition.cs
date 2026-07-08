@@ -19,6 +19,10 @@ public static class AssistantComposition
                 "dotnet user-secrets set Anthropic:ApiKey <key>")
             .Validate(o => o.MaxToolIterations is > 0 and <= 10,
                 "Anthropic:MaxToolIterations must be between 1 and 10.")
+            .Validate(o => o.MaxToolRetries is >= 0 and <= 5,
+                "Anthropic:MaxToolRetries must be between 0 and 5.")
+            .Validate(o => o.ToolRetryBaseDelayMs is >= 0 and <= 5000,
+                "Anthropic:ToolRetryBaseDelayMs must be between 0 and 5000.")
             .Validate(o => IsValidTimeZone(o.UserTimeZone),
                 "Anthropic:UserTimeZone must be a valid timezone id (e.g. Europe/Berlin).")
             .ValidateOnStart();

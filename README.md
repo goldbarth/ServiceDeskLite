@@ -73,6 +73,8 @@ Browser ─POST msg + convId─▶ API adapter ──stream──▶ Anthropic M
 
 **Self-correction instead of silent failure.** Tool inputs are parsed and guarded before touching the domain (schema shape, priority enum, due dates in the past). A rejected input — or a handler `Result` failure — is returned to the model as a `tool_result` with `is_error: true`, including the reason; the model then retries with corrected arguments within the same loop. LLM output is treated as untrusted input, never piped raw into business logic.
 
+**Autonomous chains with transient retry.** A single request can trigger a whole sequence in one turn — check for duplicates, create if new, then assign — the model plans the steps and uses each result to decide the next (prompt-driven; the loop is the planner). Deterministic failures surface as `is_error` for the model to fix; *transient* failures (a Voyage `429`, an upstream `5xx`, a timeout) are retried at the edge with bounded exponential backoff before surfacing, so a rate-limit blip mid-chain recovers instead of aborting the step. Retry re-invokes the same command handlers — nothing bypasses domain validation. Design and scope: [ADR-0027](docs/adr/0027-agent-orchestration-and-retry.md).
+
 **Statelessness and time.** The API holds no conversation state — the client resends the transcript each turn, which is what lets the model reference the id of a ticket it created earlier. Because the model has no calendar, the current date (with weekday) and the configured user timezone are injected into the system prompt per request, so relative deadlines ("by Friday") resolve correctly and due times render in the user's local time. Vague times of day ("morning") trigger a clarifying question rather than a guess.
 
 ## Architecture decisions
