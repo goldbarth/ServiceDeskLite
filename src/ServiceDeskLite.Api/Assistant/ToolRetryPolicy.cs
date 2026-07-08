@@ -12,8 +12,8 @@ namespace ServiceDeskLite.Api.Assistant;
 /// </summary>
 public static class ToolRetryPolicy
 {
-    public static async Task<(string Content, bool IsError, Guid? TicketId)> ExecuteAsync(
-        Func<CancellationToken, Task<(string Content, bool IsError, Guid? TicketId)>> action,
+    public static async Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteAsync(
+        Func<CancellationToken, Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)>> action,
         int maxRetries,
         Func<int, TimeSpan> backoff,
         ILogger logger,
@@ -44,7 +44,7 @@ public static class ToolRetryPolicy
                     "Tool failed after {Attempts} attempt(s); surfacing as an error tool result.",
                     attempt + 1);
                 return ("The tool failed due to a technical error. Continue without it and do not retry.",
-                    true, null);
+                    true, null, null);
             }
         }
     }

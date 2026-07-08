@@ -15,15 +15,15 @@ public sealed class ToolRetryPolicyTests
     private static HttpRequestException Transient() =>
         new("rate limited", inner: null, statusCode: HttpStatusCode.TooManyRequests);
 
-    private static Task<(string, bool, Guid?)> Ok() =>
-        Task.FromResult(("done", false, (Guid?)null));
+    private static Task<(string, bool, Guid?, double?)> Ok() =>
+        Task.FromResult(("done", false, (Guid?)null, (double?)null));
 
     [Fact]
     public async Task Retries_transient_failure_then_returns_success()
     {
         var attempts = 0;
 
-        var (content, isError, _) = await ToolRetryPolicy.ExecuteAsync(
+        var (content, isError, _, _) = await ToolRetryPolicy.ExecuteAsync(
             _ =>
             {
                 attempts++;
@@ -41,7 +41,7 @@ public sealed class ToolRetryPolicyTests
     {
         var attempts = 0;
 
-        var (_, isError, _) = await ToolRetryPolicy.ExecuteAsync(
+        var (_, isError, _, _) = await ToolRetryPolicy.ExecuteAsync(
             _ =>
             {
                 attempts++;
@@ -58,7 +58,7 @@ public sealed class ToolRetryPolicyTests
     {
         var attempts = 0;
 
-        var (_, isError, _) = await ToolRetryPolicy.ExecuteAsync(
+        var (_, isError, _, _) = await ToolRetryPolicy.ExecuteAsync(
             _ =>
             {
                 attempts++;
@@ -75,11 +75,11 @@ public sealed class ToolRetryPolicyTests
     {
         var attempts = 0;
 
-        var (content, isError, _) = await ToolRetryPolicy.ExecuteAsync(
+        var (content, isError, _, _) = await ToolRetryPolicy.ExecuteAsync(
             _ =>
             {
                 attempts++;
-                return Task.FromResult(("invalid input", true, (Guid?)null));
+                return Task.FromResult(("invalid input", true, (Guid?)null, (double?)null));
             },
             maxRetries: 3, NoDelay, NullLogger.Instance, CancellationToken.None);
 
@@ -95,7 +95,7 @@ public sealed class ToolRetryPolicyTests
         cts.Cancel();
 
         var act = async () => await ToolRetryPolicy.ExecuteAsync(
-            (Func<CancellationToken, Task<(string, bool, Guid?)>>)(_ => throw new OperationCanceledException(cts.Token)),
+            (Func<CancellationToken, Task<(string, bool, Guid?, double?)>>)(_ => throw new OperationCanceledException(cts.Token)),
             maxRetries: 2, NoDelay, NullLogger.Instance, cts.Token);
 
         await act.Should().ThrowAsync<OperationCanceledException>();

@@ -134,12 +134,12 @@ public sealed partial class CreateTicketTool
     }
 
     /// <summary>Executes the tool. Failures come back as (content, isError=true) so the model can self-correct.</summary>
-    public async Task<(string Content, bool IsError, Guid? TicketId)> ExecuteAsync(
+    public async Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteAsync(
         JsonElement input,
         CancellationToken ct)
     {
         if (!TryParseInput(input, _clock.UtcNow, out var command, out var parseError))
-            return ($"Invalid tool input: {parseError}", true, null);
+            return ($"Invalid tool input: {parseError}", true, null, null);
 
         var result = await _handler.HandleAsync(command, ct);
 
@@ -149,10 +149,10 @@ public sealed partial class CreateTicketTool
             var fields = e.FieldErrors is { Count: > 0 }
                 ? " Field errors: " + string.Join("; ", e.FieldErrors.Select(f => $"{f.Key}: {string.Join(", ", f.Value)}"))
                 : string.Empty;
-            return ($"Ticket creation failed ({e.Code}): {e.Message}{fields}", true, null);
+            return ($"Ticket creation failed ({e.Code}): {e.Message}{fields}", true, null, null);
         }
 
         var id = result.Value!.Id.Value;
-        return ($"Ticket created successfully with id {id}.", false, id);
+        return ($"Ticket created successfully with id {id}.", false, id, null);
     }
 }

@@ -30,3 +30,4 @@
 | 0025 | [ADR 0025: Agent Roster Entity and Assignee Storage (FK, name snapshot in audit)](0025-agent-roster-and-assignee-storage.md) |
 | 0026 | [ADR 0026: Agent Memory — Server-Side Conversation State and Long-Term Recall](0026-agent-memory.md) |
 | 0027 | [ADR 0027: Autonomous Multi-Tool Orchestration and Transient-Fault Retry](0027-agent-orchestration-and-retry.md) |
+| 0028 | [ADR 0028: Self-Critique, Confidence Signal, and Tool Fallback](0028-self-critique-confidence-fallback.md) |

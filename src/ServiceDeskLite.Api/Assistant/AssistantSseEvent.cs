@@ -13,7 +13,8 @@ public sealed record AssistantSseEvent(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] Guid? TicketId = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsError = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Message = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] Guid? ConversationId = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] Guid? ConversationId = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Confidence = null)
 {
     /// <summary>First event on every stream: carries the conversation id for the client's next turn.</summary>
     public const string ConversationEvent = "conversation";

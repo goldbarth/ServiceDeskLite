@@ -114,12 +114,16 @@ public sealed partial class RecallMemoryTool
         return sb.ToString();
     }
 
-    public async Task<(string Content, bool IsError, Guid? TicketId)> ExecuteAsync(
+    /// <summary>Confidence proxy: the strongest match's similarity (0 when there are none).</summary>
+    public static double TopSimilarity(IReadOnlyList<MemoryMatch> matches) =>
+        matches.Count > 0 ? matches.Max(m => m.Similarity) : 0.0;
+
+    public async Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteAsync(
         JsonElement input,
         CancellationToken ct)
     {
         if (!TryParseInput(input, out var query, out var limit, out var parseError))
-            return ($"Invalid tool input: {parseError}", true, null);
+            return ($"Invalid tool input: {parseError}", true, null, null);
 
         MemorySearchResult result;
         try
@@ -134,13 +138,13 @@ public sealed partial class RecallMemoryTool
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Memory recall failed for assistant query");
-            return ("Memory recall failed due to a technical error. Continue without it.", true, null);
+            return ("Memory recall failed due to a technical error. Continue without it.", true, null, null);
         }
 
         if (!result.IsAvailable)
             return ("Long-term memory is not available in this deployment. Continue without it " +
-                    "and do not retry this tool.", false, null);
+                    "and do not retry this tool.", false, null, null);
 
-        return (FormatResult(query, result.Matches), false, null);
+        return (FormatResult(query, result.Matches), false, null, TopSimilarity(result.Matches));
     }
 }
