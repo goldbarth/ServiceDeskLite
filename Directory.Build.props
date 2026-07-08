@@ -4,5 +4,16 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <LangVersion>latest</LangVersion>
         <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+
+        <!-- Versioning: MinVer derives the version from the nearest reachable git tag.
+             Release tags are prefixed with 'v' (v1.2.0), so tell MinVer to strip it.
+             On a tagged commit → that exact version (e.g. v1.3.0 → 1.3.0); on commits
+             after a tag → the next patch as a pre-release with height (1.2.1-alpha.0.N). -->
+        <MinVerTagPrefix>v</MinVerTagPrefix>
     </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Build-time only (PrivateAssets=all): sets Version/AssemblyVersion, ships nothing. -->
+        <PackageReference Include="MinVer" Version="7.0.0" PrivateAssets="all" />
+    </ItemGroup>
 </Project>

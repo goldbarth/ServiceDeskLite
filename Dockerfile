@@ -28,9 +28,17 @@ RUN dotnet restore src/ServiceDeskLite.Api/ServiceDeskLite.Api.csproj --locked-m
 COPY src/ src/
 # Knowledge-base corpus lives at the repo root; the API project copies it to output.
 COPY KnowledgeBase/ KnowledgeBase/
+
+# MinVer derives the version from git history, but .git is not in the build context
+# (.dockerignore), so pass the version explicitly for a correct stamp, e.g.:
+#   docker build --build-arg MINVER_VERSION_OVERRIDE=1.3.0 .
+# (compute it on the host with the `minver-cli` tool). Without it, MinVer falls back
+# to 0.0.0-alpha.0 — a warning, not an error, so unversioned container builds still work.
+ARG MINVER_VERSION_OVERRIDE=""
 RUN dotnet publish src/ServiceDeskLite.Api/ServiceDeskLite.Api.csproj \
     -c Release \
     --no-restore \
+    ${MINVER_VERSION_OVERRIDE:+-p:MinVerVersionOverride=$MINVER_VERSION_OVERRIDE} \
     -o /app/publish
 
 # Stage 2: Runtime — only the ASP.NET Core runtime, no SDK
