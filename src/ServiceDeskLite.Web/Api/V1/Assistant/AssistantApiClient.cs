@@ -46,7 +46,8 @@ internal sealed class AssistantApiClient(HttpClient http) : IAssistantApiClient
                 payload?.TicketId,
                 payload?.IsError,
                 payload?.Message,
-                payload?.ConversationId);
+                payload?.ConversationId,
+                payload?.Confidence);
 
             if (sse.EventType is AssistantStreamEvent.DoneEvent or AssistantStreamEvent.ErrorEvent)
                 yield break;
@@ -84,5 +85,6 @@ internal sealed class AssistantApiClient(HttpClient http) : IAssistantApiClient
         Guid? TicketId,
         bool? IsError,
         string? Message,
-        Guid? ConversationId);
+        Guid? ConversationId,
+        double? Confidence);
 }

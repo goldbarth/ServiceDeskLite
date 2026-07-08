@@ -164,13 +164,13 @@ public sealed partial class UpdateTicketTool
         return true;
     }
 
-    public async Task<(string Content, bool IsError, Guid? TicketId)> ExecuteAsync(
+    public async Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteAsync(
         JsonElement input,
         DateTimeOffset now,
         CancellationToken ct)
     {
         if (!TryParseInput(input, now, out var command, out var parseError))
-            return ($"Invalid tool input: {parseError}", true, null);
+            return ($"Invalid tool input: {parseError}", true, null, null);
 
         var result = await _handler.HandleAsync(command, ct);
 
@@ -180,10 +180,10 @@ public sealed partial class UpdateTicketTool
             var fields = e.FieldErrors is { Count: > 0 }
                 ? " Field errors: " + string.Join("; ", e.FieldErrors.Select(f => $"{f.Key}: {string.Join(", ", f.Value)}"))
                 : string.Empty;
-            return ($"Ticket update failed ({e.Code}): {e.Message}{fields}", true, null);
+            return ($"Ticket update failed ({e.Code}): {e.Message}{fields}", true, null, null);
         }
 
         var id = command!.Id.Value;
-        return ($"Ticket {id} updated successfully.", false, id);
+        return ($"Ticket {id} updated successfully.", false, id, null);
     }
 }

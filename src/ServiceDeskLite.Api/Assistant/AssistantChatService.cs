@@ -202,11 +202,15 @@ public sealed partial class AssistantChatService
                 yield return new SseItem<AssistantSseEvent>(
                     new AssistantSseEvent(ToolName: call.Name), AssistantSseEvent.ToolCallEvent);
 
-                var (content, isError, ticketId) = await ToolRetryPolicy.ExecuteAsync(
+                var (content, isError, ticketId, confidence) = await ToolRetryPolicy.ExecuteAsync(
                     c => ExecuteToolAsync(call, c), _options.MaxToolRetries, Backoff, _logger, ct);
 
+                if (confidence is { } score)
+                    _logger.LogInformation("Tool {Tool} returned confidence {Confidence:P0}.", call.Name, score);
+
                 yield return new SseItem<AssistantSseEvent>(
-                    new AssistantSseEvent(ToolName: call.Name, TicketId: ticketId, IsError: isError, Message: content),
+                    new AssistantSseEvent(
+                        ToolName: call.Name, TicketId: ticketId, IsError: isError, Message: content, Confidence: confidence),
                     AssistantSseEvent.ToolResultEvent);
 
                 toolResults.Add(new ToolResultBlockParam
@@ -247,7 +251,7 @@ public sealed partial class AssistantChatService
         return TimeSpan.FromMilliseconds(Math.Min(ms, 30_000));
     }
 
-    private Task<(string Content, bool IsError, Guid? TicketId)> ExecuteToolAsync(ToolCall call, CancellationToken ct) =>
+    private Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteToolAsync(ToolCall call, CancellationToken ct) =>
         call.Name switch
         {
             CreateTicketTool.Name => _createTool.ExecuteAsync(call.Input, ct),
@@ -258,7 +262,7 @@ public sealed partial class AssistantChatService
             AssignTicketTool.Name => _assignTool.ExecuteAsync(call.Input, ct),
             RememberTool.Name => _rememberTool.ExecuteAsync(call.Input, ct),
             RecallMemoryTool.Name => _recallTool.ExecuteAsync(call.Input, ct),
-            _ => Task.FromResult(($"Unknown tool '{call.Name}'.", true, (Guid?)null)),
+            _ => Task.FromResult(($"Unknown tool '{call.Name}'.", true, (Guid?)null, (double?)null)),
         };
 
     private static SseItem<AssistantSseEvent> ErrorItem(string message) =>

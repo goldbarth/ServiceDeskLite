@@ -84,3 +84,10 @@ Voyage key defaults to the placeholder: RAG is an optional enhancement.
 - **Deliberately cut** (scale-appropriate, documented for the record):
   chunking (tickets are short — one vector per ticket), hybrid FTS+vector
   search, re-ranking, embedding of comments.
+
+## Update
+
+ADR 0028 refines the "unavailable" behavior of `find_similar_tickets`: when semantic
+search cannot run (no Voyage key / InMemory) or finds nothing, the tool now falls back
+to labelled keyword search via `SearchTicketsHandler` instead of dead-ending, and its
+result carries a confidence signal (top similarity).

@@ -91,12 +91,12 @@ public sealed partial class AssignTicketTool
         return true;
     }
 
-    public async Task<(string Content, bool IsError, Guid? TicketId)> ExecuteAsync(
+    public async Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteAsync(
         JsonElement input,
         CancellationToken ct)
     {
         if (!TryParseInput(input, out var ticketId, out var assigneeName, out var parseError))
-            return ($"Invalid tool input: {parseError}", true, null);
+            return ($"Invalid tool input: {parseError}", true, null, null);
 
         AgentId? agentId = null;
         if (assigneeName is not null)
@@ -110,7 +110,7 @@ public sealed partial class AssignTicketTool
                 var available = roster.Value is { Count: > 0 }
                     ? string.Join(", ", roster.Value.Select(a => a.Name))
                     : "(none)";
-                return ($"No active agent named \"{assigneeName}\". Available agents: {available}.", true, null);
+                return ($"No active agent named \"{assigneeName}\". Available agents: {available}.", true, null, null);
             }
 
             agentId = match.Id;
@@ -122,12 +122,12 @@ public sealed partial class AssignTicketTool
         if (!result.IsSuccess)
         {
             var e = result.Error!;
-            return ($"Assignment failed ({e.Code}): {e.Message}", true, null);
+            return ($"Assignment failed ({e.Code}): {e.Message}", true, null, null);
         }
 
         var message = assigneeName is null
             ? $"Ticket {ticketId} unassigned."
             : $"Ticket {ticketId} assigned to {assigneeName}.";
-        return (message, false, ticketId);
+        return (message, false, ticketId, null);
     }
 }

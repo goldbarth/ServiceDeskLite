@@ -11,7 +11,8 @@ public sealed record AssistantStreamEvent(
     Guid? TicketId = null,
     bool? IsError = null,
     string? Message = null,
-    Guid? ConversationId = null)
+    Guid? ConversationId = null,
+    double? Confidence = null)
 {
     public const string ConversationEvent = "conversation";
     public const string TextEvent = "text";

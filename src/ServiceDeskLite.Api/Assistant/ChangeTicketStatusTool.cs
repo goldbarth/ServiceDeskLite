@@ -85,22 +85,22 @@ public sealed partial class ChangeTicketStatusTool
         return true;
     }
 
-    public async Task<(string Content, bool IsError, Guid? TicketId)> ExecuteAsync(
+    public async Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteAsync(
         JsonElement input,
         CancellationToken ct)
     {
         if (!TryParseInput(input, out var command, out var parseError))
-            return ($"Invalid tool input: {parseError}", true, null);
+            return ($"Invalid tool input: {parseError}", true, null, null);
 
         var result = await _handler.HandleAsync(command, ct);
 
         if (!result.IsSuccess)
         {
             var e = result.Error!;
-            return ($"Status change failed ({e.Code}): {e.Message}", true, null);
+            return ($"Status change failed ({e.Code}): {e.Message}", true, null, null);
         }
 
         var id = command!.Id.Value;
-        return ($"Ticket {id} status changed to {command.NewStatus}.", false, id);
+        return ($"Ticket {id} status changed to {command.NewStatus}.", false, id, null);
     }
 }

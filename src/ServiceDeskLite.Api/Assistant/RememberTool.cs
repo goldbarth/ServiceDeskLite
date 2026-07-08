@@ -100,12 +100,12 @@ public sealed partial class RememberTool
         return true;
     }
 
-    public async Task<(string Content, bool IsError, Guid? TicketId)> ExecuteAsync(
+    public async Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteAsync(
         JsonElement input,
         CancellationToken ct)
     {
         if (!TryParseInput(input, out var content, out var kind, out var parseError))
-            return ($"Invalid tool input: {parseError}", true, null);
+            return ($"Invalid tool input: {parseError}", true, null, null);
 
         MemoryWriteResult result;
         try
@@ -120,13 +120,13 @@ public sealed partial class RememberTool
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Storing a memory failed");
-            return ("Storing the memory failed due to a technical error. Continue without it.", true, null);
+            return ("Storing the memory failed due to a technical error. Continue without it.", true, null, null);
         }
 
         if (!result.IsAvailable)
             return ("Long-term memory is not available in this deployment. Do not retry this tool; " +
-                    "continue without storing.", false, null);
+                    "continue without storing.", false, null, null);
 
-        return ($"Stored as a {kind} memory.", false, null);
+        return ($"Stored as a {kind} memory.", false, null, null);
     }
 }

@@ -206,22 +206,22 @@ public sealed partial class SearchTicketsTool
         return sb.ToString();
     }
 
-    public async Task<(string Content, bool IsError, Guid? TicketId)> ExecuteAsync(
+    public async Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteAsync(
         JsonElement input,
         CancellationToken ct)
     {
         if (!TryParseInput(input, out var query, out var parseError))
-            return ($"Invalid tool input: {parseError}", true, null);
+            return ($"Invalid tool input: {parseError}", true, null, null);
 
         var result = await _handler.HandleAsync(query, ct);
 
         if (!result.IsSuccess)
         {
             var e = result.Error!;
-            return ($"Ticket search failed ({e.Code}): {e.Message}", true, null);
+            return ($"Ticket search failed ({e.Code}): {e.Message}", true, null, null);
         }
 
-        return (FormatResult(result.Value!), false, null);
+        return (FormatResult(result.Value!), false, null, null);
     }
 
     private static bool TryParseEnumArray<TEnum>(

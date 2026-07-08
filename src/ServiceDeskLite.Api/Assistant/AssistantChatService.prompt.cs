@@ -67,6 +67,13 @@ public sealed partial class AssistantChatService
             retry, choose a different step, or report it — rather than repeating the same failing call or
             abandoning the whole task.
 
+            Critique each tool result before you act on it. If a result is weak (low similarity), empty,
+            or contradicts what the user asked, do not treat it as fact: re-plan in the same turn by
+            refining the query, trying a different tool, or asking the user, instead of asserting a false
+            duplicate or acting on a shaky match. find_similar_tickets falls back to keyword matching when
+            semantic search is unavailable and labels those hits as keyword matches; treat keyword hits as
+            weaker evidence than semantic ones, so confirm before declaring a duplicate based on them.
+
             The user's local date and time is {localDateTime} ({timeZoneId}, UTC{utcOffset}). Resolve
             relative dates like 'by Friday' against this, and always express dueAt values with the user's
             UTC offset ({utcOffset}), not as UTC. If the user gives a vague time of day (like 'morning' or

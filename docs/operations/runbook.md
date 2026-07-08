@@ -111,6 +111,8 @@ Event stream: `conversation` (id for the next turn) → `text` (response deltas)
 
 The model can chain these tools autonomously in a single turn (e.g. dup-check → create → assign, bounded by `Anthropic:MaxToolIterations`, default 6). Transient tool failures (rate limits, upstream 5xx, timeouts) are retried at the edge with bounded backoff (`Anthropic:MaxToolRetries`, `Anthropic:ToolRetryBaseDelayMs`) before surfacing as an error `tool_result`; deterministic failures surface immediately for the model to correct (ADR 0027).
 
+Retrieval tools attach a confidence signal (top-match similarity) to their result, emitted on the `tool_result` SSE event (`confidence`) and logged. When semantic search is unavailable (no Voyage key / InMemory) or finds nothing, `find_similar_tickets` falls back to keyword search (labelled as such) instead of reporting "unavailable", and the prompt tells the model to re-plan on weak/empty/contradictory results (ADR 0028).
+
 ### Tests
 
 ```bash
