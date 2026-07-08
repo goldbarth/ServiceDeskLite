@@ -134,7 +134,7 @@ public sealed partial class CreateTicketTool
     }
 
     /// <summary>Executes the tool. Failures come back as (content, isError=true) so the model can self-correct.</summary>
-    public async Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteAsync(
+    public async Task<ToolResult> ExecuteAsync(
         JsonElement input,
         CancellationToken ct)
     {

@@ -85,6 +85,11 @@ public partial class AssistantChatPage : IDisposable
                             evt.IsError == true ? null : evt.TicketId));
                         break;
 
+                    case AssistantStreamEvent.CitationEvent:
+                        if (evt.Citations is { Count: > 0 } citations)
+                            _entries.Add(new ChatEntry(ChatEntryKind.Citations, string.Empty, citations: citations));
+                        break;
+
                     case AssistantStreamEvent.ErrorEvent:
                         _entries.Add(new ChatEntry(ChatEntryKind.Error, evt.Message ?? "Unexpected error."));
                         break;
@@ -120,13 +125,19 @@ public partial class AssistantChatPage : IDisposable
         Assistant,
         ToolCall,
         ToolResult,
+        Citations,
         Error,
     }
 
-    private sealed class ChatEntry(ChatEntryKind kind, string text, Guid? ticketId = null)
+    private sealed class ChatEntry(
+        ChatEntryKind kind,
+        string text,
+        Guid? ticketId = null,
+        IReadOnlyList<AssistantCitation>? citations = null)
     {
         public ChatEntryKind Kind { get; } = kind;
         public string Text { get; set; } = text;
         public Guid? TicketId { get; } = ticketId;
+        public IReadOnlyList<AssistantCitation> Citations { get; } = citations ?? [];
     }
 }

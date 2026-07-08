@@ -16,8 +16,8 @@ public static class AssistantEndpoints
             .WithName("Assistant_Chat")
             .WithSummary("Chat with the AI assistant")
             .WithDescription(
-                "Streams the model response as Server-Sent Events (text, tool_call, tool_result, error, done). " +
-                "The model may create tickets via the create_ticket tool.")
+                "Streams the model response as Server-Sent Events (text, tool_call, tool_result, citation, error, done). " +
+                "The model may create tickets via the create_ticket tool and cite knowledge-base sources.")
             .Produces(StatusCodes.Status200OK, contentType: "text/event-stream")
             .ProducesProblem(StatusCodes.Status400BadRequest);
 

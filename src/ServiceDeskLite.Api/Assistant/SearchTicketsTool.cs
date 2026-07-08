@@ -206,7 +206,7 @@ public sealed partial class SearchTicketsTool
         return sb.ToString();
     }
 
-    public async Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteAsync(
+    public async Task<ToolResult> ExecuteAsync(
         JsonElement input,
         CancellationToken ct)
     {

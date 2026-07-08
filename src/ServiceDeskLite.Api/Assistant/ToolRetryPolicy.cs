@@ -12,8 +12,8 @@ namespace ServiceDeskLite.Api.Assistant;
 /// </summary>
 public static class ToolRetryPolicy
 {
-    public static async Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteAsync(
-        Func<CancellationToken, Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)>> action,
+    public static async Task<ToolResult> ExecuteAsync(
+        Func<CancellationToken, Task<ToolResult>> action,
         int maxRetries,
         Func<int, TimeSpan> backoff,
         ILogger logger,

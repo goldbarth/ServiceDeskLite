@@ -1,6 +1,7 @@
 @page "/assistant"
 
 @using MudBlazor
+@using ServiceDeskLite.Contracts.V1.Assistant
 @using ServiceDeskLite.Web.Api.V1.Assistant
 
 <PageTitle>Assistant</PageTitle>
@@ -62,6 +63,26 @@
                                 <MudChip T="string" Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Color="Color.Warning">
                                     @entry.Text
                                 </MudChip>
+                            }
+                        </div>
+                        break;
+
+                    case ChatEntryKind.Citations:
+                        <div class="assistant-chat__sources">
+                            <div class="assistant-chat__sources-title">
+                                <MudIcon Icon="@Icons.Material.Filled.MenuBook" Size="Size.Small" />
+                                <span>Sources</span>
+                            </div>
+                            @foreach (var citation in entry.Citations)
+                            {
+                                <div class="assistant-chat__source">
+                                    <div class="assistant-chat__source-head">
+                                        <span class="assistant-chat__source-title">@citation.Title</span>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Text">@citation.Source</MudChip>
+                                        <span class="assistant-chat__source-heading">@citation.Heading</span>
+                                    </div>
+                                    <p class="assistant-chat__source-snippet">@citation.Snippet</p>
+                                </div>
                             }
                         </div>
                         break;

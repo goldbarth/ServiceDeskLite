@@ -831,7 +831,7 @@
     },
     "/api/v1/assistant/chat": {
       "post": {
-        "description": "Streams the model response as Server-Sent Events (text, tool_call, tool_result, error, done). The model may create tickets via the create_ticket tool.",
+        "description": "Streams the model response as Server-Sent Events (text, tool_call, tool_result, citation, error, done). The model may create tickets via the create_ticket tool and cite knowledge-base sources.",
         "operationId": "Assistant_Chat",
         "requestBody": {
           "content": {
