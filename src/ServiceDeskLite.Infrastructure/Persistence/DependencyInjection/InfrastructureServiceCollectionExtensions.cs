@@ -8,6 +8,7 @@ using ServiceDeskLite.Application.Abstractions.Assistant;
 using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Abstractions.Search;
 using ServiceDeskLite.Infrastructure.Embeddings;
+using ServiceDeskLite.Infrastructure.Embeddings.KnowledgeBase;
 using ServiceDeskLite.Infrastructure.Persistence.Conversations;
 using ServiceDeskLite.Infrastructure.Persistence.Repositories;
 using ServiceDeskLite.Infrastructure.Persistence.UnitOfWork;
@@ -66,6 +67,14 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddScoped<ITicketSimilaritySearch, PgVectorTicketSimilaritySearch>();
         services.AddHostedService<TicketEmbeddingWorker>();
+
+        // Knowledge-base RAG: file corpus → chunked embeddings (worker) → pgvector search.
+        // Shares the Voyage client and its enabled/disabled gate with ticket search.
+        services.AddOptions<KnowledgeBaseOptions>()
+            .Bind(configuration.GetSection(KnowledgeBaseOptions.SectionName));
+        services.AddSingleton<IKnowledgeCorpus, FileKnowledgeCorpus>();
+        services.AddScoped<IKnowledgeBaseSearch, PgVectorKnowledgeBaseSearch>();
+        services.AddHostedService<KnowledgeEmbeddingWorker>();
 
         // Long-term memory shares the Voyage embedding client; one instance backs both ports.
         services.AddScoped<PgVectorMemoryStore>();

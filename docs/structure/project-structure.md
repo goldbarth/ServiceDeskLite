@@ -40,6 +40,11 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── 0022-security-hardening-minimal.md
 │   │   ├── 0023-ai-assistant-edge-adapter.md
 │   │   ├── 0024-semantic-ticket-search-rag.md
+│   │   ├── 0025-agent-roster-and-assignee-storage.md
+│   │   ├── 0026-agent-memory.md
+│   │   ├── 0027-agent-orchestration-and-retry.md
+│   │   ├── 0028-self-critique-confidence-fallback.md
+│   │   ├── 0029-knowledge-base-rag.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
@@ -80,7 +85,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── runbook.md
 │   │   └── toc.yml
 │   ├── releases
-│   │   └── v1.1.0.md
+│   │   ├── v1.1.0.md
+│   │   └── v1.2.0.md
 │   ├── structure
 │   │   ├── project-structure.md
 │   │   ├── solution-map.md
@@ -99,11 +105,31 @@ The repository is organized into layered projects and mirrored test projects.
 │   ├── ServiceDeskLite.Api
 │   │   ├── Assistant
 │   │   │   ├── AnthropicOptions.cs
+│   │   │   ├── AssignTicketTool.cs
+│   │   │   ├── AssignTicketTool.prompt.cs
 │   │   │   ├── AssistantChatService.cs
+│   │   │   ├── AssistantChatService.prompt.cs
 │   │   │   ├── AssistantSseEvent.cs
+│   │   │   ├── ChangeTicketStatusTool.cs
+│   │   │   ├── ChangeTicketStatusTool.prompt.cs
 │   │   │   ├── CreateTicketTool.cs
+│   │   │   ├── CreateTicketTool.prompt.cs
+│   │   │   ├── DemoCurrentUser.cs
 │   │   │   ├── FindSimilarTicketsTool.cs
-│   │   │   └── UpdateTicketTool.cs
+│   │   │   ├── FindSimilarTicketsTool.prompt.cs
+│   │   │   ├── RecallMemoryTool.cs
+│   │   │   ├── RecallMemoryTool.prompt.cs
+│   │   │   ├── RememberTool.cs
+│   │   │   ├── RememberTool.prompt.cs
+│   │   │   ├── SearchKnowledgeBaseTool.cs
+│   │   │   ├── SearchKnowledgeBaseTool.prompt.cs
+│   │   │   ├── SearchTicketsTool.cs
+│   │   │   ├── SearchTicketsTool.prompt.cs
+│   │   │   ├── ToolResult.cs
+│   │   │   ├── ToolRetryPolicy.cs
+│   │   │   ├── TransientFault.cs
+│   │   │   ├── UpdateTicketTool.cs
+│   │   │   └── UpdateTicketTool.prompt.cs
 │   │   ├── Composition
 │   │   │   ├── ApiErrorHandlingExtensions.cs
 │   │   │   ├── ApiLoggingExtensions.cs
@@ -112,6 +138,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── InfrastructureComposition.cs
 │   │   │   └── OpenApi.cs
 │   │   ├── Endpoints
+│   │   │   ├── AgentsEndpoints.cs
 │   │   │   ├── AssistantEndpoints.cs
 │   │   │   ├── DashboardEndpoints.cs
 │   │   │   └── TicketsEndpoints.cs
@@ -132,6 +159,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   └── Security
 │   │   │       └── ApiKeyMiddleware.cs
 │   │   ├── Mapping
+│   │   │   ├── Agents
+│   │   │   │   └── AgentMapping.cs
 │   │   │   ├── Dashboard
 │   │   │   │   └── DashboardMapping.cs
 │   │   │   └── Tickets
@@ -152,14 +181,32 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   └── ServiceDeskLite.Api.http
 │   ├── ServiceDeskLite.Application
 │   │   ├── Abstractions
+│   │   │   ├── Assistant
+│   │   │   │   ├── ConversationId.cs
+│   │   │   │   ├── IConversationStore.cs
+│   │   │   │   ├── ICurrentUser.cs
+│   │   │   │   ├── IMemorySearch.cs
+│   │   │   │   ├── IMemoryStore.cs
+│   │   │   │   ├── MemoryId.cs
+│   │   │   │   └── OwnerId.cs
 │   │   │   ├── Persistence
+│   │   │   │   ├── IAgentRepository.cs
 │   │   │   │   ├── IAuditEventRepository.cs
 │   │   │   │   ├── IDashboardRepository.cs
 │   │   │   │   ├── IOutboxRepository.cs
 │   │   │   │   ├── ITicketRepository.cs
 │   │   │   │   └── IUnitOfWork.cs
 │   │   │   └── Search
+│   │   │       ├── IKnowledgeBaseSearch.cs
 │   │   │       └── ITicketSimilaritySearch.cs
+│   │   ├── Agents
+│   │   │   ├── GetAgents
+│   │   │   │   ├── GetAgentsHandler.cs
+│   │   │   │   └── GetAgentsQuery.cs
+│   │   │   ├── Seeding
+│   │   │   │   ├── AgentRoster.cs
+│   │   │   │   └── IAgentSeeder.cs
+│   │   │   └── AgentDto.cs
 │   │   ├── Common
 │   │   │   ├── Validation
 │   │   │   │   ├── FieldValidationBuilder.cs
@@ -224,6 +271,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── Paging.cs
 │   │   │   │   ├── SortSpec.cs
 │   │   │   │   ├── TicketListItemDto.cs
+│   │   │   │   ├── TicketReference.cs
 │   │   │   │   └── TicketSearchCriteria.cs
 │   │   │   └── UpdateTicket
 │   │   │       ├── UpdateTicketCommand.cs
@@ -233,8 +281,11 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   └── ServiceDeskLite.Application.csproj
 │   ├── ServiceDeskLite.Contracts
 │   │   ├── V1
+│   │   │   ├── Agents
+│   │   │   │   └── AgentResponse.cs
 │   │   │   ├── Assistant
-│   │   │   │   └── AssistantChatRequest.cs
+│   │   │   │   ├── AssistantChatRequest.cs
+│   │   │   │   └── AssistantCitation.cs
 │   │   │   ├── Common
 │   │   │   │   ├── PagedResponse.cs
 │   │   │   │   ├── ProblemDetailsContract.cs
@@ -261,6 +312,9 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Contracts.csproj
 │   ├── ServiceDeskLite.Domain
+│   │   ├── Agents
+│   │   │   ├── Agent.cs
+│   │   │   └── AgentId.cs
 │   │   ├── Audit
 │   │   │   ├── AuditEvent.cs
 │   │   │   ├── AuditEventId.cs
@@ -281,7 +335,6 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── StatusChangedDomainEvent.cs
 │   │   │   │   ├── TicketCreatedDomainEvent.cs
 │   │   │   │   └── TicketDetailsUpdatedDomainEvent.cs
-│   │   │   ├── Assignee.cs
 │   │   │   ├── Comment.cs
 │   │   │   ├── CommentId.cs
 │   │   │   ├── Ticket.cs
@@ -294,7 +347,19 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   └── ServiceDeskLite.Domain.csproj
 │   ├── ServiceDeskLite.Infrastructure
 │   │   ├── Embeddings
+│   │   │   ├── KnowledgeBase
+│   │   │   │   ├── FileKnowledgeCorpus.cs
+│   │   │   │   ├── IKnowledgeCorpus.cs
+│   │   │   │   ├── KnowledgeArticle.cs
+│   │   │   │   ├── KnowledgeBaseOptions.cs
+│   │   │   │   ├── KnowledgeChunk.cs
+│   │   │   │   ├── KnowledgeChunkContent.cs
+│   │   │   │   ├── KnowledgeChunker.cs
+│   │   │   │   ├── KnowledgeEmbeddingWorker.cs
+│   │   │   │   └── PgVectorKnowledgeBaseSearch.cs
 │   │   │   ├── IEmbeddingClient.cs
+│   │   │   ├── MemoryRecord.cs
+│   │   │   ├── PgVectorMemoryStore.cs
 │   │   │   ├── PgVectorTicketSimilaritySearch.cs
 │   │   │   ├── TicketEmbedding.cs
 │   │   │   ├── TicketEmbeddingContent.cs
@@ -303,13 +368,24 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   └── VoyageOptions.cs
 │   │   ├── Persistence
 │   │   │   ├── Configurations
+│   │   │   │   ├── AgentConfiguration.cs
+│   │   │   │   ├── AgentIdConverter.cs
 │   │   │   │   ├── AuditEventConfiguration.cs
 │   │   │   │   ├── AuditEventIdConverter.cs
+│   │   │   │   ├── ConversationIdConverter.cs
+│   │   │   │   ├── ConversationMessageConfiguration.cs
+│   │   │   │   ├── KnowledgeChunkConfiguration.cs
+│   │   │   │   ├── MemoryIdConverter.cs
+│   │   │   │   ├── MemoryRecordConfiguration.cs
 │   │   │   │   ├── OutboxMessageConfiguration.cs
 │   │   │   │   ├── OutboxMessageIdConverter.cs
+│   │   │   │   ├── OwnerIdConverter.cs
 │   │   │   │   ├── TicketConfiguration.cs
 │   │   │   │   ├── TicketEmbeddingConfiguration.cs
 │   │   │   │   └── TicketIdConverter.cs
+│   │   │   ├── Conversations
+│   │   │   │   ├── ConversationMessageRecord.cs
+│   │   │   │   └── EfConversationStore.cs
 │   │   │   ├── DependencyInjection
 │   │   │   │   └── InfrastructureServiceCollectionExtensions.cs
 │   │   │   ├── Migrations
@@ -319,13 +395,25 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── 20260311000756_AddOutboxMessages.Designer.cs
 │   │   │   │   ├── 20260703084946_AddTicketEmbeddings.cs
 │   │   │   │   ├── 20260703084946_AddTicketEmbeddings.Designer.cs
+│   │   │   │   ├── 20260707085746_AddAgents.cs
+│   │   │   │   ├── 20260707085746_AddAgents.Designer.cs
+│   │   │   │   ├── 20260707111848_ChangeAssigneeToAgentFk.cs
+│   │   │   │   ├── 20260707111848_ChangeAssigneeToAgentFk.Designer.cs
+│   │   │   │   ├── 20260707123324_AddTicketRefSuffix.cs
+│   │   │   │   ├── 20260707123324_AddTicketRefSuffix.Designer.cs
+│   │   │   │   ├── 20260708141742_AddAgentMemory.cs
+│   │   │   │   ├── 20260708141742_AddAgentMemory.Designer.cs
+│   │   │   │   ├── 20260708173602_AddKnowledgeChunks.cs
+│   │   │   │   ├── 20260708173602_AddKnowledgeChunks.Designer.cs
 │   │   │   │   └── ServiceDeskLiteDbContextModelSnapshot.cs
 │   │   │   ├── Repositories
+│   │   │   │   ├── EfAgentRepository.cs
 │   │   │   │   ├── EfAuditEventRepository.cs
 │   │   │   │   ├── EfDashboardRepository.cs
 │   │   │   │   ├── EfOutboxRepository.cs
 │   │   │   │   └── EfTicketRepository.cs
 │   │   │   ├── Seeding
+│   │   │   │   ├── AgentSeeder.cs
 │   │   │   │   └── TicketSeeder.cs
 │   │   │   ├── UnitOfWork
 │   │   │   │   └── EfUnitOfWork.cs
@@ -337,13 +425,17 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── DependencyInjection
 │   │   │   └── InMemoryServiceCollectionExtensions.cs
 │   │   ├── Persistence
+│   │   │   ├── InMemoryAgentRepository.cs
 │   │   │   ├── InMemoryAuditEventRepository.cs
+│   │   │   ├── InMemoryConversationStore.cs
 │   │   │   ├── InMemoryDashboardRepository.cs
 │   │   │   ├── InMemoryOutboxRepository.cs
 │   │   │   ├── InMemoryStore.cs
 │   │   │   ├── InMemoryTicketRepository.cs
 │   │   │   └── InMemoryUnitOfWork.cs
 │   │   ├── Search
+│   │   │   ├── UnavailableKnowledgeBaseSearch.cs
+│   │   │   ├── UnavailableMemoryStore.cs
 │   │   │   └── UnavailableTicketSimilaritySearch.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Infrastructure.InMemory.csproj
@@ -500,9 +592,22 @@ The repository is organized into layered projects and mirrored test projects.
 │       └── ServiceDeskLite.Web.csproj
 ├── tests
 │   ├── ServiceDeskLite.Tests.Api
+│   │   ├── Agents
+│   │   │   └── AgentsEndpointTests.cs
 │   │   ├── Assistant
+│   │   │   ├── AssignTicketToolInputTests.cs
+│   │   │   ├── ChangeTicketStatusToolInputTests.cs
 │   │   │   ├── CreateTicketToolInputTests.cs
+│   │   │   ├── FindSimilarTicketsToolFallbackTests.cs
+│   │   │   ├── FindSimilarTicketsToolFormatTests.cs
 │   │   │   ├── FindSimilarTicketsToolInputTests.cs
+│   │   │   ├── RecallMemoryToolInputTests.cs
+│   │   │   ├── RememberToolInputTests.cs
+│   │   │   ├── SearchKnowledgeBaseToolExecuteTests.cs
+│   │   │   ├── SearchKnowledgeBaseToolInputTests.cs
+│   │   │   ├── SearchTicketsToolInputTests.cs
+│   │   │   ├── ToolRetryPolicyTests.cs
+│   │   │   ├── TransientFaultTests.cs
 │   │   │   └── UpdateTicketToolInputTests.cs
 │   │   ├── Dashboard
 │   │   │   └── DashboardEndpointTests.cs
@@ -515,6 +620,9 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── ApiWebApplicationFactory.cs
 │   │   │   ├── InMemorySink.cs
 │   │   │   └── TestEndpointFilter.cs
+│   │   ├── KnowledgeBase
+│   │   │   ├── FileKnowledgeCorpusParseTests.cs
+│   │   │   └── KnowledgeChunkerTests.cs
 │   │   ├── Tickets
 │   │   │   ├── AuditEventMappingTests.cs
 │   │   │   └── ChangeTicketStatusEndpointTests.cs
@@ -523,6 +631,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   ├── ServiceDeskLite.Tests.Application
 │   │   ├── Common
 │   │   │   └── ResultTests.cs
+│   │   ├── Fakes
+│   │   │   └── EmptyAgentRepository.cs
 │   │   ├── Tickets
 │   │   │   ├── AddComment
 │   │   │   │   └── AddCommentHandlerTest.cs
@@ -545,24 +655,34 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Tests.Application.csproj
 │   ├── ServiceDeskLite.Tests.Domain
+│   │   ├── Agents
+│   │   │   └── AgentTests.cs
 │   │   ├── Tickets
-│   │   │   ├── AssigneeTests.cs
 │   │   │   ├── TicketDomainEventsTests.cs
 │   │   │   ├── TicketTests.cs
 │   │   │   └── TicketWorkflowTests.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Tests.Domain.csproj
 │   ├── ServiceDeskLite.Tests.EndToEnd
+│   │   ├── Assistant
+│   │   │   ├── AssistantKnowledgeBaseTests.cs
+│   │   │   ├── AssistantMemoryTests.cs
+│   │   │   └── AssistantOrchestrationTests.cs
 │   │   ├── Composition
 │   │   │   ├── ProviderMatrixAttribute.cs
 │   │   │   ├── TestServiceProvider.cs
 │   │   │   └── TicketFactory.cs
 │   │   ├── Tickets
+│   │   │   ├── AgentAssignmentTests.cs
+│   │   │   ├── AssistantChangeStatusTests.cs
 │   │   │   ├── ChangeTicketStatusTests.cs
 │   │   │   ├── CommitBoundaryTests.cs
 │   │   │   ├── DeterministicPagingSortingTests.cs
 │   │   │   ├── DuplicateDetectionTests.cs
-│   │   │   └── ReadIsolationTests.cs
+│   │   │   ├── FindThenUpdateTests.cs
+│   │   │   ├── ReadIsolationTests.cs
+│   │   │   ├── ReferenceLookupTests.cs
+│   │   │   └── SearchTicketsFilterTests.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Tests.EndToEnd.csproj
 │   ├── ServiceDeskLite.Tests.Infrastructure.InMemory

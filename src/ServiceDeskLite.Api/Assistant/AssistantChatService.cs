@@ -33,6 +33,7 @@ public sealed partial class AssistantChatService
     private readonly SearchTicketsTool _searchTool;
     private readonly ChangeTicketStatusTool _changeStatusTool;
     private readonly AssignTicketTool _assignTool;
+    private readonly SearchKnowledgeBaseTool _knowledgeTool;
     private readonly RememberTool _rememberTool;
     private readonly RecallMemoryTool _recallTool;
     private readonly IConversationStore _conversations;
@@ -49,6 +50,7 @@ public sealed partial class AssistantChatService
         SearchTicketsTool searchTool,
         ChangeTicketStatusTool changeStatusTool,
         AssignTicketTool assignTool,
+        SearchKnowledgeBaseTool knowledgeTool,
         RememberTool rememberTool,
         RecallMemoryTool recallTool,
         IConversationStore conversations,
@@ -64,6 +66,7 @@ public sealed partial class AssistantChatService
         _searchTool = searchTool ?? throw new ArgumentNullException(nameof(searchTool));
         _changeStatusTool = changeStatusTool ?? throw new ArgumentNullException(nameof(changeStatusTool));
         _assignTool = assignTool ?? throw new ArgumentNullException(nameof(assignTool));
+        _knowledgeTool = knowledgeTool ?? throw new ArgumentNullException(nameof(knowledgeTool));
         _rememberTool = rememberTool ?? throw new ArgumentNullException(nameof(rememberTool));
         _recallTool = recallTool ?? throw new ArgumentNullException(nameof(recallTool));
         _conversations = conversations ?? throw new ArgumentNullException(nameof(conversations));
@@ -122,6 +125,7 @@ public sealed partial class AssistantChatService
                     SearchTicketsTool.Definition,
                     ChangeTicketStatusTool.Definition,
                     AssignTicketTool.Definition,
+                    SearchKnowledgeBaseTool.Definition,
                     RememberTool.Definition,
                     RecallMemoryTool.Definition,
                 ],
@@ -202,22 +206,30 @@ public sealed partial class AssistantChatService
                 yield return new SseItem<AssistantSseEvent>(
                     new AssistantSseEvent(ToolName: call.Name), AssistantSseEvent.ToolCallEvent);
 
-                var (content, isError, ticketId, confidence) = await ToolRetryPolicy.ExecuteAsync(
+                var result = await ToolRetryPolicy.ExecuteAsync(
                     c => ExecuteToolAsync(call, c), _options.MaxToolRetries, Backoff, _logger, ct);
 
-                if (confidence is { } score)
+                if (result.Confidence is { } score)
                     _logger.LogInformation("Tool {Tool} returned confidence {Confidence:P0}.", call.Name, score);
 
                 yield return new SseItem<AssistantSseEvent>(
                     new AssistantSseEvent(
-                        ToolName: call.Name, TicketId: ticketId, IsError: isError, Message: content, Confidence: confidence),
+                        ToolName: call.Name, TicketId: result.TicketId, IsError: result.IsError,
+                        Message: result.Content, Confidence: result.Confidence),
                     AssistantSseEvent.ToolResultEvent);
+
+                // Surface knowledge-base sources as a distinct event so the client can show
+                // where the answer came from. Emitted only for sources actually retrieved.
+                if (result.Citations is { Count: > 0 } citations)
+                    yield return new SseItem<AssistantSseEvent>(
+                        new AssistantSseEvent(ToolName: call.Name, Citations: citations),
+                        AssistantSseEvent.CitationEvent);
 
                 toolResults.Add(new ToolResultBlockParam
                 {
                     ToolUseID = call.Id,
-                    Content = content,
-                    IsError = isError,
+                    Content = result.Content,
+                    IsError = result.IsError,
                 });
             }
 
@@ -251,7 +263,7 @@ public sealed partial class AssistantChatService
         return TimeSpan.FromMilliseconds(Math.Min(ms, 30_000));
     }
 
-    private Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteToolAsync(ToolCall call, CancellationToken ct) =>
+    private Task<ToolResult> ExecuteToolAsync(ToolCall call, CancellationToken ct) =>
         call.Name switch
         {
             CreateTicketTool.Name => _createTool.ExecuteAsync(call.Input, ct),
@@ -260,9 +272,10 @@ public sealed partial class AssistantChatService
             SearchTicketsTool.Name => _searchTool.ExecuteAsync(call.Input, ct),
             ChangeTicketStatusTool.Name => _changeStatusTool.ExecuteAsync(call.Input, ct),
             AssignTicketTool.Name => _assignTool.ExecuteAsync(call.Input, ct),
+            SearchKnowledgeBaseTool.Name => _knowledgeTool.ExecuteAsync(call.Input, ct),
             RememberTool.Name => _rememberTool.ExecuteAsync(call.Input, ct),
             RecallMemoryTool.Name => _recallTool.ExecuteAsync(call.Input, ct),
-            _ => Task.FromResult(($"Unknown tool '{call.Name}'.", true, (Guid?)null, (double?)null)),
+            _ => Task.FromResult(new ToolResult($"Unknown tool '{call.Name}'.", true)),
         };
 
     private static SseItem<AssistantSseEvent> ErrorItem(string message) =>

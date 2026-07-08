@@ -15,8 +15,8 @@ public sealed class ToolRetryPolicyTests
     private static HttpRequestException Transient() =>
         new("rate limited", inner: null, statusCode: HttpStatusCode.TooManyRequests);
 
-    private static Task<(string, bool, Guid?, double?)> Ok() =>
-        Task.FromResult(("done", false, (Guid?)null, (double?)null));
+    private static Task<ToolResult> Ok() =>
+        Task.FromResult(new ToolResult("done", false));
 
     [Fact]
     public async Task Retries_transient_failure_then_returns_success()
@@ -79,7 +79,7 @@ public sealed class ToolRetryPolicyTests
             _ =>
             {
                 attempts++;
-                return Task.FromResult(("invalid input", true, (Guid?)null, (double?)null));
+                return Task.FromResult(new ToolResult("invalid input", true));
             },
             maxRetries: 3, NoDelay, NullLogger.Instance, CancellationToken.None);
 
@@ -95,7 +95,7 @@ public sealed class ToolRetryPolicyTests
         cts.Cancel();
 
         var act = async () => await ToolRetryPolicy.ExecuteAsync(
-            (Func<CancellationToken, Task<(string, bool, Guid?, double?)>>)(_ => throw new OperationCanceledException(cts.Token)),
+            (Func<CancellationToken, Task<ToolResult>>)(_ => throw new OperationCanceledException(cts.Token)),
             maxRetries: 2, NoDelay, NullLogger.Instance, cts.Token);
 
         await act.Should().ThrowAsync<OperationCanceledException>();

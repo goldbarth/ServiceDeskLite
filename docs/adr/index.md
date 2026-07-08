@@ -31,3 +31,4 @@
 | 0026 | [ADR 0026: Agent Memory — Server-Side Conversation State and Long-Term Recall](0026-agent-memory.md) |
 | 0027 | [ADR 0027: Autonomous Multi-Tool Orchestration and Transient-Fault Retry](0027-agent-orchestration-and-retry.md) |
 | 0028 | [ADR 0028: Self-Critique, Confidence Signal, and Tool Fallback](0028-self-critique-confidence-fallback.md) |
+| 0029 | [ADR 0029: Knowledge-Base RAG with Cited Streaming Answers](0029-knowledge-base-rag.md) |

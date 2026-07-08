@@ -147,7 +147,7 @@ public sealed partial class FindSimilarTicketsTool
     public static double TopSimilarity(IReadOnlyList<TicketSimilarityMatch> matches) =>
         matches.Count > 0 ? matches.Max(m => m.Similarity) : 0.0;
 
-    public async Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteAsync(
+    public async Task<ToolResult> ExecuteAsync(
         JsonElement input,
         CancellationToken ct)
     {
@@ -181,7 +181,7 @@ public sealed partial class FindSimilarTicketsTool
         return (FormatResult(query, result.Matches), false, null, TopSimilarity(result.Matches));
     }
 
-    private async Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> KeywordFallbackAsync(
+    private async Task<ToolResult> KeywordFallbackAsync(
         string query, int limit, string reason, CancellationToken ct)
     {
         var searchQuery = new SearchTicketsQuery(

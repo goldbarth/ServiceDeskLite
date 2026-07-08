@@ -30,4 +30,11 @@
       <ProjectReference Include="..\ServiceDeskLite.Application\ServiceDeskLite.Application.csproj" />
     </ItemGroup>
 
+    <!-- Knowledge-base corpus: copied next to the app so FileKnowledgeCorpus can read it at runtime. -->
+    <ItemGroup>
+        <Content Include="..\..\KnowledgeBase\**\*.md"
+                 Link="KnowledgeBase\%(RecursiveDir)%(Filename)%(Extension)"
+                 CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
 </Project>

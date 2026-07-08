@@ -4,6 +4,7 @@ using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Outbox;
 using ServiceDeskLite.Domain.Tickets;
 using ServiceDeskLite.Infrastructure.Embeddings;
+using ServiceDeskLite.Infrastructure.Embeddings.KnowledgeBase;
 
 namespace ServiceDeskLite.Infrastructure.Persistence;
 
@@ -16,6 +17,7 @@ public class ServiceDeskLiteDbContext(DbContextOptions options)
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     public DbSet<TicketEmbedding> TicketEmbeddings => Set<TicketEmbedding>();
     public DbSet<MemoryRecord> Memories => Set<MemoryRecord>();
+    public DbSet<KnowledgeChunk> KnowledgeChunks => Set<KnowledgeChunk>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -40,6 +40,7 @@ public static class AssistantComposition
         services.AddScoped<SearchTicketsTool>();
         services.AddScoped<ChangeTicketStatusTool>();
         services.AddScoped<AssignTicketTool>();
+        services.AddScoped<SearchKnowledgeBaseTool>();
         services.AddScoped<RememberTool>();
         services.AddScoped<RecallMemoryTool>();
         services.AddScoped<AssistantChatService>();

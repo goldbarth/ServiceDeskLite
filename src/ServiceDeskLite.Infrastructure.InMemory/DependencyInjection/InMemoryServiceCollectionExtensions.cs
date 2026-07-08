@@ -26,6 +26,7 @@ public static class InMemoryServiceCollectionExtensions
         services.AddScoped<IDashboardRepository, InMemoryDashboardRepository>();
 
         services.AddScoped<ITicketSimilaritySearch, UnavailableTicketSimilaritySearch>();
+        services.AddScoped<IKnowledgeBaseSearch, UnavailableKnowledgeBaseSearch>();
 
         services.AddScoped<IConversationStore, InMemoryConversationStore>();
 

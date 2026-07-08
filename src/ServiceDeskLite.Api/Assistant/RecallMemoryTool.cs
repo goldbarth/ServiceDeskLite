@@ -118,7 +118,7 @@ public sealed partial class RecallMemoryTool
     public static double TopSimilarity(IReadOnlyList<MemoryMatch> matches) =>
         matches.Count > 0 ? matches.Max(m => m.Similarity) : 0.0;
 
-    public async Task<(string Content, bool IsError, Guid? TicketId, double? Confidence)> ExecuteAsync(
+    public async Task<ToolResult> ExecuteAsync(
         JsonElement input,
         CancellationToken ct)
     {

@@ -26,6 +26,8 @@ RUN dotnet restore src/ServiceDeskLite.Api/ServiceDeskLite.Api.csproj --locked-m
 
 # Copy all source files and publish
 COPY src/ src/
+# Knowledge-base corpus lives at the repo root; the API project copies it to output.
+COPY KnowledgeBase/ KnowledgeBase/
 RUN dotnet publish src/ServiceDeskLite.Api/ServiceDeskLite.Api.csproj \
     -c Release \
     --no-restore \
