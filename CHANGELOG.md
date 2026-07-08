@@ -1,5 +1,34 @@
 # Changelog
 
+## v1.3.0 — Knowledge-Base RAG, Hybrid Retrieval & Grounding
+
+### Summary
+
+Grows the optional ticket-only semantic search into a full knowledge system
+(milestone M5). The assistant answers how-to questions from a dedicated
+knowledge-base corpus and streams the sources it cited; ticket retrieval becomes
+hybrid (semantic + keyword fused with metadata filters); and every knowledge-base
+answer is grounding-checked so the agent hedges or re-retrieves instead of
+asserting an unsupported claim. All optional, degrading honestly without a Voyage
+key or on the InMemory provider.
+
+### Highlights
+
+- Knowledge-base RAG: `/KnowledgeBase` corpus (articles, FAQ, internal docs), chunked and embedded by a background worker, with answers that stream cited sources over SSE (ADR 0029)
+- Hybrid ticket retrieval: `find_similar_tickets` fuses semantic + keyword via Reciprocal Rank Fusion, with optional status/priority filters and per-result relevance (ADR 0030)
+- RAG grounding evaluation: a deterministic `check_grounding` tool scores an answer against its sources; weak grounding makes the agent re-retrieve or hedge (ADR 0031)
+- New assistant tools `search_knowledge_base` and `check_grounding` (ten tools total)
+- Web: retrieved sources render as a "Sources" card; answers carry a grounding badge
+- Build: versions are derived from git tags via MinVer
+
+### Known limitations
+
+- Still no real auth — the roster is seeded fictitious accounts, not authenticated identities
+- Knowledge-base RAG, citations, and grounding-against-real-sources require PostgreSQL + a Voyage API key; without them they report unavailable
+- The grounding check is lexical, so it assumes an answer and its sources share a language
+
+_Full notes: [docs/releases/v1.3.0.md](docs/releases/v1.3.0.md)_
+
 ## v1.2.0 — Semantic Search (RAG) & Agent Roster
 
 ### Summary
