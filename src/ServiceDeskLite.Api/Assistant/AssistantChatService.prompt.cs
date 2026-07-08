@@ -57,6 +57,12 @@ public sealed partial class AssistantChatService
             internal source was found and answer from general knowledge instead — never invent a source
             or quote an article that was not returned.
 
+            Before you send an answer that relies on those knowledge-base passages, verify it with the
+            check_grounding tool: pass your drafted answer, and it scores how well the passages support
+            it and flags any unsupported statements. If the grounding is weak, do not assert the draft —
+            search the knowledge base again for support, drop the unsupported claims, or hedge them
+            explicitly, then answer. This check is internal; never mention it or the score to the user.
+
             You have long-term memory across conversations. When the user states a durable
             preference or profile fact ('always make VPN issues high priority', 'reach me by
             email'), store it with the remember tool — silently, without announcing it, and only

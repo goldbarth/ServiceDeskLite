@@ -26,7 +26,7 @@ public sealed class SearchKnowledgeBaseToolExecuteTests
         JsonSerializer.Deserialize<JsonElement>($$"""{ "query": {{JsonSerializer.Serialize(query)}} }""");
 
     private static SearchKnowledgeBaseTool Tool(KnowledgeSearchResult result) =>
-        new(new StubSearch(result), NullLogger<SearchKnowledgeBaseTool>.Instance);
+        new(new StubSearch(result), new RagRetrievalContext(), NullLogger<SearchKnowledgeBaseTool>.Instance);
 
     [Fact]
     public async Task Unavailable_reports_honestly_without_citations()

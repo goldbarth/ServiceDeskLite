@@ -46,6 +46,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── 0028-self-critique-confidence-fallback.md
 │   │   ├── 0029-knowledge-base-rag.md
 │   │   ├── 0030-hybrid-ticket-retrieval.md
+│   │   ├── 0031-rag-grounding-evaluation.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
@@ -113,11 +114,15 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── AssistantSseEvent.cs
 │   │   │   ├── ChangeTicketStatusTool.cs
 │   │   │   ├── ChangeTicketStatusTool.prompt.cs
+│   │   │   ├── CheckGroundingTool.cs
+│   │   │   ├── CheckGroundingTool.prompt.cs
 │   │   │   ├── CreateTicketTool.cs
 │   │   │   ├── CreateTicketTool.prompt.cs
 │   │   │   ├── DemoCurrentUser.cs
 │   │   │   ├── FindSimilarTicketsTool.cs
 │   │   │   ├── FindSimilarTicketsTool.prompt.cs
+│   │   │   ├── GroundingEvaluator.cs
+│   │   │   ├── RagRetrievalContext.cs
 │   │   │   ├── RecallMemoryTool.cs
 │   │   │   ├── RecallMemoryTool.prompt.cs
 │   │   │   ├── RememberTool.cs
@@ -602,10 +607,12 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── Assistant
 │   │   │   ├── AssignTicketToolInputTests.cs
 │   │   │   ├── ChangeTicketStatusToolInputTests.cs
+│   │   │   ├── CheckGroundingToolTests.cs
 │   │   │   ├── CreateTicketToolInputTests.cs
 │   │   │   ├── FindSimilarTicketsToolFormatTests.cs
 │   │   │   ├── FindSimilarTicketsToolHybridTests.cs
 │   │   │   ├── FindSimilarTicketsToolInputTests.cs
+│   │   │   ├── GroundingEvaluatorTests.cs
 │   │   │   ├── RecallMemoryToolInputTests.cs
 │   │   │   ├── RememberToolInputTests.cs
 │   │   │   ├── SearchKnowledgeBaseToolExecuteTests.cs
