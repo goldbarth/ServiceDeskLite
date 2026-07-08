@@ -71,15 +71,20 @@
       },
       "AssistantChatRequest": {
         "properties": {
-          "messages": {
-            "items": {
-              "$ref": "#/components/schemas/AssistantChatMessage"
-            },
-            "type": "array"
+          "conversationId": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "newMessage": {
+            "$ref": "#/components/schemas/AssistantChatMessage"
           }
         },
         "required": [
-          "messages"
+          "conversationId",
+          "newMessage"
         ],
         "type": "object"
       },

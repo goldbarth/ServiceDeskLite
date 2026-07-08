@@ -30,21 +30,17 @@ public static class AssistantEndpoints
         AssistantChatService service,
         ResultToProblemDetailsMapper mapper)
     {
-        if (request.Messages is not { Count: > 0 })
-            return mapper.ToProblem(ctx, ApplicationError.Validation(
-                "assistant_chat.messages.empty",
-                "At least one message is required."));
-
-        if (request.Messages.Any(m => string.IsNullOrWhiteSpace(m.Content)))
+        if (request.NewMessage is null || string.IsNullOrWhiteSpace(request.NewMessage.Content))
             return mapper.ToProblem(ctx, ApplicationError.Validation(
                 "assistant_chat.message.empty",
-                "Message contents must not be empty."));
+                "A non-empty user message is required."));
 
-        if (request.Messages[^1].Role != AssistantChatRole.User)
+        if (request.NewMessage.Role != AssistantChatRole.User)
             return mapper.ToProblem(ctx, ApplicationError.Validation(
-                "assistant_chat.messages.last_not_user",
-                "The last message must be a user message."));
+                "assistant_chat.message.not_user",
+                "The message must be a user message."));
 
-        return TypedResults.ServerSentEvents(service.StreamChatAsync(request.Messages, ctx.RequestAborted));
+        return TypedResults.ServerSentEvents(
+            service.StreamChatAsync(request.ConversationId, request.NewMessage, ctx.RequestAborted));
     }
 }

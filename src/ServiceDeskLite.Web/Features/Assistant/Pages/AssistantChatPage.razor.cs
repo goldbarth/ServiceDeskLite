@@ -18,6 +18,10 @@ public partial class AssistantChatPage : IDisposable
     private bool _isStreaming;
     private bool _hasStreamedText;
 
+    // Set from the server's first `conversation` event; resent each turn so the
+    // server keeps context without the client resending the whole transcript.
+    private Guid? _conversationId;
+
     // KeyUp, not KeyDown: with Immediate binding, the input event that follows
     // keydown would re-populate the bound value with the old text after Clear().
     // By keyup time no further input events are pending.
@@ -42,23 +46,22 @@ public partial class AssistantChatPage : IDisposable
         _entries.Add(new ChatEntry(ChatEntryKind.User, message));
         StateHasChanged();
 
-        // The API is stateless — resend the visible conversation so the model keeps
-        // context across turns (e.g. the id of a ticket it created earlier).
-        var transcript = _entries
-            .Where(e => e.Kind is ChatEntryKind.User or ChatEntryKind.Assistant && !string.IsNullOrWhiteSpace(e.Text))
-            .Select(e => new AssistantChatMessage(
-                e.Kind == ChatEntryKind.User ? AssistantChatRole.User : AssistantChatRole.Assistant,
-                e.Text))
-            .ToList();
+        // The server persists conversation state, so only the new user message is
+        // sent; _conversationId ties this turn to the ongoing conversation.
+        var newMessage = new AssistantChatMessage(AssistantChatRole.User, message);
 
         ChatEntry? assistantEntry = null;
 
         try
         {
-            await foreach (var evt in AssistantClient.ChatAsync(transcript, _disposeCts.Token))
+            await foreach (var evt in AssistantClient.ChatAsync(_conversationId, newMessage, _disposeCts.Token))
             {
                 switch (evt.EventType)
                 {
+                    case AssistantStreamEvent.ConversationEvent:
+                        _conversationId = evt.ConversationId;
+                        break;
+
                     case AssistantStreamEvent.TextEvent:
                         // Tool events may interleave with text; a new bubble starts after each interruption.
                         if (assistantEntry is null || _entries[^1] != assistantEntry)

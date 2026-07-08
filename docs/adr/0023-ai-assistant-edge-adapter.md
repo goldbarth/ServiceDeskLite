@@ -80,7 +80,9 @@ endpoints use.
 ### What is intentionally missing
 
 - An `IAssistantService` application port — no second consumer exists.
-- Conversation persistence — transcripts live in the browser session.
+- ~~Conversation persistence — transcripts live in the browser session.~~
+  **Superseded by ADR 0026:** conversation state is now persisted server-side and
+  the transcript contract has changed (trigger #2 below fired).
 - Prompt caching, rate limiting, multi-provider abstraction.
 - A generic tool-plugin mechanism — two explicit tool classes are clearer
   at this scale than a registry.
@@ -114,7 +116,7 @@ Revisit when:
 1. A **second consumer** of the assistant appears (CLI, bot, background
    job) — that is the point to introduce an application-layer port.
 2. Conversations must be **persisted or resumed** across sessions — state
-   moves server-side and the transcript contract changes.
+   moves server-side and the transcript contract changes. **(Fired — see ADR 0026.)**
 3. The **tool count grows** beyond a handful — replace explicit tool classes
    with schema generation or a registry.
 
@@ -123,6 +125,7 @@ Revisit when:
 - ADR 0004 – Minimal API without MediatR (same anti-abstraction reasoning)
 - ADR 0002 – Result pattern (tool failures map onto `Result` errors)
 - ADR 0021 – Outbox stub (assistant writes flow through the same staging)
+- ADR 0026 – Agent Memory (reverses the stateless/no-persistence stance above)
 - `src/ServiceDeskLite.Api/Assistant/AssistantChatService.cs`
 - `src/ServiceDeskLite.Api/Assistant/CreateTicketTool.cs`
 - `src/ServiceDeskLite.Api/Assistant/UpdateTicketTool.cs`

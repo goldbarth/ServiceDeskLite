@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
+using ServiceDeskLite.Application.Abstractions.Assistant;
 using ServiceDeskLite.Domain.Agents;
 using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Outbox;
@@ -13,6 +14,7 @@ internal sealed class InMemoryStore
     private readonly ConcurrentDictionary<AgentId, Agent> _agents = new();
     private readonly ConcurrentBag<AuditEvent> _auditEvents = new();
     private readonly ConcurrentBag<OutboxMessage> _outboxMessages = new();
+    private readonly ConcurrentDictionary<ConversationId, ConversationLog> _conversations = new();
 
     public bool TryGetAgent(AgentId id, out Agent? agent)
         => _agents.TryGetValue(id, out agent);
@@ -72,4 +74,32 @@ internal sealed class InMemoryStore
 
     public IReadOnlyCollection<OutboxMessage> SnapshotOutboxMessages()
         => _outboxMessages.ToArray();
+
+    public IReadOnlyList<ConversationMessage> GetConversation(ConversationId id, OwnerId owner)
+    {
+        if (!_conversations.TryGetValue(id, out var log) || log.Owner != owner)
+            return [];
+
+        lock (log)
+            return log.Messages.OrderBy(m => m.Sequence).ToList();
+    }
+
+    public void AppendConversation(ConversationId id, OwnerId owner, IReadOnlyList<ConversationMessage> messages)
+    {
+        var log = _conversations.GetOrAdd(id, _ => new ConversationLog(owner));
+
+        // First writer establishes ownership; a mismatched owner is ignored, mirroring
+        // the EF store's owner-scoped query (no cross-owner writes).
+        if (log.Owner != owner)
+            return;
+
+        lock (log)
+            log.Messages.AddRange(messages);
+    }
+
+    private sealed class ConversationLog(OwnerId owner)
+    {
+        public OwnerId Owner { get; } = owner;
+        public List<ConversationMessage> Messages { get; } = [];
+    }
 }

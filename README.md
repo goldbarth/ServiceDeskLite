@@ -49,21 +49,25 @@ Dependency direction is strictly inward: Domain knows nothing about Application,
 `POST /api/v1/assistant/chat` drives an agentic loop against the Anthropic Messages API (official .NET SDK) and re-streams the result as Server-Sent Events. The design goal: the model decides *what* to do, but *can only act* through the existing application layer.
 
 ```text
-Browser ──POST transcript──▶ API adapter ──stream──▶ Anthropic Messages API
+Browser ─POST msg + convId─▶ API adapter ──stream──▶ Anthropic Messages API
    ▲                             │
-   │  SSE: text / tool_call /    │  stop_reason: tool_use?
-   │  tool_result / done         ▼
-   │              ┌─ find_similar_tickets ─▶ Voyage embeddings + pgvector
+   │  SSE: conversation / text / │  stop_reason: tool_use?
+   │  tool_call / tool_result /  ▼
+   │  done        ┌─ find_similar_tickets ─▶ Voyage embeddings + pgvector
+   │              ├─ recall_memory / remember ▶ long-term memory (pgvector)
    │              ├─ search_tickets ───────▶ SearchTicketsHandler (filter/sort/page)
    │              ├─ change_ticket_status ─▶ ChangeTicketStatusHandler (state machine)
    │              ├─ assign_ticket ────────▶ AssignTicketHandler (agent roster, FK)
    └──────────────┴─ CreateTicketHandler / UpdateTicketHandler
                      (validation, audit, outbox — unchanged)
+   conversation state persisted server-side (IConversationStore); client resends only convId
 ```
 
 **Non-blocking token streaming.** Text deltas are forwarded to the browser the moment they arrive — the stream is never buffered until completion. Tool-use blocks arrive interleaved in the same stream as partial JSON fragments (`input_json_delta`); the adapter accumulates them per content block and parses the input only when the block closes. Streaming text and assembling tool calls happen concurrently on one pass over the stream, so the user watches the model "think aloud" while its tool arguments are still being assembled.
 
-**The loop.** When a turn ends with `stop_reason: tool_use`, the adapter executes each requested tool, appends the assistant turn plus all tool results to the message history, and calls the model again — up to a configurable iteration cap. Six tools are exposed: `find_similar_tickets` (semantic duplicate check before creating a ticket), `search_tickets` (find existing tickets by structured filter — status, priority, assignee — plus free text, returning a compact list to act on by id), `create_ticket` (file a ticket from the user's description), `update_ticket` (partial update of any existing ticket by id — resolved from an earlier `create_ticket` result or via `search_tickets`, e.g. "set the login ticket to high priority"; only provided fields change), `change_ticket_status` (move a ticket through the workflow, e.g. "close the printer ticket"; the domain state machine rejects invalid transitions and the reason is relayed to the model) and `assign_ticket` (assign/reassign/unassign by resolving an agent name against the seeded roster; an unknown or inactive agent comes back with the list of valid agents).
+**The loop.** When a turn ends with `stop_reason: tool_use`, the adapter executes each requested tool, appends the assistant turn plus all tool results to the message history, and calls the model again — up to a configurable iteration cap. Eight tools are exposed: `find_similar_tickets` (semantic duplicate check before creating a ticket), `search_tickets` (find existing tickets by structured filter — status, priority, assignee — plus free text, returning a compact list to act on by id), `create_ticket` (file a ticket from the user's description), `update_ticket` (partial update of any existing ticket by id — resolved from an earlier `create_ticket` result or via `search_tickets`, e.g. "set the login ticket to high priority"; only provided fields change), `change_ticket_status` (move a ticket through the workflow, e.g. "close the printer ticket"; the domain state machine rejects invalid transitions and the reason is relayed to the model), `assign_ticket` (assign/reassign/unassign by resolving an agent name against the seeded roster; an unknown or inactive agent comes back with the list of valid agents), and the long-term memory pair `remember` / `recall_memory` (store and semantically recall durable user facts across conversations).
+
+**Memory across turns and sessions.** Short-term: conversation state is persisted server-side ([`IConversationStore`](src/ServiceDeskLite.Application/Abstractions/Assistant/IConversationStore.cs), Postgres + InMemory), so the client sends only the new message plus a `conversationId` (returned on the first turn via a `conversation` SSE event) instead of the whole transcript. Long-term: `remember` embeds a durable fact (Voyage) and `recall_memory` retrieves it by cosine similarity from pgvector, scoped to an owner resolved through the `ICurrentUser` seam (a constant demo owner today; real auth swaps only that). Without a Voyage key — or on InMemory — memory reports itself unavailable rather than faking a stored or recalled fact. Design and scope: [ADR-0026](docs/adr/0026-agent-memory.md).
 
 **RAG as an agent tool.** Before creating a ticket, the model is instructed to check for duplicates: the query is embedded (Voyage AI, `voyage-3.5` — Anthropic has no embeddings endpoint) and ranked by cosine distance against ticket embeddings stored in pgvector, inside the existing PostgreSQL. Retrieval is cross-lingual — a German problem description matches English tickets. Indexing is asynchronous: a poll-based background worker embeds new, edited (content-hash staleness check), and backfilled tickets in batches, so the ticket write path gains no network dependency. Without a Voyage key — or on the InMemory provider — the tool honestly reports search as unavailable instead of faking empty results. Design and deliberate scope cuts (no chunking, no re-ranking, no separate vector DB): [ADR-0024](docs/adr/0024-semantic-ticket-search-rag.md).
 

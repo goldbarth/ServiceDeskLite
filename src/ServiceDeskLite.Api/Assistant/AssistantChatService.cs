@@ -9,6 +9,7 @@ using Anthropic.Models.Messages;
 
 using Microsoft.Extensions.Options;
 
+using ServiceDeskLite.Application.Abstractions.Assistant;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Contracts.V1.Assistant;
 
@@ -22,6 +23,9 @@ namespace ServiceDeskLite.Api.Assistant;
 /// </summary>
 public sealed partial class AssistantChatService
 {
+    private const string UserRole = "user";
+    private const string AssistantRole = "assistant";
+
     private readonly AnthropicClient _client;
     private readonly CreateTicketTool _createTool;
     private readonly UpdateTicketTool _updateTool;
@@ -29,6 +33,10 @@ public sealed partial class AssistantChatService
     private readonly SearchTicketsTool _searchTool;
     private readonly ChangeTicketStatusTool _changeStatusTool;
     private readonly AssignTicketTool _assignTool;
+    private readonly RememberTool _rememberTool;
+    private readonly RecallMemoryTool _recallTool;
+    private readonly IConversationStore _conversations;
+    private readonly ICurrentUser _currentUser;
     private readonly AnthropicOptions _options;
     private readonly IClock _clock;
     private readonly ILogger<AssistantChatService> _logger;
@@ -41,6 +49,10 @@ public sealed partial class AssistantChatService
         SearchTicketsTool searchTool,
         ChangeTicketStatusTool changeStatusTool,
         AssignTicketTool assignTool,
+        RememberTool rememberTool,
+        RecallMemoryTool recallTool,
+        IConversationStore conversations,
+        ICurrentUser currentUser,
         IOptions<AnthropicOptions> options,
         IClock clock,
         ILogger<AssistantChatService> logger)
@@ -52,26 +64,48 @@ public sealed partial class AssistantChatService
         _searchTool = searchTool ?? throw new ArgumentNullException(nameof(searchTool));
         _changeStatusTool = changeStatusTool ?? throw new ArgumentNullException(nameof(changeStatusTool));
         _assignTool = assignTool ?? throw new ArgumentNullException(nameof(assignTool));
+        _rememberTool = rememberTool ?? throw new ArgumentNullException(nameof(rememberTool));
+        _recallTool = recallTool ?? throw new ArgumentNullException(nameof(recallTool));
+        _conversations = conversations ?? throw new ArgumentNullException(nameof(conversations));
+        _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async IAsyncEnumerable<SseItem<AssistantSseEvent>> StreamChatAsync(
-        IReadOnlyList<AssistantChatMessage> transcript,
+        Guid? conversationId,
+        AssistantChatMessage newMessage,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
+        var owner = _currentUser.Owner;
+        var conversation = conversationId is { } id ? new ConversationId(id) : ConversationId.New();
+
+        // First event: hand the client the conversation id so its next turn sends
+        // only the id + new message instead of the whole transcript.
+        yield return new SseItem<AssistantSseEvent>(
+            new AssistantSseEvent(ConversationId: conversation.Value), AssistantSseEvent.ConversationEvent);
+
         var timeZone = TimeZoneInfo.FindSystemTimeZoneById(_options.UserTimeZone);
         var localNow = TimeZoneInfo.ConvertTime(_clock.UtcNow, timeZone);
         var systemPrompt = BuildSystemPrompt(localNow, _options.UserTimeZone);
 
-        var messages = transcript
+        var stored = await _conversations.GetAsync(conversation, owner, ct);
+
+        var messages = stored
             .Select(m => new MessageParam
             {
-                Role = m.Role == AssistantChatRole.Assistant ? Role.Assistant : Role.User,
+                Role = m.Role == AssistantRole ? Role.Assistant : Role.User,
                 Content = m.Content,
             })
             .ToList();
+
+        messages.Add(new MessageParam { Role = Role.User, Content = newMessage.Content });
+
+        // Accumulates the assistant's text across all tool iterations of this turn;
+        // persisted (with the user message) once the model produces its final answer.
+        var assistantText = new StringBuilder();
+        var nextSequence = stored.Count;
 
         for (var iteration = 0; iteration <= _options.MaxToolIterations; iteration++)
         {
@@ -88,6 +122,8 @@ public sealed partial class AssistantChatService
                     SearchTicketsTool.Definition,
                     ChangeTicketStatusTool.Definition,
                     AssignTicketTool.Definition,
+                    RememberTool.Definition,
+                    RecallMemoryTool.Definition,
                 ],
                 Messages = messages,
             };
@@ -135,12 +171,16 @@ public sealed partial class AssistantChatService
 
                 var textDelta = turn.Apply(stream.Current);
                 if (textDelta is not null)
+                {
+                    assistantText.Append(textDelta);
                     yield return new SseItem<AssistantSseEvent>(
                         new AssistantSseEvent(Text: textDelta), AssistantSseEvent.TextEvent);
+                }
             }
 
             if (turn.StopReason != StopReason.ToolUse || turn.ToolCalls.Count == 0)
             {
+                await PersistTurnAsync(conversation, owner, nextSequence, newMessage.Content, assistantText.ToString(), ct);
                 yield return new SseItem<AssistantSseEvent>(new AssistantSseEvent(), AssistantSseEvent.DoneEvent);
                 yield break;
             }
@@ -180,6 +220,26 @@ public sealed partial class AssistantChatService
         }
     }
 
+    /// <summary>
+    /// Persists this turn's user message and the assistant's final text. Called only
+    /// on successful completion — a failed or aborted turn is left unpersisted so the
+    /// client can retry the same conversation without a dangling user message. Only
+    /// text turns are stored (matching the prior client-resend fidelity); the in-loop
+    /// tool_use/tool_result blocks stay request-local.
+    /// </summary>
+    private async Task PersistTurnAsync(
+        ConversationId conversation, OwnerId owner, int startSequence,
+        string userText, string assistantText, CancellationToken ct)
+    {
+        var now = _clock.UtcNow;
+
+        List<ConversationMessage> toPersist = [new(startSequence, UserRole, userText, now)];
+        if (!string.IsNullOrEmpty(assistantText))
+            toPersist.Add(new(startSequence + 1, AssistantRole, assistantText, now));
+
+        await _conversations.AppendAsync(conversation, owner, toPersist, ct);
+    }
+
     private Task<(string Content, bool IsError, Guid? TicketId)> ExecuteToolAsync(ToolCall call, CancellationToken ct) =>
         call.Name switch
         {
@@ -189,6 +249,8 @@ public sealed partial class AssistantChatService
             SearchTicketsTool.Name => _searchTool.ExecuteAsync(call.Input, ct),
             ChangeTicketStatusTool.Name => _changeStatusTool.ExecuteAsync(call.Input, ct),
             AssignTicketTool.Name => _assignTool.ExecuteAsync(call.Input, ct),
+            RememberTool.Name => _rememberTool.ExecuteAsync(call.Input, ct),
+            RecallMemoryTool.Name => _recallTool.ExecuteAsync(call.Input, ct),
             _ => Task.FromResult(($"Unknown tool '{call.Name}'.", true, (Guid?)null)),
         };
 

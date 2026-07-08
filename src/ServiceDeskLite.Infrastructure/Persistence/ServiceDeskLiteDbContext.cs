@@ -15,6 +15,7 @@ public class ServiceDeskLiteDbContext(DbContextOptions options)
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     public DbSet<TicketEmbedding> TicketEmbeddings => Set<TicketEmbedding>();
+    public DbSet<MemoryRecord> Memories => Set<MemoryRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
