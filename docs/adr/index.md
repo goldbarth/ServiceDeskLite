@@ -32,3 +32,4 @@
 | 0027 | [ADR 0027: Autonomous Multi-Tool Orchestration and Transient-Fault Retry](0027-agent-orchestration-and-retry.md) |
 | 0028 | [ADR 0028: Self-Critique, Confidence Signal, and Tool Fallback](0028-self-critique-confidence-fallback.md) |
 | 0029 | [ADR 0029: Knowledge-Base RAG with Cited Streaming Answers](0029-knowledge-base-rag.md) |
+| 0030 | [ADR 0030: Hybrid Ticket Retrieval (RRF fusion of semantic + keyword + metadata)](0030-hybrid-ticket-retrieval.md) |

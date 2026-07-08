@@ -81,6 +81,13 @@ Revisit when:
 2. More tools need fallbacks - a shared fallback abstraction may beat per-tool wiring.
 3. Confidence starts driving control flow (auto-reject below a threshold) rather than informing the model.
 
+## Update
+
+ADR 0030 turns the keyword *fallback* described here into a keyword *blend*:
+`find_similar_tickets` now fuses semantic + keyword signals (Reciprocal Rank Fusion) on
+the normal path, and the keyword-only behavior remains as the honest degraded path when
+semantic search is unavailable. The confidence signal is now the fused relevance.
+
 ## Related
 
 - ADR 0023 - AI Assistant as Edge Adapter (the loop and `is_error` self-correction)

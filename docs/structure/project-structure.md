@@ -45,6 +45,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── 0027-agent-orchestration-and-retry.md
 │   │   ├── 0028-self-critique-confidence-fallback.md
 │   │   ├── 0029-knowledge-base-rag.md
+│   │   ├── 0030-hybrid-ticket-retrieval.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
@@ -197,6 +198,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── ITicketRepository.cs
 │   │   │   │   └── IUnitOfWork.cs
 │   │   │   └── Search
+│   │   │       ├── IHybridTicketSearch.cs
 │   │   │       ├── IKnowledgeBaseSearch.cs
 │   │   │       └── ITicketSimilaritySearch.cs
 │   │   ├── Agents
@@ -259,6 +261,9 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   └── TicketDetailsDtoMapping.cs
 │   │   │   ├── Outbox
 │   │   │   │   └── OutboxMessageFactory.cs
+│   │   │   ├── Search
+│   │   │   │   ├── HybridTicketSearch.cs
+│   │   │   │   └── ReciprocalRankFusion.cs
 │   │   │   ├── SearchTickets
 │   │   │   │   ├── SearchTicketsHandler.cs
 │   │   │   │   ├── SearchTicketsQuery.cs
@@ -598,8 +603,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── AssignTicketToolInputTests.cs
 │   │   │   ├── ChangeTicketStatusToolInputTests.cs
 │   │   │   ├── CreateTicketToolInputTests.cs
-│   │   │   ├── FindSimilarTicketsToolFallbackTests.cs
 │   │   │   ├── FindSimilarTicketsToolFormatTests.cs
+│   │   │   ├── FindSimilarTicketsToolHybridTests.cs
 │   │   │   ├── FindSimilarTicketsToolInputTests.cs
 │   │   │   ├── RecallMemoryToolInputTests.cs
 │   │   │   ├── RememberToolInputTests.cs
@@ -648,6 +653,9 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   └── GetDashboardSummaryHandlerTests.cs
 │   │   │   ├── GetTicketById
 │   │   │   │   └── GetTicketByIdHandlerTests.cs
+│   │   │   ├── Search
+│   │   │   │   ├── HybridTicketSearchTests.cs
+│   │   │   │   └── ReciprocalRankFusionTests.cs
 │   │   │   ├── SearchTickets
 │   │   │   │   └── SearchTicketsHandlerTests.cs
 │   │   │   └── UpdateTicket
@@ -680,6 +688,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── DeterministicPagingSortingTests.cs
 │   │   │   ├── DuplicateDetectionTests.cs
 │   │   │   ├── FindThenUpdateTests.cs
+│   │   │   ├── HybridTicketSearchTests.cs
 │   │   │   ├── ReadIsolationTests.cs
 │   │   │   ├── ReferenceLookupTests.cs
 │   │   │   └── SearchTicketsFilterTests.cs

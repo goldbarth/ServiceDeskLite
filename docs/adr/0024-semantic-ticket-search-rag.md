@@ -91,3 +91,8 @@ ADR 0028 refines the "unavailable" behavior of `find_similar_tickets`: when sema
 search cannot run (no Voyage key / InMemory) or finds nothing, the tool now falls back
 to labelled keyword search via `SearchTicketsHandler` instead of dead-ending, and its
 result carries a confidence signal (top similarity).
+
+ADR 0030 supersedes the semantic-*only* retrieval described here: `find_similar_tickets`
+now blends this semantic signal with keyword search via Reciprocal Rank Fusion, plus
+metadata (status/priority) filters. The semantic path documented above is unchanged and
+remains the degraded fallback when Voyage/pgvector is unavailable.

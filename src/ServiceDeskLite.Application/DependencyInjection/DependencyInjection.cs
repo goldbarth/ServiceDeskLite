@@ -10,6 +10,8 @@ using ServiceDeskLite.Application.Tickets.CreateTicket;
 using ServiceDeskLite.Application.Tickets.GetAuditEvents;
 using ServiceDeskLite.Application.Tickets.GetDashboardSummary;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
+using ServiceDeskLite.Application.Abstractions.Search;
+using ServiceDeskLite.Application.Tickets.Search;
 using ServiceDeskLite.Application.Tickets.SearchTickets;
 using ServiceDeskLite.Application.Tickets.UpdateTicket;
 
@@ -38,6 +40,10 @@ public static class DependencyInjection
         services.AddScoped<GetAuditEventsHandler>();
         services.AddScoped<GetDashboardSummaryHandler>();
         services.AddScoped<GetAgentsHandler>();
+
+        // Hybrid ticket retrieval composes the semantic + keyword ports; provider-agnostic,
+        // so it is registered once here and shared by both persistence providers.
+        services.AddScoped<IHybridTicketSearch, HybridTicketSearch>();
 
         return services;
     }
