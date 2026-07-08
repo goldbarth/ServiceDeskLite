@@ -34,6 +34,9 @@ public static class AssistantComposition
 
         services.AddSingleton<ICurrentUser, DemoCurrentUser>();
 
+        // Per-request: search_knowledge_base records retrieved passages here, check_grounding reads them.
+        services.AddScoped<IRagRetrievalContext, RagRetrievalContext>();
+
         services.AddScoped<CreateTicketTool>();
         services.AddScoped<UpdateTicketTool>();
         services.AddScoped<FindSimilarTicketsTool>();
@@ -41,6 +44,7 @@ public static class AssistantComposition
         services.AddScoped<ChangeTicketStatusTool>();
         services.AddScoped<AssignTicketTool>();
         services.AddScoped<SearchKnowledgeBaseTool>();
+        services.AddScoped<CheckGroundingTool>();
         services.AddScoped<RememberTool>();
         services.AddScoped<RecallMemoryTool>();
         services.AddScoped<AssistantChatService>();

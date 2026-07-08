@@ -67,6 +67,17 @@
                         </div>
                         break;
 
+                    case ChatEntryKind.Grounding:
+                        <div class="assistant-chat__tool">
+                            <MudChip T="string"
+                                     Icon="@(entry.Score >= 0.6 ? Icons.Material.Filled.VerifiedUser : Icons.Material.Filled.GppMaybe)"
+                                     Size="Size.Small"
+                                     Color="@(entry.Score >= 0.6 ? Color.Success : entry.Score >= 0.3 ? Color.Warning : Color.Error)">
+                                Grounding @(entry.Score is { } s ? s.ToString("P0", System.Globalization.CultureInfo.InvariantCulture) : "—")
+                            </MudChip>
+                        </div>
+                        break;
+
                     case ChatEntryKind.Citations:
                         <div class="assistant-chat__sources">
                             <div class="assistant-chat__sources-title">

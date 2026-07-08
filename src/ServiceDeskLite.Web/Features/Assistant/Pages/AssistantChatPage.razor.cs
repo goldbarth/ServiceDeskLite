@@ -10,6 +10,10 @@ public partial class AssistantChatPage : IDisposable
 {
     [Inject] private IAssistantApiClient AssistantClient { get; set; } = default!;
 
+    // Server-side tool name (ServiceDeskLite.Api.Assistant.CheckGroundingTool.Name); the web
+    // renders its result as a grounding badge instead of a generic tool chip.
+    private const string GroundingToolName = "check_grounding";
+
     private readonly List<ChatEntry> _entries = [];
     private readonly CancellationTokenSource _disposeCts = new();
 
@@ -79,10 +83,13 @@ public partial class AssistantChatPage : IDisposable
                         break;
 
                     case AssistantStreamEvent.ToolResultEvent:
-                        _entries.Add(new ChatEntry(
-                            ChatEntryKind.ToolResult,
-                            evt.Message ?? string.Empty,
-                            evt.IsError == true ? null : evt.TicketId));
+                        if (evt.ToolName == GroundingToolName)
+                            _entries.Add(new ChatEntry(ChatEntryKind.Grounding, evt.Message ?? string.Empty, score: evt.Confidence));
+                        else
+                            _entries.Add(new ChatEntry(
+                                ChatEntryKind.ToolResult,
+                                evt.Message ?? string.Empty,
+                                evt.IsError == true ? null : evt.TicketId));
                         break;
 
                     case AssistantStreamEvent.CitationEvent:
@@ -126,6 +133,7 @@ public partial class AssistantChatPage : IDisposable
         ToolCall,
         ToolResult,
         Citations,
+        Grounding,
         Error,
     }
 
@@ -133,11 +141,13 @@ public partial class AssistantChatPage : IDisposable
         ChatEntryKind kind,
         string text,
         Guid? ticketId = null,
-        IReadOnlyList<AssistantCitation>? citations = null)
+        IReadOnlyList<AssistantCitation>? citations = null,
+        double? score = null)
     {
         public ChatEntryKind Kind { get; } = kind;
         public string Text { get; set; } = text;
         public Guid? TicketId { get; } = ticketId;
         public IReadOnlyList<AssistantCitation> Citations { get; } = citations ?? [];
+        public double? Score { get; } = score;
     }
 }

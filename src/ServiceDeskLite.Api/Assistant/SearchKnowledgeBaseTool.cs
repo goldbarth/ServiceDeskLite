@@ -28,11 +28,16 @@ public sealed partial class SearchKnowledgeBaseTool
     private const int SnippetLength = 240;
 
     private readonly IKnowledgeBaseSearch _search;
+    private readonly IRagRetrievalContext _retrieval;
     private readonly ILogger<SearchKnowledgeBaseTool> _logger;
 
-    public SearchKnowledgeBaseTool(IKnowledgeBaseSearch search, ILogger<SearchKnowledgeBaseTool> logger)
+    public SearchKnowledgeBaseTool(
+        IKnowledgeBaseSearch search,
+        IRagRetrievalContext retrieval,
+        ILogger<SearchKnowledgeBaseTool> logger)
     {
         _search = search ?? throw new ArgumentNullException(nameof(search));
+        _retrieval = retrieval ?? throw new ArgumentNullException(nameof(retrieval));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -163,6 +168,10 @@ public sealed partial class SearchKnowledgeBaseTool
             return new ToolResult(
                 $"No knowledge-base passages matched \"{query}\". Do not invent a source; tell the user nothing relevant was found.",
                 false);
+
+        // Record the retrieved passages so a later check_grounding can score the answer
+        // against exactly these sources.
+        _retrieval.Record(result.Matches.Select(m => new RagPassage(m.Title, m.Heading, m.Snippet)));
 
         return new ToolResult(
             FormatResult(query, result.Matches),

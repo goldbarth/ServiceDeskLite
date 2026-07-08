@@ -34,6 +34,7 @@ public sealed partial class AssistantChatService
     private readonly ChangeTicketStatusTool _changeStatusTool;
     private readonly AssignTicketTool _assignTool;
     private readonly SearchKnowledgeBaseTool _knowledgeTool;
+    private readonly CheckGroundingTool _groundingTool;
     private readonly RememberTool _rememberTool;
     private readonly RecallMemoryTool _recallTool;
     private readonly IConversationStore _conversations;
@@ -51,6 +52,7 @@ public sealed partial class AssistantChatService
         ChangeTicketStatusTool changeStatusTool,
         AssignTicketTool assignTool,
         SearchKnowledgeBaseTool knowledgeTool,
+        CheckGroundingTool groundingTool,
         RememberTool rememberTool,
         RecallMemoryTool recallTool,
         IConversationStore conversations,
@@ -67,6 +69,7 @@ public sealed partial class AssistantChatService
         _changeStatusTool = changeStatusTool ?? throw new ArgumentNullException(nameof(changeStatusTool));
         _assignTool = assignTool ?? throw new ArgumentNullException(nameof(assignTool));
         _knowledgeTool = knowledgeTool ?? throw new ArgumentNullException(nameof(knowledgeTool));
+        _groundingTool = groundingTool ?? throw new ArgumentNullException(nameof(groundingTool));
         _rememberTool = rememberTool ?? throw new ArgumentNullException(nameof(rememberTool));
         _recallTool = recallTool ?? throw new ArgumentNullException(nameof(recallTool));
         _conversations = conversations ?? throw new ArgumentNullException(nameof(conversations));
@@ -126,6 +129,7 @@ public sealed partial class AssistantChatService
                     ChangeTicketStatusTool.Definition,
                     AssignTicketTool.Definition,
                     SearchKnowledgeBaseTool.Definition,
+                    CheckGroundingTool.Definition,
                     RememberTool.Definition,
                     RecallMemoryTool.Definition,
                 ],
@@ -273,6 +277,7 @@ public sealed partial class AssistantChatService
             ChangeTicketStatusTool.Name => _changeStatusTool.ExecuteAsync(call.Input, ct),
             AssignTicketTool.Name => _assignTool.ExecuteAsync(call.Input, ct),
             SearchKnowledgeBaseTool.Name => _knowledgeTool.ExecuteAsync(call.Input, ct),
+            CheckGroundingTool.Name => _groundingTool.ExecuteAsync(call.Input, ct),
             RememberTool.Name => _rememberTool.ExecuteAsync(call.Input, ct),
             RecallMemoryTool.Name => _recallTool.ExecuteAsync(call.Input, ct),
             _ => Task.FromResult(new ToolResult($"Unknown tool '{call.Name}'.", true)),
