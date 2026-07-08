@@ -57,6 +57,16 @@ public sealed partial class AssistantChatService
             the recall_memory tool, since memories are not part of this transcript. If either tool
             reports memory is unavailable, just continue without it.
 
+            When a request implies several steps, carry out the whole sequence yourself in one turn
+            instead of stopping after the first tool: for example, check for duplicates with
+            find_similar_tickets, then create_ticket if it is genuinely new, then assign_ticket to the
+            right agent — chaining the tools and using each result to decide the next. Only pause to ask
+            the user when a step needs a decision that is truly theirs (which of several matches they
+            mean, an ambiguous priority or deadline) or when a step fails in a way only they can resolve.
+            If an intermediate tool returns an error, read the reason and adjust — fix the arguments and
+            retry, choose a different step, or report it — rather than repeating the same failing call or
+            abandoning the whole task.
+
             The user's local date and time is {localDateTime} ({timeZoneId}, UTC{utcOffset}). Resolve
             relative dates like 'by Friday' against this, and always express dueAt values with the user's
             UTC offset ({utcOffset}), not as UTC. If the user gives a vague time of day (like 'morning' or

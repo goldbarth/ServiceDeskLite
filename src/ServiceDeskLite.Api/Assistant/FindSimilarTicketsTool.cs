@@ -125,6 +125,11 @@ public sealed partial class FindSimilarTicketsTool
         {
             result = await _search.SearchAsync(query, limit, ct);
         }
+        catch (Exception ex) when (TransientFault.IsTransient(ex, ct))
+        {
+            // Let the retry policy handle transient faults (e.g. Voyage 429/5xx).
+            throw;
+        }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Similarity search failed for assistant query");

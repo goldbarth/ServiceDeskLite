@@ -202,7 +202,8 @@ public sealed partial class AssistantChatService
                 yield return new SseItem<AssistantSseEvent>(
                     new AssistantSseEvent(ToolName: call.Name), AssistantSseEvent.ToolCallEvent);
 
-                var (content, isError, ticketId) = await ExecuteToolAsync(call, ct);
+                var (content, isError, ticketId) = await ToolRetryPolicy.ExecuteAsync(
+                    c => ExecuteToolAsync(call, c), _options.MaxToolRetries, Backoff, _logger, ct);
 
                 yield return new SseItem<AssistantSseEvent>(
                     new AssistantSseEvent(ToolName: call.Name, TicketId: ticketId, IsError: isError, Message: content),
@@ -238,6 +239,12 @@ public sealed partial class AssistantChatService
             toPersist.Add(new(startSequence + 1, AssistantRole, assistantText, now));
 
         await _conversations.AppendAsync(conversation, owner, toPersist, ct);
+    }
+
+    private TimeSpan Backoff(int attempt)
+    {
+        var ms = _options.ToolRetryBaseDelayMs * Math.Pow(2, attempt);
+        return TimeSpan.FromMilliseconds(Math.Min(ms, 30_000));
     }
 
     private Task<(string Content, bool IsError, Guid? TicketId)> ExecuteToolAsync(ToolCall call, CancellationToken ct) =>

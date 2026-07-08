@@ -109,6 +109,8 @@ Errors follow RFC 9457 ProblemDetails with machine-readable `code` fields.
 
 Event stream: `conversation` (id for the next turn) → `text` (response deltas) → `tool_call` / `tool_result` (with `ticketId`) → `done`; failures arrive as an `error` event. The model has eight tools — `create_ticket`, `update_ticket`, `change_ticket_status` (workflow-validated status changes), `assign_ticket` (assign/reassign/unassign against the seeded agent roster), `search_tickets` (find existing tickets by filter), `find_similar_tickets` (semantic dedup), and the long-term memory pair `remember` / `recall_memory` (store and recall durable user facts across conversations; requires a Voyage key + Postgres, otherwise reports unavailable) — all executing through the regular application-layer handlers.
 
+The model can chain these tools autonomously in a single turn (e.g. dup-check → create → assign, bounded by `Anthropic:MaxToolIterations`, default 6). Transient tool failures (rate limits, upstream 5xx, timeouts) are retried at the edge with bounded backoff (`Anthropic:MaxToolRetries`, `Anthropic:ToolRetryBaseDelayMs`) before surfacing as an error `tool_result`; deterministic failures surface immediately for the model to correct (ADR 0027).
+
 ### Tests
 
 ```bash

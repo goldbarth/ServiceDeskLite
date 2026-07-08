@@ -126,6 +126,11 @@ public sealed partial class RecallMemoryTool
         {
             result = await _memory.SearchAsync(_currentUser.Owner, query, limit, ct);
         }
+        catch (Exception ex) when (TransientFault.IsTransient(ex, ct))
+        {
+            // Let the retry policy handle transient faults (e.g. Voyage 429/5xx).
+            throw;
+        }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Memory recall failed for assistant query");
