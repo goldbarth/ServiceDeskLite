@@ -4,9 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Pgvector.EntityFrameworkCore;
 
+using ServiceDeskLite.Application.Abstractions.Assistant;
 using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Abstractions.Search;
 using ServiceDeskLite.Infrastructure.Embeddings;
+using ServiceDeskLite.Infrastructure.Persistence.Conversations;
 using ServiceDeskLite.Infrastructure.Persistence.Repositories;
 using ServiceDeskLite.Infrastructure.Persistence.UnitOfWork;
 
@@ -27,6 +29,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IOutboxRepository, EfOutboxRepository>();
         services.AddScoped<IDashboardRepository, EfDashboardRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+
+        services.AddScoped<IConversationStore, EfConversationStore>();
 
         services.AddTicketEmbeddings(configuration);
 
@@ -62,6 +66,11 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddScoped<ITicketSimilaritySearch, PgVectorTicketSimilaritySearch>();
         services.AddHostedService<TicketEmbeddingWorker>();
+
+        // Long-term memory shares the Voyage embedding client; one instance backs both ports.
+        services.AddScoped<PgVectorMemoryStore>();
+        services.AddScoped<IMemoryStore>(sp => sp.GetRequiredService<PgVectorMemoryStore>());
+        services.AddScoped<IMemorySearch>(sp => sp.GetRequiredService<PgVectorMemoryStore>());
 
         return services;
     }

@@ -98,17 +98,16 @@ Errors follow RFC 9457 ProblemDetails with machine-readable `code` fields.
 
 ### Assistant endpoint
 
-`POST /api/v1/assistant/chat` takes the full conversation transcript (the API is stateless) and streams Server-Sent Events:
+`POST /api/v1/assistant/chat` takes one new user message plus an optional `conversationId` (conversation state is persisted server-side, ADR 0026) and streams Server-Sent Events. Omit `conversationId` to start a new conversation; the server returns the id on the `conversation` event, which the client resends on the next turn:
 
 ```json
 {
-  "messages": [
-    { "role": "User", "content": "Der Drucker im 3. Stock ist ausgefallen. Bitte bis Freitag 9 Uhr beheben." }
-  ]
+  "conversationId": null,
+  "newMessage": { "role": "User", "content": "Der Drucker im 3. Stock ist ausgefallen. Bitte bis Freitag 9 Uhr beheben." }
 }
 ```
 
-Event stream: `text` (response deltas) → `tool_call` / `tool_result` (with `ticketId`) → `done`; failures arrive as an `error` event. The model has six tools — `create_ticket`, `update_ticket`, `change_ticket_status` (workflow-validated status changes), `assign_ticket` (assign/reassign/unassign against the seeded agent roster), `search_tickets` (find existing tickets by filter) and `find_similar_tickets` (semantic dedup) — all executing through the regular application-layer handlers.
+Event stream: `conversation` (id for the next turn) → `text` (response deltas) → `tool_call` / `tool_result` (with `ticketId`) → `done`; failures arrive as an `error` event. The model has eight tools — `create_ticket`, `update_ticket`, `change_ticket_status` (workflow-validated status changes), `assign_ticket` (assign/reassign/unassign against the seeded agent roster), `search_tickets` (find existing tickets by filter), `find_similar_tickets` (semantic dedup), and the long-term memory pair `remember` / `recall_memory` (store and recall durable user facts across conversations; requires a Voyage key + Postgres, otherwise reports unavailable) — all executing through the regular application-layer handlers.
 
 ### Tests
 

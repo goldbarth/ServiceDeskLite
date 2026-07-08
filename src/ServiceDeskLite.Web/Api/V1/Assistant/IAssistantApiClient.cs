@@ -4,8 +4,13 @@ namespace ServiceDeskLite.Web.Api.V1.Assistant;
 
 public interface IAssistantApiClient
 {
-    /// <summary>Sends the full conversation transcript and streams the assistant's SSE response.</summary>
+    /// <summary>
+    /// Sends one new user message and streams the assistant's SSE response. Pass the
+    /// <paramref name="conversationId"/> from a prior turn's <c>conversation</c> event
+    /// to continue that conversation; pass <c>null</c> to start a new one.
+    /// </summary>
     IAsyncEnumerable<AssistantStreamEvent> ChatAsync(
-        IReadOnlyList<AssistantChatMessage> transcript,
+        Guid? conversationId,
+        AssistantChatMessage newMessage,
         CancellationToken ct = default);
 }

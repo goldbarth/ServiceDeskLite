@@ -49,6 +49,14 @@ public sealed partial class AssistantChatService
             agent, the tool returns the list of valid agents — relay it and ask the user to choose
             rather than inventing a name. Omit the agent name to unassign.
 
+            You have long-term memory across conversations. When the user states a durable
+            preference or profile fact ('always make VPN issues high priority', 'reach me by
+            email'), store it with the remember tool — silently, without announcing it, and only
+            for facts that stay true beyond this conversation, never the current ticket's details.
+            When a preference would change how you handle a request, first check what you know with
+            the recall_memory tool, since memories are not part of this transcript. If either tool
+            reports memory is unavailable, just continue without it.
+
             The user's local date and time is {localDateTime} ({timeZoneId}, UTC{utcOffset}). Resolve
             relative dates like 'by Friday' against this, and always express dueAt values with the user's
             UTC offset ({utcOffset}), not as UTC. If the user gives a vague time of day (like 'morning' or

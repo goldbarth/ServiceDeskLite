@@ -15,12 +15,13 @@ internal sealed class AssistantApiClient(HttpClient http) : IAssistantApiClient
     private static readonly JsonSerializerOptions JsonOptions = JsonSerializerOptions.Web;
 
     public async IAsyncEnumerable<AssistantStreamEvent> ChatAsync(
-        IReadOnlyList<AssistantChatMessage> transcript,
+        Guid? conversationId,
+        AssistantChatMessage newMessage,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "api/v1/assistant/chat")
         {
-            Content = JsonContent.Create(new AssistantChatRequest(transcript)),
+            Content = JsonContent.Create(new AssistantChatRequest(conversationId, newMessage)),
         };
         request.Headers.Accept.Add(new("text/event-stream"));
 
@@ -44,7 +45,8 @@ internal sealed class AssistantApiClient(HttpClient http) : IAssistantApiClient
                 payload?.ToolName,
                 payload?.TicketId,
                 payload?.IsError,
-                payload?.Message);
+                payload?.Message,
+                payload?.ConversationId);
 
             if (sse.EventType is AssistantStreamEvent.DoneEvent or AssistantStreamEvent.ErrorEvent)
                 yield break;
@@ -81,5 +83,6 @@ internal sealed class AssistantApiClient(HttpClient http) : IAssistantApiClient
         string? ToolName,
         Guid? TicketId,
         bool? IsError,
-        string? Message);
+        string? Message,
+        Guid? ConversationId);
 }

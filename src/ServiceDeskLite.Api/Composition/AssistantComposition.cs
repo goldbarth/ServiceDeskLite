@@ -3,6 +3,7 @@ using Anthropic;
 using Microsoft.Extensions.Options;
 
 using ServiceDeskLite.Api.Assistant;
+using ServiceDeskLite.Application.Abstractions.Assistant;
 
 namespace ServiceDeskLite.Api.Composition;
 
@@ -27,12 +28,16 @@ public static class AssistantComposition
             ApiKey = sp.GetRequiredService<IOptions<AnthropicOptions>>().Value.ApiKey,
         });
 
+        services.AddSingleton<ICurrentUser, DemoCurrentUser>();
+
         services.AddScoped<CreateTicketTool>();
         services.AddScoped<UpdateTicketTool>();
         services.AddScoped<FindSimilarTicketsTool>();
         services.AddScoped<SearchTicketsTool>();
         services.AddScoped<ChangeTicketStatusTool>();
         services.AddScoped<AssignTicketTool>();
+        services.AddScoped<RememberTool>();
+        services.AddScoped<RecallMemoryTool>();
         services.AddScoped<AssistantChatService>();
 
         return services;
