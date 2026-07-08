@@ -6,19 +6,19 @@ using Anthropic.Models.Messages;
 
 using ServiceDeskLite.Application.Abstractions.Search;
 using ServiceDeskLite.Application.Common;
-using ServiceDeskLite.Application.Tickets.SearchTickets;
-using ServiceDeskLite.Application.Tickets.Shared;
+using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Api.Assistant;
 
 /// <summary>
-/// RAG retrieval step exposed as a tool: the model decides when to search,
-/// the query is embedded (Voyage) and matched against ticket embeddings in
-/// Postgres (pgvector, cosine). Results go back as a tool_result so the model
-/// can ground its answer in existing tickets - e.g. to flag duplicates before
-/// creating a new one. When semantic search is unavailable (no Voyage key /
-/// InMemory) or finds nothing, it falls back to keyword search so the step still
-/// produces a usable, clearly-labelled result instead of stalling.
+/// Hybrid RAG retrieval exposed as a tool: the model decides when to search, and the
+/// query is answered by <see cref="IHybridTicketSearch"/>, which blends semantic
+/// (Voyage + pgvector cosine) and keyword signals with Reciprocal Rank Fusion,
+/// constrained by optional status/priority metadata filters (ADR-0030). Results carry
+/// a fused relevance score so the model can judge confidence, and each is labelled
+/// with the signals that matched it. When the semantic signal is unavailable (no
+/// Voyage key / InMemory) the blend degrades to keyword-only and says so, rather than
+/// pretending semantic evidence.
 /// </summary>
 public sealed partial class FindSimilarTicketsTool
 {
@@ -27,17 +27,12 @@ public sealed partial class FindSimilarTicketsTool
     private const int DefaultLimit = 5;
     private const int MaxLimit = 10;
 
-    private readonly ITicketSimilaritySearch _search;
-    private readonly SearchTicketsHandler _keywordSearch;
+    private readonly IHybridTicketSearch _search;
     private readonly ILogger<FindSimilarTicketsTool> _logger;
 
-    public FindSimilarTicketsTool(
-        ITicketSimilaritySearch search,
-        SearchTicketsHandler keywordSearch,
-        ILogger<FindSimilarTicketsTool> logger)
+    public FindSimilarTicketsTool(IHybridTicketSearch search, ILogger<FindSimilarTicketsTool> logger)
     {
         _search = search ?? throw new ArgumentNullException(nameof(search));
-        _keywordSearch = keywordSearch ?? throw new ArgumentNullException(nameof(keywordSearch));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -61,16 +56,27 @@ public sealed partial class FindSimilarTicketsTool
                     maximum = MaxLimit,
                     description = LimitDescription,
                 }),
+                ["statuses"] = JsonSerializer.SerializeToElement(new
+                {
+                    type = "array",
+                    items = new { type = "string", @enum = Enum.GetNames<TicketStatus>() },
+                    description = StatusesDescription,
+                }),
+                ["priorities"] = JsonSerializer.SerializeToElement(new
+                {
+                    type = "array",
+                    items = new { type = "string", @enum = Enum.GetNames<TicketPriority>() },
+                    description = PrioritiesDescription,
+                }),
             },
             Required = ["query"],
         },
     };
 
     /// <summary>Maps and validates tool input. Static and side-effect free for unit testing.</summary>
-    public static bool TryParseInput(JsonElement input, out string query, out int limit, out string? error)
+    public static bool TryParseInput(JsonElement input, out HybridTicketSearchQuery query, out string? error)
     {
-        query = string.Empty;
-        limit = DefaultLimit;
+        query = null!;
 
         if (input.ValueKind is not JsonValueKind.Object)
         {
@@ -86,78 +92,114 @@ public sealed partial class FindSimilarTicketsTool
             return false;
         }
 
+        var limit = DefaultLimit;
         if (input.TryGetProperty("limit", out var limitEl) && limitEl.ValueKind is not JsonValueKind.Null)
         {
             if (limitEl.ValueKind is not JsonValueKind.Number
-                || !limitEl.TryGetInt32(out var parsedLimit)
-                || parsedLimit is < 1 or > MaxLimit)
+                || !limitEl.TryGetInt32(out limit)
+                || limit is < 1 or > MaxLimit)
             {
                 error = $"Property 'limit' must be an integer between 1 and {MaxLimit}.";
                 return false;
             }
-
-            limit = parsedLimit;
         }
 
-        query = queryEl.GetString()!;
+        if (!TryParseEnums<TicketStatus>(input, "statuses", out var statuses, out error))
+            return false;
+        if (!TryParseEnums<TicketPriority>(input, "priorities", out var priorities, out error))
+            return false;
+
+        query = new HybridTicketSearchQuery(queryEl.GetString()!.Trim(), limit, statuses, priorities);
         error = null;
         return true;
     }
 
-    /// <summary>Formats matches for the model: compact, one line per ticket, similarity as percentage.</summary>
-    public static string FormatResult(string query, IReadOnlyList<TicketSimilarityMatch> matches)
+    private static bool TryParseEnums<TEnum>(
+        JsonElement input, string property, out IReadOnlyCollection<TEnum>? values, out string? error)
+        where TEnum : struct, Enum
     {
-        if (matches.Count == 0)
-            return $"No tickets similar to \"{query}\" were found.";
+        values = null;
+        error = null;
 
-        var sb = new StringBuilder();
-        sb.Append(CultureInfo.InvariantCulture, $"Found {matches.Count} ticket(s) similar to \"{query}\":");
+        if (!input.TryGetProperty(property, out var el) || el.ValueKind is JsonValueKind.Null)
+            return true;
 
-        foreach (var m in matches)
+        if (el.ValueKind is not JsonValueKind.Array)
         {
-            sb.AppendLine();
-            sb.Append(CultureInfo.InvariantCulture,
-                $"- id={m.Id.Value} | \"{m.Title}\" | status={m.Status} | priority={m.Priority} | similarity={m.Similarity:P0}");
+            error = $"Property '{property}' must be an array of strings.";
+            return false;
         }
 
-        return sb.ToString();
+        var parsed = new List<TEnum>();
+        foreach (var item in el.EnumerateArray())
+        {
+            if (item.ValueKind is not JsonValueKind.String
+                || !Enum.TryParse<TEnum>(item.GetString(), ignoreCase: true, out var value)
+                || !Enum.IsDefined(value))
+            {
+                error = $"Property '{property}' contains an invalid {typeof(TEnum).Name}: '{item}'. "
+                    + $"Valid values: {string.Join(", ", Enum.GetNames<TEnum>())}.";
+                return false;
+            }
+
+            parsed.Add(value);
+        }
+
+        values = parsed.Count > 0 ? parsed : null;
+        return true;
     }
 
-    /// <summary>Formats keyword-fallback hits, labelled so the model knows these are not semantic matches.</summary>
-    public static string FormatFallback(string query, string reason, IReadOnlyList<TicketListItemDto> items)
+    /// <summary>Formats fused matches for the model: one line per ticket with relevance and matched signals.</summary>
+    public static string FormatResult(HybridTicketSearchResult result, string query)
     {
-        if (items.Count == 0)
-            return $"{reason} No tickets matched \"{query}\" by keyword either.";
+        if (result.Matches.Count == 0)
+        {
+            return result.SemanticAvailable
+                ? $"No tickets similar to \"{query}\" were found."
+                : $"Semantic search is unavailable here; no tickets matched \"{query}\" by keyword either.";
+        }
 
         var sb = new StringBuilder();
+        var mode = result.SemanticAvailable
+            ? "hybrid semantic + keyword search"
+            : "keyword-only search (semantic search unavailable — treat as weaker evidence)";
+
         sb.Append(CultureInfo.InvariantCulture,
-            $"{reason} Keyword-matched {items.Count} ticket(s) for \"{query}\" (keyword hits are less precise than semantic ones):");
+            $"Found {result.Matches.Count} ticket(s) for \"{query}\" via {mode}, best first:");
 
-        foreach (var t in items)
+        foreach (var m in result.Matches)
         {
+            var signals = (m.FromSemantic, m.FromKeyword) switch
+            {
+                (true, true) => "semantic+keyword",
+                (true, false) => "semantic",
+                _ => "keyword",
+            };
+            var similarity = m.Similarity is { } s
+                ? string.Create(CultureInfo.InvariantCulture, $", similarity={s:P0}")
+                : string.Empty;
+
             sb.AppendLine();
             sb.Append(CultureInfo.InvariantCulture,
-                $"- id={t.Id.Value} | \"{t.Title}\" | status={t.Status} | priority={t.Priority}");
+                $"- id={m.Id.Value} | \"{m.Title}\" | status={m.Status} | priority={m.Priority} | relevance={m.Relevance:P0}{similarity} | matched={signals}");
         }
 
         return sb.ToString();
     }
 
-    /// <summary>Confidence proxy: the strongest match's similarity (0 when there are none).</summary>
-    public static double TopSimilarity(IReadOnlyList<TicketSimilarityMatch> matches) =>
-        matches.Count > 0 ? matches.Max(m => m.Similarity) : 0.0;
+    /// <summary>Confidence proxy: the strongest match's fused relevance (0 when there are none).</summary>
+    public static double TopRelevance(HybridTicketSearchResult result) =>
+        result.Matches.Count > 0 ? result.Matches.Max(m => m.Relevance) : 0.0;
 
-    public async Task<ToolResult> ExecuteAsync(
-        JsonElement input,
-        CancellationToken ct)
+    public async Task<ToolResult> ExecuteAsync(JsonElement input, CancellationToken ct)
     {
-        if (!TryParseInput(input, out var query, out var limit, out var parseError))
-            return ($"Invalid tool input: {parseError}", true, null, null);
+        if (!TryParseInput(input, out var query, out var parseError))
+            return new ToolResult($"Invalid tool input: {parseError}", true);
 
-        TicketSimilaritySearchResult result;
+        HybridTicketSearchResult result;
         try
         {
-            result = await _search.SearchAsync(query, limit, ct);
+            result = await _search.SearchAsync(query, ct);
         }
         catch (Exception ex) when (TransientFault.IsTransient(ex, ct))
         {
@@ -166,36 +208,15 @@ public sealed partial class FindSimilarTicketsTool
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Similarity search failed for assistant query");
-            return ("Similarity search failed due to a technical error. Continue without it.", true, null, null);
+            _logger.LogError(ex, "Hybrid ticket search failed for assistant query");
+            return new ToolResult("Ticket search failed due to a technical error. Continue without it.", true);
         }
 
-        // Fall back to keyword search when semantic search cannot run or found nothing,
-        // so the step still yields something to reason about rather than dead-ending.
-        if (!result.IsAvailable)
-            return await KeywordFallbackAsync(query, limit, "Semantic search is unavailable here.", ct);
+        // No vector score when semantic did not run; report null confidence rather than a fake one.
+        double? confidence = result.SemanticAvailable && result.Matches.Count > 0
+            ? TopRelevance(result)
+            : null;
 
-        if (result.Matches.Count == 0)
-            return await KeywordFallbackAsync(query, limit, "No semantic matches found.", ct);
-
-        return (FormatResult(query, result.Matches), false, null, TopSimilarity(result.Matches));
-    }
-
-    private async Task<ToolResult> KeywordFallbackAsync(
-        string query, int limit, string reason, CancellationToken ct)
-    {
-        var searchQuery = new SearchTicketsQuery(
-            new TicketSearchCriteria(Text: query),
-            new Paging(PagingPolicy.MinPage, limit));
-
-        var keyword = await _keywordSearch.HandleAsync(searchQuery, ct);
-        if (!keyword.IsSuccess)
-        {
-            // Keyword is the fallback itself; report honestly and let the model proceed.
-            return ($"{reason} Keyword fallback also failed; continue without duplicate detection.", false, null, null);
-        }
-
-        // No vector score for keyword hits - report null confidence rather than fake one.
-        return (FormatFallback(query, reason, keyword.Value!.Page.Items), false, null, null);
+        return new ToolResult(FormatResult(result, query.Text), IsError: false, Confidence: confidence);
     }
 }
