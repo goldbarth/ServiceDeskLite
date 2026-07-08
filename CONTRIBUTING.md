@@ -111,6 +111,30 @@ If a change spans multiple scopes, omit the scope or split into separate commits
 
 ---
 
+## Versioning and Releases
+
+Versions are derived from git tags by [MinVer](https://github.com/adamralph/minver) —
+no version number is stored in source. Release tags are prefixed with `v`
+(`MinVerTagPrefix=v` in `Directory.Build.props`).
+
+- **On a tagged commit**, the build stamps that exact version: tag `v1.3.0` → `1.3.0`.
+- **After a tag**, builds are pre-releases with commit height: e.g. `1.2.1-alpha.0.7`
+  (7 commits past `v1.2.0`). `AssemblyVersion` stays fixed for binary compatibility;
+  the full version lands in `AssemblyInformationalVersion` and `AssemblyFileVersion`.
+
+To cut a release (typically at a completed milestone):
+
+```bash
+git checkout main && git pull
+git tag v1.3.0        # annotated tags also work: git tag -a v1.3.0 -m "M5 RAG Expansion"
+git push origin v1.3.0
+```
+
+The container image gets the version via a build arg, since `.git` is not in the build
+context: `docker build --build-arg MINVER_VERSION_OVERRIDE=1.3.0 .` (see the `Dockerfile`).
+
+---
+
 ## Pull Requests
 
 Before opening a PR:
