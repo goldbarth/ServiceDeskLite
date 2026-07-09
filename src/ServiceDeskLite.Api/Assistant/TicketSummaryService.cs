@@ -7,6 +7,7 @@ using Anthropic.Models.Messages;
 
 using Microsoft.Extensions.Options;
 
+using ServiceDeskLite.Api.Assistant.Sandbox;
 using ServiceDeskLite.Application.Abstractions.Assistant;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
@@ -24,6 +25,8 @@ public sealed partial class TicketSummaryService
 {
     private readonly AnthropicClient _client;
     private readonly IAssistantMetricsSink _metrics;
+    private readonly ModelTurnLimiter _modelTurns;
+    private readonly ICurrentUser _currentUser;
     private readonly IClock _clock;
     private readonly AnthropicOptions _options;
     private readonly ILogger<TicketSummaryService> _logger;
@@ -31,12 +34,16 @@ public sealed partial class TicketSummaryService
     public TicketSummaryService(
         AnthropicClient client,
         IAssistantMetricsSink metrics,
+        ModelTurnLimiter modelTurns,
+        ICurrentUser currentUser,
         IClock clock,
         IOptions<AnthropicOptions> options,
         ILogger<TicketSummaryService> logger)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
+        _modelTurns = modelTurns ?? throw new ArgumentNullException(nameof(modelTurns));
+        _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -47,6 +54,15 @@ public sealed partial class TicketSummaryService
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(ticket);
+
+        // A summary is a billable model call like any other, and the tab streams one on every
+        // first open. It shares the owner's model-turn budget with the chat.
+        if (!_modelTurns.TryConsume(_currentUser.Owner))
+        {
+            _logger.LogWarning("Model-turn rate limit reached while summarizing ticket {TicketId}", ticket.Id.Value);
+            yield return ErrorItem(_modelTurns.LimitMessage);
+            yield break;
+        }
 
         var parameters = new MessageCreateParams
         {

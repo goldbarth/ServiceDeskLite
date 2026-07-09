@@ -3,6 +3,7 @@ using Anthropic;
 using Microsoft.Extensions.Options;
 
 using ServiceDeskLite.Api.Assistant;
+using ServiceDeskLite.Api.Assistant.Sandbox;
 using ServiceDeskLite.Application.Abstractions.Assistant;
 
 namespace ServiceDeskLite.Api.Composition;
@@ -34,6 +35,8 @@ public static class AssistantComposition
             ApiKey = sp.GetRequiredService<IOptions<AnthropicOptions>>().Value.ApiKey,
         });
 
+        services.AddAgentSandbox(configuration);
+
         services.AddSingleton<ICurrentUser, DemoCurrentUser>();
 
         // Per-request: search_knowledge_base records retrieved passages here, check_grounding reads them.
@@ -52,6 +55,42 @@ public static class AssistantComposition
         services.AddScoped<RecallMemoryTool>();
         services.AddScoped<AssistantChatService>();
         services.AddScoped<TicketSummaryService>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// The guard layer every tool call passes through (ADR-0035). Guards are singletons: they
+    /// hold no per-request state, and the per-turn counters are passed to them in the context.
+    /// </summary>
+    private static IServiceCollection AddAgentSandbox(
+        this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<AgentSandboxOptions>()
+            .Bind(configuration.GetSection(AgentSandboxOptions.SectionName))
+            .Validate(o => o.MaxInputCharacters is > 0 and <= 200_000,
+                "AgentSandbox:MaxInputCharacters must be between 1 and 200000.")
+            .Validate(o => o.MaxStringCharacters is > 0 and <= 100_000,
+                "AgentSandbox:MaxStringCharacters must be between 1 and 100000.")
+            .Validate(o => o.MaxStringCharacters <= o.MaxInputCharacters,
+                "AgentSandbox:MaxStringCharacters must not exceed MaxInputCharacters, "
+                + "or the string limit could never be reached.")
+            .Validate(o => o.MaxWritesPerTurn is > 0 and <= 50,
+                "AgentSandbox:MaxWritesPerTurn must be between 1 and 50.")
+            .Validate(o => o.ToolCallsPerMinute is > 0 and <= 10_000,
+                "AgentSandbox:ToolCallsPerMinute must be between 1 and 10000.")
+            .Validate(o => o.ModelTurnsPerMinute is > 0 and <= 10_000,
+                "AgentSandbox:ModelTurnsPerMinute must be between 1 and 10000.")
+            .ValidateOnStart();
+
+        services.AddSingleton<TokenBucketRegistry>();
+        services.AddSingleton<ModelTurnLimiter>();
+
+        services.AddSingleton<IToolGuard, KnownToolGuard>();
+        services.AddSingleton<IToolGuard, InputSizeGuard>();
+        services.AddSingleton<IToolGuard, WriteBudgetGuard>();
+        services.AddSingleton<IToolGuard, RateLimitGuard>();
+        services.AddSingleton<ToolGuardPipeline>();
 
         return services;
     }

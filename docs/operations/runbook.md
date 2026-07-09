@@ -139,7 +139,36 @@ data: {}
 
 The model emits marker-delimited sections (`<<SUMMARY>>`, `<<NEXT_STEPS>>`, `<<RISKS>>`, `<<MISSING_INFO>>`) which the API recovers from the token stream and never forwards to the client.
 Output is capped by `Anthropic:SummaryMaxTokens` (default 2048).
-The web client streams the summary on first open of the ticket's `AI Summary` tab and keeps it for the lifetime of the page; there is no server-side caching and no rate limiting.
+The web client streams the summary on first open of the ticket's `AI Summary` tab and keeps it for the lifetime of the page; there is no server-side caching.
+Each summary spends one model turn from the caller's sandbox budget (see below), so a client that reloads the tab in a loop is throttled rather than billed.
+
+### Agent sandbox
+
+Every tool call passes a guard layer before it reaches a command handler (ADR 0035).
+A refused call comes back to the model as an ordinary `tool_result` with `is_error: true` and the reason, so the model adapts instead of the request failing.
+
+| Setting | Default | What it bounds |
+|---------|---------|----------------|
+| `AgentSandbox:MaxInputCharacters` | 16384 | Raw JSON size of one tool's arguments |
+| `AgentSandbox:MaxStringCharacters` | 8000 | Any single string inside those arguments |
+| `AgentSandbox:MaxWritesPerTurn` | 6 | Ticket- or memory-changing tool calls per chat turn |
+| `AgentSandbox:ToolCallsPerMinute` | 60 | Tool calls per owner |
+| `AgentSandbox:ModelTurnsPerMinute` | 30 | Anthropic round trips per owner, chat and summaries combined |
+
+Unknown tool names are refused outright.
+Retrievals never count against the write budget, so a model that has spent it can still read.
+
+The buckets live in the API process, keyed by `ICurrentUser.Owner` — today a single demo owner, so the limits are effectively global.
+They reset when the API restarts, and a multi-instance deployment would need a shared store.
+Exhausting the model-turn budget ends the stream with an `error` event rather than an HTTP 429, because the response has already begun streaming by the time the model is called.
+
+To see it work, start the API with a tightened limit and ask the assistant to create two tickets:
+
+```bash
+AgentSandbox__MaxWritesPerTurn=1 dotnet run --project src/ServiceDeskLite.Api
+```
+
+The first `create_ticket` succeeds; the second comes back as an error `tool_result`, and the assistant tells the user which ticket it did not create.
 
 ### AI dashboard endpoint
 
