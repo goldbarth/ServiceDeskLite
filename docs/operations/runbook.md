@@ -205,7 +205,11 @@ Seeded demo tickets carry no audit events, so a fresh deployment shows many tick
 dotnet test
 ```
 
-Runs all suites (Domain, Application, API, Integration, Web, EndToEnd) — no database or API key required; test hosts inject fakes.
+Runs all suites (Domain, Application, API, Integration, Web, EndToEnd, Evaluation) — no database or API key required; test hosts inject fakes.
+
+`Tests.Evaluation` is the agent evaluation suite: it drives the real assistant endpoint, loop, guards, tools and handlers against a scripted model, replacing only the HTTP transport under the Anthropic client.
+It pins tool-calling, RAG grounding and streaming behaviour, and it needs no network.
+See [testing/overview.md](../testing/overview.md) for what it does and does not evaluate.
 
 ### PostgreSQL instead of InMemory (optional)
 

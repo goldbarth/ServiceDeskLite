@@ -93,7 +93,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   ├── releases
 │   │   ├── v1.1.0.md
 │   │   ├── v1.2.0.md
-│   │   └── v1.3.0.md
+│   │   ├── v1.3.0.md
+│   │   └── v1.4.0.md
 │   ├── structure
 │   │   ├── project-structure.md
 │   │   ├── solution-map.md
@@ -782,6 +783,21 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   └── SearchTicketsFilterTests.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Tests.EndToEnd.csproj
+│   ├── ServiceDeskLite.Tests.Evaluation
+│   │   ├── Harness
+│   │   │   ├── AgentTranscript.cs
+│   │   │   ├── EvaluationHost.cs
+│   │   │   ├── ScriptedKnowledgeBase.cs
+│   │   │   ├── ScriptedModelHandler.cs
+│   │   │   └── ScriptedTurn.cs
+│   │   ├── Scenarios
+│   │   │   ├── MetricsRegressionTests.cs
+│   │   │   ├── PromptSuiteTests.cs
+│   │   │   ├── RagGroundingTests.cs
+│   │   │   ├── StreamingTests.cs
+│   │   │   └── ToolCallingTests.cs
+│   │   ├── packages.lock.json
+│   │   └── ServiceDeskLite.Tests.Evaluation.csproj
 │   ├── ServiceDeskLite.Tests.Infrastructure.InMemory
 │   │   ├── InMemoryAiDashboardRepositoryTests.cs
 │   │   ├── InMemoryOutboxRepositoryTests.cs
