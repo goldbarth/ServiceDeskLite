@@ -35,11 +35,17 @@ public readonly record struct ToolGuardResult(bool IsAllowed, string? Reason)
 
 /// <param name="Input">Raw tool arguments as the model produced them, before any tool parses them.</param>
 /// <param name="Turn">Counters scoped to one chat turn; shared by every call within it.</param>
+/// <param name="Mode">
+/// Whether a human is watching. The same call is a different risk depending on the answer: a user
+/// who asked for a ticket to be closed has already approved it, while a background loop closing one
+/// has approved nothing.
+/// </param>
 public sealed record ToolInvocationContext(
     string ToolName,
     JsonElement Input,
     OwnerId Owner,
-    ToolTurnState Turn);
+    ToolTurnState Turn,
+    AgentMode Mode = AgentMode.Interactive);
 
 /// <summary>
 /// Mutable per-turn accounting. One instance lives for the length of a single

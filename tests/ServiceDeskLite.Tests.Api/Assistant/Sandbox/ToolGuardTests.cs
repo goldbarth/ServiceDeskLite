@@ -227,8 +227,11 @@ public sealed class ToolCatalogTests
             .Where(name => name is not null)
             .ToList();
 
-        toolNames.Should().HaveCount(11);
+        // Both directions, against each other rather than against a number somebody has to remember
+        // to bump: a tool absent from the catalog would be refused at runtime by KnownToolGuard, and
+        // a catalog entry with no tool behind it would be a name the dispatch can never resolve.
         toolNames.Should().OnlyContain(name => ToolCatalog.IsKnown(name!));
+        toolNames.Should().HaveCount(ToolCatalog.Kinds.Count);
     }
 
     [Fact]

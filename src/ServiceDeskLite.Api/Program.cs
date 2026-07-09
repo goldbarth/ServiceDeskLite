@@ -47,7 +47,8 @@ builder.Services
     .AddApiErrorHandling() // ErrorHandling + ProblemDetails + Mapper
     .AddApplication() // Application Layer
     .AddApiInfrastructure(builder.Configuration) // Infrastructure Provider Switch
-    .AddAssistant(builder.Configuration) // Anthropic client + tool-calling chat service
+    .AddAssistant(builder.Configuration) // Anthropic client + agent loop + tools
+    .AddAutonomousWorker(builder.Configuration) // Background ticket worker (off by default)
     // Last: it decorates the metrics sink the persistence provider registered above.
     .AddObservability(builder.Configuration); // Meter + ActivitySource, Prometheus / OTLP exporters
 

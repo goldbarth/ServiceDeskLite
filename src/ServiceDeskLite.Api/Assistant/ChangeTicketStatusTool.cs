@@ -2,6 +2,7 @@ using System.Text.Json;
 
 using Anthropic.Models.Messages;
 
+using ServiceDeskLite.Application.Abstractions.Assistant;
 using ServiceDeskLite.Application.Tickets.ChangeTicketStatus;
 using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
@@ -12,17 +13,19 @@ namespace ServiceDeskLite.Api.Assistant;
 /// Lets the model advance a ticket through the workflow (e.g. "mark it in progress",
 /// "close it"). Executes through ChangeTicketStatusHandler, so the domain state machine
 /// stays authoritative: invalid transitions are rejected and surfaced back to the model
-/// as an error tool_result, and the change is audited with actor "ai-assistant".
+/// as an error tool_result, and the change is audited under the acting agent's actor.
 /// </summary>
 public sealed partial class ChangeTicketStatusTool
 {
     public const string Name = "change_ticket_status";
 
     private readonly ChangeTicketStatusHandler _handler;
+    private readonly IAgentActor _actor;
 
-    public ChangeTicketStatusTool(ChangeTicketStatusHandler handler)
+    public ChangeTicketStatusTool(ChangeTicketStatusHandler handler, IAgentActor actor)
     {
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+        _actor = actor ?? throw new ArgumentNullException(nameof(actor));
     }
 
     public static Tool Definition => new()
@@ -51,7 +54,12 @@ public sealed partial class ChangeTicketStatusTool
     };
 
     /// <summary>Maps tool input to a ChangeTicketStatusCommand. Static for unit testing.</summary>
-    public static bool TryParseInput(JsonElement input, out ChangeTicketStatusCommand? command, out string? error)
+    /// <param name="actor">Audit actor; defaults to the interactive assistant.</param>
+    public static bool TryParseInput(
+        JsonElement input,
+        out ChangeTicketStatusCommand? command,
+        out string? error,
+        string actor = AuditActors.AiAssistant)
     {
         command = null;
 
@@ -80,7 +88,7 @@ public sealed partial class ChangeTicketStatusTool
             return false;
         }
 
-        command = new ChangeTicketStatusCommand(new TicketId(ticketId), status, AuditActors.AiAssistant);
+        command = new ChangeTicketStatusCommand(new TicketId(ticketId), status, actor);
         error = null;
         return true;
     }
@@ -89,7 +97,7 @@ public sealed partial class ChangeTicketStatusTool
         JsonElement input,
         CancellationToken ct)
     {
-        if (!TryParseInput(input, out var command, out var parseError))
+        if (!TryParseInput(input, out var command, out var parseError, _actor.Actor))
             return ($"Invalid tool input: {parseError}", true, null, null);
 
         var result = await _handler.HandleAsync(command, ct);

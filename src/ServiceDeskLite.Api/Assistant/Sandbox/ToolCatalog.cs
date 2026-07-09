@@ -19,6 +19,7 @@ public static class ToolCatalog
             [AssignTicketTool.Name] = AssistantToolKind.Action,
             [RouteTicketTool.Name] = AssistantToolKind.Action,
             [RememberTool.Name] = AssistantToolKind.Action,
+            [AddCommentTool.Name] = AssistantToolKind.Action,
             [FindSimilarTicketsTool.Name] = AssistantToolKind.DuplicateCheck,
             [SearchTicketsTool.Name] = AssistantToolKind.Retrieval,
             [SearchKnowledgeBaseTool.Name] = AssistantToolKind.Retrieval,

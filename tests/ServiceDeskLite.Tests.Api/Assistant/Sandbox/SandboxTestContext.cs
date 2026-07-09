@@ -19,8 +19,11 @@ internal static class SandboxTestContext
     public static JsonElement Json(string raw) => JsonDocument.Parse(raw).RootElement;
 
     public static ToolInvocationContext Context(
-        string toolName, string input = "{}", ToolTurnState? turn = null)
-        => new(toolName, Json(input), Owner, turn ?? new ToolTurnState());
+        string toolName,
+        string input = "{}",
+        ToolTurnState? turn = null,
+        AgentMode mode = AgentMode.Interactive)
+        => new(toolName, Json(input), Owner, turn ?? new ToolTurnState(), mode);
 }
 
 internal sealed class FakeClock : IClock

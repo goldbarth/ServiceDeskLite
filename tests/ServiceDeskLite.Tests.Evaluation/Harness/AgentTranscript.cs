@@ -72,6 +72,41 @@ public static class AgentTranscript
         return json.RootElement.GetProperty("items").EnumerateArray().Single().GetProperty("id").GetGuid();
     }
 
+    /// <summary>Creates a ticket the way a person would, so the worker finds a real one to review.</summary>
+    public static async Task<Guid> CreateTicketAsync(
+        this HttpClient client, string title, string description, string priority = "Medium")
+    {
+        using var response = await client.PostAsJsonAsync(
+            "/api/v1/tickets", new { title, description, priority, dueAt = (DateTimeOffset?)null });
+        response.EnsureSuccessStatusCode();
+
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        return json.RootElement.GetProperty("id").GetGuid();
+    }
+
+    /// <summary>The ticket as the API reports it: status, and the comments on its conversation.</summary>
+    public static async Task<JsonElement> TicketAsync(this HttpClient client, Guid ticketId)
+    {
+        using var response = await client.GetAsync($"/api/v1/tickets/{ticketId}");
+        response.EnsureSuccessStatusCode();
+
+        return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.Clone();
+    }
+
+    public static async Task<string> StatusOfAsync(this HttpClient client, Guid ticketId)
+        => (await client.TicketAsync(ticketId)).GetProperty("status").GetString()!;
+
+    /// <summary>Comment bodies on a ticket, oldest first. The worker's only way to reach a person.</summary>
+    public static async Task<IReadOnlyList<JsonElement>> CommentsAsync(this HttpClient client, Guid ticketId)
+    {
+        var ticket = await client.TicketAsync(ticketId);
+
+        return ticket.GetProperty("conversation").EnumerateArray()
+            .Where(item => item.TryGetProperty("comment", out var c) && c.ValueKind == JsonValueKind.Object)
+            .Select(item => item.GetProperty("comment").Clone())
+            .ToList();
+    }
+
     public static async Task<IReadOnlyList<JsonElement>> AuditEventsAsync(this HttpClient client, Guid ticketId)
     {
         using var response = await client.GetAsync($"/api/v1/tickets/{ticketId}/audit-events");

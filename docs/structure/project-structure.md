@@ -52,6 +52,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── 0034-ai-operations-metrics.md
 │   │   ├── 0035-agent-sandbox.md
 │   │   ├── 0036-observability.md
+│   │   ├── 0037-autonomous-ticket-worker.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
@@ -95,7 +96,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── v1.1.0.md
 │   │   ├── v1.2.0.md
 │   │   ├── v1.3.0.md
-│   │   └── v1.4.0.md
+│   │   ├── v1.4.0.md
+│   │   └── v1.5.0.md
 │   ├── structure
 │   │   ├── project-structure.md
 │   │   ├── solution-map.md
@@ -113,8 +115,13 @@ The repository is organized into layered projects and mirrored test projects.
 ├── src
 │   ├── ServiceDeskLite.Api
 │   │   ├── Assistant
+│   │   │   ├── Agent
+│   │   │   │   ├── AgentLoop.cs
+│   │   │   │   ├── AgentLoopEvent.cs
+│   │   │   │   └── ToolDispatcher.cs
 │   │   │   ├── Sandbox
 │   │   │   │   ├── AgentSandboxOptions.cs
+│   │   │   │   ├── HumanReviewGuard.cs
 │   │   │   │   ├── InputSizeGuard.cs
 │   │   │   │   ├── IToolGuard.cs
 │   │   │   │   ├── KnownToolGuard.cs
@@ -124,6 +131,9 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── ToolCatalog.cs
 │   │   │   │   ├── ToolGuardPipeline.cs
 │   │   │   │   └── WriteBudgetGuard.cs
+│   │   │   ├── AddCommentTool.cs
+│   │   │   ├── AddCommentTool.prompt.cs
+│   │   │   ├── AgentActorContext.cs
 │   │   │   ├── AnthropicOptions.cs
 │   │   │   ├── AssignTicketTool.cs
 │   │   │   ├── AssignTicketTool.prompt.cs
@@ -209,6 +219,11 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── requests
 │   │   │   ├── api.http
 │   │   │   └── ServiceDeskLite.Request.Api.http
+│   │   ├── Worker
+│   │   │   ├── AutonomousWorkerOptions.cs
+│   │   │   ├── TicketReviewer.cs
+│   │   │   ├── TicketReviewer.prompt.cs
+│   │   │   └── TicketWorker.cs
 │   │   ├── appsettings.Development.json
 │   │   ├── appsettings.json
 │   │   ├── packages.lock.json
@@ -219,6 +234,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── Abstractions
 │   │   │   ├── Assistant
 │   │   │   │   ├── ConversationId.cs
+│   │   │   │   ├── IAgentActor.cs
 │   │   │   │   ├── IAssistantMetricsSink.cs
 │   │   │   │   ├── IConversationStore.cs
 │   │   │   │   ├── ICurrentUser.cs
@@ -683,9 +699,11 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   └── AgentsEndpointTests.cs
 │   │   ├── Assistant
 │   │   │   ├── Sandbox
+│   │   │   │   ├── HumanReviewGuardTests.cs
 │   │   │   │   ├── SandboxTestContext.cs
 │   │   │   │   ├── ToolGuardPipelineTests.cs
 │   │   │   │   └── ToolGuardTests.cs
+│   │   │   ├── AddCommentToolInputTests.cs
 │   │   │   ├── AssignTicketToolInputTests.cs
 │   │   │   ├── ChangeTicketStatusToolInputTests.cs
 │   │   │   ├── CheckGroundingToolTests.cs
@@ -724,6 +742,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── Tickets
 │   │   │   ├── AuditEventMappingTests.cs
 │   │   │   └── ChangeTicketStatusEndpointTests.cs
+│   │   ├── Worker
+│   │   │   └── AutonomousWorkerOptionsTests.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Tests.Api.csproj
 │   ├── ServiceDeskLite.Tests.Application
@@ -803,6 +823,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── ScriptedTurn.cs
 │   │   │   └── TraceCapture.cs
 │   │   ├── Scenarios
+│   │   │   ├── AutonomousWorkerTests.cs
 │   │   │   ├── MetricsRegressionTests.cs
 │   │   │   ├── ObservabilityTests.cs
 │   │   │   ├── PromptSuiteTests.cs

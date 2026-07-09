@@ -3,7 +3,9 @@ using Anthropic;
 using Microsoft.Extensions.Options;
 
 using ServiceDeskLite.Api.Assistant;
+using ServiceDeskLite.Api.Assistant.Agent;
 using ServiceDeskLite.Api.Assistant.Sandbox;
+using ServiceDeskLite.Api.Worker;
 using ServiceDeskLite.Application.Abstractions.Assistant;
 
 namespace ServiceDeskLite.Api.Composition;
@@ -41,6 +43,15 @@ public static class AssistantComposition
 
         // Per-request: search_knowledge_base records retrieved passages here, check_grounding reads them.
         services.AddScoped<IRagRetrievalContext, RagRetrievalContext>();
+
+        // Interactive in every request scope; only the worker's own scope switches it (ADR-0037).
+        // Registered by its concrete type as well, because the worker has to reach the setter.
+        services.AddScoped<AgentActorContext>();
+        services.AddScoped<IAgentActor>(sp => sp.GetRequiredService<AgentActorContext>());
+
+        services.AddScoped<AddCommentTool>();
+        services.AddScoped<ToolDispatcher>();
+        services.AddScoped<AgentLoop>();
 
         services.AddScoped<CreateTicketTool>();
         services.AddScoped<UpdateTicketTool>();
@@ -90,7 +101,49 @@ public static class AssistantComposition
         services.AddSingleton<IToolGuard, InputSizeGuard>();
         services.AddSingleton<IToolGuard, WriteBudgetGuard>();
         services.AddSingleton<IToolGuard, RateLimitGuard>();
+
+        // Only ever refuses an unattended agent; in a conversation the user is the review (ADR-0037).
+        services.AddSingleton<IToolGuard, HumanReviewGuard>();
+
         services.AddSingleton<ToolGuardPipeline>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// The autonomous worker (ADR-0037). Off unless <c>AutonomousWorker:Enabled</c> says otherwise;
+    /// the options bind regardless, because <see cref="HumanReviewGuard"/> reads the same policy to
+    /// decide what an unattended agent may do, worker or not.
+    /// </summary>
+    public static IServiceCollection AddAutonomousWorker(
+        this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<AutonomousWorkerOptions>()
+            .Bind(configuration.GetSection(AutonomousWorkerOptions.SectionName))
+            // Before validation, and before anything reads the policy. The collections bind into an
+            // empty list so configuration replaces rather than appends; this puts the defaults back
+            // where configuration stayed silent.
+            .PostConfigure(o => o.ApplyDefaults())
+            .Validate(o => o.ScanIntervalSeconds is >= 10 and <= 86_400,
+                "AutonomousWorker:ScanIntervalSeconds must be between 10 and 86400.")
+            .Validate(o => o.MaxTicketsPerRun is > 0 and <= 100,
+                "AutonomousWorker:MaxTicketsPerRun must be between 1 and 100.")
+            .Validate(o => o.MinTicketAgeMinutes >= 0,
+                "AutonomousWorker:MinTicketAgeMinutes must not be negative.")
+            .Validate(o => o.ScanStatuses.Count > 0,
+                "AutonomousWorker:ScanStatuses must name at least one status, or the worker scans nothing.")
+            .Validate(o => o.AutonomousWrites.All(ToolCatalog.IsKnown),
+                "AutonomousWorker:AutonomousWrites may only name tools that exist. "
+                + "A misspelt name would silently grant nothing.")
+            .Validate(o => !o.ScanStatuses.Contains(Domain.Tickets.TicketStatus.Closed),
+                "AutonomousWorker:ScanStatuses must not include Closed — the worker would reopen "
+                + "finished work on every scan.")
+            .ValidateOnStart();
+
+        // Scoped: the worker resolves one per ticket, inside the scope it made autonomous.
+        // Registered even when the worker is disabled, so the reviewer stays directly testable.
+        services.AddScoped<TicketReviewer>();
+        services.AddHostedService<TicketWorker>();
 
         return services;
     }
