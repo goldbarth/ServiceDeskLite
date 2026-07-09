@@ -25,6 +25,7 @@ A .NET 10 service-desk reference application built on Clean Architecture: explic
 - **Transactional outbox (stub)** — domain events are staged as outbox messages in the same transaction as the state change; deliberately without a dispatcher ([ADR-0021](docs/adr/0021-outbox-stub.md))
 - **Result-based application flow** — no exceptions cross application boundaries; failures map to RFC 9457 ProblemDetails with machine-readable error codes and field-level validation
 - **Swappable persistence** — PostgreSQL (EF Core) and InMemory behind the same application ports; end-to-end tests run against both
+- **Agent evaluation suite** — the real assistant endpoint, loop, guards, tools and handlers run against a scripted model; only the HTTP transport under the Anthropic client is replaced, so tool calling, RAG grounding and streaming are pinned in CI without a network call
 
 ## System architecture
 

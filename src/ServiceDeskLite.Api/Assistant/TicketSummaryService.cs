@@ -96,6 +96,13 @@ public sealed partial class TicketSummaryService
                 _logger.LogError(ex, "Anthropic API error while summarizing ticket {TicketId}", ticket.Id.Value);
                 failed = true;
             }
+            catch (Exception ex)
+            {
+                // Same contract as the chat stream: an unexpected upstream fault surfaces as an
+                // error event, never as an exception thrown into a half-written response.
+                _logger.LogError(ex, "Unexpected error while summarizing ticket {TicketId}", ticket.Id.Value);
+                failed = true;
+            }
             finally
             {
                 if (!moved)

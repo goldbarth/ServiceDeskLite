@@ -183,6 +183,14 @@ public sealed partial class AssistantChatService
                     _logger.LogError(ex, "Anthropic API error during assistant stream");
                     failed = true;
                 }
+                catch (Exception ex)
+                {
+                    // Nothing guarantees the upstream response is shaped as documented. The adapter
+                    // promises the stream never breaks, so an unexpected fault becomes an error
+                    // event rather than an unhandled exception mid-response.
+                    _logger.LogError(ex, "Unexpected error while reading the assistant stream");
+                    failed = true;
+                }
                 finally
                 {
                     if (!moved)
@@ -208,6 +216,15 @@ public sealed partial class AssistantChatService
                     yield return new SseItem<AssistantSseEvent>(
                         new AssistantSseEvent(Text: textDelta), AssistantSseEvent.TextEvent);
                 }
+            }
+
+            // A turn that ended without a stop reason produced nothing the API promises. Emitting
+            // `done` here would show the user an empty answer and call it success.
+            if (turn.StopReason is null)
+            {
+                _logger.LogError("Assistant stream ended without a stop reason; the response was incomplete");
+                yield return ErrorItem("The AI service returned an incomplete response. Please try again.");
+                yield break;
             }
 
             // One chat turn can span several model round trips; each is billed on its own.
