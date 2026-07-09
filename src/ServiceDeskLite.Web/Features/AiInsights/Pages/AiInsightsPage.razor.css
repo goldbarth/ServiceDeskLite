@@ -1,0 +1,39 @@
+.ai-page {
+    display: grid;
+    gap: 1.7rem;
+    /* Without an explicit track the implicit column sizes to its widest child, and the
+       tool table's nowrap rows would then stretch the hero and cards past the viewport. */
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.ai-page__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.45rem;
+    grid-auto-rows: 1fr;
+}
+
+::deep .ai-page__hero-skeleton,
+::deep .ai-page__card-skeleton {
+    border-radius: var(--shell-radius-lg);
+}
+
+::deep .ai-page__card-skeleton {
+    height: 232px;
+}
+
+::deep .ai-page__notice {
+    border-radius: var(--shell-radius-lg);
+}
+
+@media (min-width: 700px) {
+    .ai-page__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1040px) {
+    .ai-page__grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}

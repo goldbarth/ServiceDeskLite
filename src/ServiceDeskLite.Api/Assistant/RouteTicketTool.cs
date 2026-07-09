@@ -3,6 +3,7 @@ using System.Text.Json;
 using Anthropic.Models.Messages;
 
 using ServiceDeskLite.Application.Tickets.Routing;
+using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Api.Assistant;
@@ -18,7 +19,6 @@ namespace ServiceDeskLite.Api.Assistant;
 public sealed partial class RouteTicketTool
 {
     public const string Name = "route_ticket";
-    private const string AssistantActor = "ai-assistant";
 
     private readonly RouteTicketHandler _handler;
 
@@ -90,7 +90,7 @@ public sealed partial class RouteTicketTool
         if (!TryParseInput(input, out var ticketId, out var parseError))
             return new ToolResult($"Invalid tool input: {parseError}", true);
 
-        var result = await _handler.HandleAsync(new RouteTicketCommand(new TicketId(ticketId), AssistantActor), ct);
+        var result = await _handler.HandleAsync(new RouteTicketCommand(new TicketId(ticketId), AuditActors.AiAssistant), ct);
         if (!result.IsSuccess)
         {
             var e = result.Error!;

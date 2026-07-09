@@ -162,12 +162,16 @@ public sealed partial class SearchKnowledgeBaseTool
         if (!result.IsAvailable)
             return new ToolResult(
                 "The knowledge base is not available in this environment. Answer from general knowledge and tell the user no internal sources could be consulted.",
-                false);
+                false,
+                MatchCount: 0,
+                SemanticAvailable: false);
 
         if (result.Matches.Count == 0)
             return new ToolResult(
                 $"No knowledge-base passages matched \"{query}\". Do not invent a source; tell the user nothing relevant was found.",
-                false);
+                false,
+                MatchCount: 0,
+                SemanticAvailable: true);
 
         // Record the retrieved passages so a later check_grounding can score the answer
         // against exactly these sources.
@@ -177,7 +181,9 @@ public sealed partial class SearchKnowledgeBaseTool
             FormatResult(query, result.Matches),
             IsError: false,
             Confidence: TopSimilarity(result.Matches),
-            Citations: ToCitations(result.Matches));
+            Citations: ToCitations(result.Matches),
+            MatchCount: result.Matches.Count,
+            SemanticAvailable: true);
     }
 
     private static string Collapse(string text) =>

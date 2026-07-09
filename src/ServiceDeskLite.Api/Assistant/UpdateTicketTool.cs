@@ -3,6 +3,7 @@ using System.Text.Json;
 using Anthropic.Models.Messages;
 
 using ServiceDeskLite.Application.Tickets.UpdateTicket;
+using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Api.Assistant;
@@ -16,7 +17,6 @@ namespace ServiceDeskLite.Api.Assistant;
 public sealed partial class UpdateTicketTool
 {
     public const string Name = "update_ticket";
-    private const string AssistantActor = "ai-assistant";
 
     private readonly UpdateTicketHandler _handler;
 
@@ -158,7 +158,7 @@ public sealed partial class UpdateTicketTool
             Description: description,
             Priority: priority,
             DueAt: dueAt,
-            Actor: AssistantActor);
+            Actor: AuditActors.AiAssistant);
 
         error = null;
         return true;

@@ -5,6 +5,7 @@ using Anthropic.Models.Messages;
 using ServiceDeskLite.Application.Agents.GetAgents;
 using ServiceDeskLite.Application.Tickets.AssignTicket;
 using ServiceDeskLite.Domain.Agents;
+using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Api.Assistant;
@@ -19,7 +20,6 @@ namespace ServiceDeskLite.Api.Assistant;
 public sealed partial class AssignTicketTool
 {
     public const string Name = "assign_ticket";
-    private const string AssistantActor = "ai-assistant";
 
     private readonly AssignTicketHandler _handler;
     private readonly GetAgentsHandler _agents;
@@ -116,7 +116,7 @@ public sealed partial class AssignTicketTool
             agentId = match.Id;
         }
 
-        var command = new AssignTicketCommand(new TicketId(ticketId), agentId, AssistantActor);
+        var command = new AssignTicketCommand(new TicketId(ticketId), agentId, AuditActors.AiAssistant);
         var result = await _handler.HandleAsync(command, ct);
 
         if (!result.IsSuccess)

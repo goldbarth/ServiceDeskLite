@@ -217,6 +217,11 @@ public sealed partial class FindSimilarTicketsTool
             ? TopRelevance(result)
             : null;
 
-        return new ToolResult(FormatResult(result, query.Text), IsError: false, Confidence: confidence);
+        return new ToolResult(
+            FormatResult(result, query.Text),
+            IsError: false,
+            Confidence: confidence,
+            MatchCount: result.Matches.Count,
+            SemanticAvailable: result.SemanticAvailable);
     }
 }

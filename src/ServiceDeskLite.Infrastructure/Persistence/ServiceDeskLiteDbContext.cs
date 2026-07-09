@@ -5,6 +5,7 @@ using ServiceDeskLite.Domain.Outbox;
 using ServiceDeskLite.Domain.Tickets;
 using ServiceDeskLite.Infrastructure.Embeddings;
 using ServiceDeskLite.Infrastructure.Embeddings.KnowledgeBase;
+using ServiceDeskLite.Infrastructure.Persistence.AssistantMetrics;
 
 namespace ServiceDeskLite.Infrastructure.Persistence;
 
@@ -18,6 +19,8 @@ public class ServiceDeskLiteDbContext(DbContextOptions options)
     public DbSet<TicketEmbedding> TicketEmbeddings => Set<TicketEmbedding>();
     public DbSet<MemoryRecord> Memories => Set<MemoryRecord>();
     public DbSet<KnowledgeChunk> KnowledgeChunks => Set<KnowledgeChunk>();
+    public DbSet<AssistantToolInvocationRecord> AssistantToolInvocations => Set<AssistantToolInvocationRecord>();
+    public DbSet<AssistantTokenUsageRecord> AssistantTokenUsages => Set<AssistantTokenUsageRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -180,6 +180,13 @@ public sealed class TicketsApiClient : ITicketsApiClient
         return await SendAsync<DashboardSummaryResponse>(httpRequest, ct);
     }
 
+    public async Task<ApiResult<AiDashboardResponse>> GetAiDashboardAsync(
+        CancellationToken ct = default)
+    {
+        var httpRequest = new HttpRequestMessage(HttpMethod.Get, "api/v1/dashboard/ai");
+        return await SendAsync<AiDashboardResponse>(httpRequest, ct);
+    }
+
     // -----------------------------
     // Central Send Logic
     // -----------------------------

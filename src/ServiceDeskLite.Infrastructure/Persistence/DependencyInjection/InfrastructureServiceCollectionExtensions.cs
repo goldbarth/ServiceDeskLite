@@ -9,6 +9,7 @@ using ServiceDeskLite.Application.Abstractions.Persistence;
 using ServiceDeskLite.Application.Abstractions.Search;
 using ServiceDeskLite.Infrastructure.Embeddings;
 using ServiceDeskLite.Infrastructure.Embeddings.KnowledgeBase;
+using ServiceDeskLite.Infrastructure.Persistence.AssistantMetrics;
 using ServiceDeskLite.Infrastructure.Persistence.Conversations;
 using ServiceDeskLite.Infrastructure.Persistence.Repositories;
 using ServiceDeskLite.Infrastructure.Persistence.UnitOfWork;
@@ -31,7 +32,13 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IDashboardRepository, EfDashboardRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
 
+        services.AddScoped<IAiDashboardRepository, EfAiDashboardRepository>();
+
         services.AddScoped<IConversationStore, EfConversationStore>();
+
+        // Singleton: the sink opens its own scope per write and must not hold the
+        // request's DbContext (see EfAssistantMetricsSink).
+        services.AddSingleton<IAssistantMetricsSink, EfAssistantMetricsSink>();
 
         services.AddTicketEmbeddings(configuration);
 

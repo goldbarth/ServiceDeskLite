@@ -308,5 +308,8 @@ public sealed class TicketBoardFeatureStateTests
 
         public Task<ApiResult<DashboardSummaryResponse>> GetDashboardSummaryAsync(CancellationToken ct = default)
             => throw new NotImplementedException();
+
+        public Task<ApiResult<AiDashboardResponse>> GetAiDashboardAsync(CancellationToken ct = default)
+            => throw new NotImplementedException();
     }
 }

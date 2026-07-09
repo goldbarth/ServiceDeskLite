@@ -3,6 +3,7 @@ using System.Text.Json;
 using Anthropic.Models.Messages;
 
 using ServiceDeskLite.Application.Tickets.ChangeTicketStatus;
+using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Api.Assistant;
@@ -16,7 +17,6 @@ namespace ServiceDeskLite.Api.Assistant;
 public sealed partial class ChangeTicketStatusTool
 {
     public const string Name = "change_ticket_status";
-    private const string AssistantActor = "ai-assistant";
 
     private readonly ChangeTicketStatusHandler _handler;
 
@@ -80,7 +80,7 @@ public sealed partial class ChangeTicketStatusTool
             return false;
         }
 
-        command = new ChangeTicketStatusCommand(new TicketId(ticketId), status, AssistantActor);
+        command = new ChangeTicketStatusCommand(new TicketId(ticketId), status, AuditActors.AiAssistant);
         error = null;
         return true;
     }

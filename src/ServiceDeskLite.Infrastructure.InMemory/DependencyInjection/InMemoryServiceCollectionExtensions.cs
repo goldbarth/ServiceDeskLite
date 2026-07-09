@@ -24,11 +24,13 @@ public static class InMemoryServiceCollectionExtensions
         services.AddScoped<IAuditEventRepository, InMemoryAuditEventRepository>();
         services.AddScoped<IOutboxRepository, InMemoryOutboxRepository>();
         services.AddScoped<IDashboardRepository, InMemoryDashboardRepository>();
+        services.AddScoped<IAiDashboardRepository, InMemoryAiDashboardRepository>();
 
         services.AddScoped<ITicketSimilaritySearch, UnavailableTicketSimilaritySearch>();
         services.AddScoped<IKnowledgeBaseSearch, UnavailableKnowledgeBaseSearch>();
 
         services.AddScoped<IConversationStore, InMemoryConversationStore>();
+        services.AddScoped<IAssistantMetricsSink, InMemoryAssistantMetricsSink>();
 
         services.AddScoped<UnavailableMemoryStore>();
         services.AddScoped<IMemoryStore>(sp => sp.GetRequiredService<UnavailableMemoryStore>());
