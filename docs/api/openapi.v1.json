@@ -983,6 +983,14 @@
               "string"
             ]
           },
+          "averageLatencyMs": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
           "errorRate": {
             "format": "double",
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
@@ -1017,7 +1025,8 @@
           "invocations",
           "errors",
           "errorRate",
-          "averageConfidence"
+          "averageConfidence",
+          "averageLatencyMs"
         ],
         "type": "object"
       },
