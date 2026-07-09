@@ -1538,6 +1538,52 @@
           "Tickets"
         ]
       }
+    },
+    "/api/v1/tickets/{id}/summary": {
+      "get": {
+        "description": "Streams a structured summary as Server-Sent Events (delta, error, done). Each delta carries the section it belongs to: Summary, NextSteps, Risks or MissingInfo.",
+        "operationId": "Tickets_Summary",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Stream an AI summary of a ticket",
+        "tags": [
+          "Tickets"
+        ]
+      }
     }
   },
   "servers": [
