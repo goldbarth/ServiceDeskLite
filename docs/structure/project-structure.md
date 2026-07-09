@@ -49,6 +49,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── 0031-rag-grounding-evaluation.md
 │   │   ├── 0032-ai-auto-routing.md
 │   │   ├── 0033-streaming-ticket-summaries.md
+│   │   ├── 0034-ai-operations-metrics.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
@@ -198,6 +199,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── Abstractions
 │   │   │   ├── Assistant
 │   │   │   │   ├── ConversationId.cs
+│   │   │   │   ├── IAssistantMetricsSink.cs
 │   │   │   │   ├── IConversationStore.cs
 │   │   │   │   ├── ICurrentUser.cs
 │   │   │   │   ├── IMemorySearch.cs
@@ -206,6 +208,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   └── OwnerId.cs
 │   │   │   ├── Persistence
 │   │   │   │   ├── IAgentRepository.cs
+│   │   │   │   ├── IAiDashboardRepository.cs
 │   │   │   │   ├── IAuditEventRepository.cs
 │   │   │   │   ├── IDashboardRepository.cs
 │   │   │   │   ├── IOutboxRepository.cs
@@ -225,6 +228,12 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── AgentRoster.cs
 │   │   │   │   └── IAgentSeeder.cs
 │   │   │   └── AgentDto.cs
+│   │   ├── Assistant
+│   │   │   └── GetAiDashboard
+│   │   │       ├── AiDashboardAggregation.cs
+│   │   │       ├── AiDashboardDto.cs
+│   │   │       ├── GetAiDashboardHandler.cs
+│   │   │       └── GetAiDashboardQuery.cs
 │   │   ├── Common
 │   │   │   ├── Validation
 │   │   │   │   ├── FieldValidationBuilder.cs
@@ -317,6 +326,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── ProblemDetailsContract.cs
 │   │   │   │   └── SortDirection.cs
 │   │   │   ├── Dashboard
+│   │   │   │   ├── AiDashboardResponse.cs
 │   │   │   │   └── DashboardSummaryResponse.cs
 │   │   │   └── Tickets
 │   │   │       ├── AddCommentRequest.cs
@@ -343,6 +353,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── Agent.cs
 │   │   │   └── AgentId.cs
 │   │   ├── Audit
+│   │   │   ├── AuditActors.cs
 │   │   │   ├── AuditEvent.cs
 │   │   │   ├── AuditEventId.cs
 │   │   │   └── AuditEventTypes.cs
@@ -395,9 +406,14 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── VoyageEmbeddingClient.cs
 │   │   │   └── VoyageOptions.cs
 │   │   ├── Persistence
+│   │   │   ├── AssistantMetrics
+│   │   │   │   ├── AssistantTokenUsageRecord.cs
+│   │   │   │   ├── AssistantToolInvocationRecord.cs
+│   │   │   │   └── EfAssistantMetricsSink.cs
 │   │   │   ├── Configurations
 │   │   │   │   ├── AgentConfiguration.cs
 │   │   │   │   ├── AgentIdConverter.cs
+│   │   │   │   ├── AssistantMetricsConfiguration.cs
 │   │   │   │   ├── AuditEventConfiguration.cs
 │   │   │   │   ├── AuditEventIdConverter.cs
 │   │   │   │   ├── ConversationIdConverter.cs
@@ -435,9 +451,12 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── 20260708173602_AddKnowledgeChunks.Designer.cs
 │   │   │   │   ├── 20260708234526_AddTicketCategory.cs
 │   │   │   │   ├── 20260708234526_AddTicketCategory.Designer.cs
+│   │   │   │   ├── 20260709080444_AddAssistantMetrics.cs
+│   │   │   │   ├── 20260709080444_AddAssistantMetrics.Designer.cs
 │   │   │   │   └── ServiceDeskLiteDbContextModelSnapshot.cs
 │   │   │   ├── Repositories
 │   │   │   │   ├── EfAgentRepository.cs
+│   │   │   │   ├── EfAiDashboardRepository.cs
 │   │   │   │   ├── EfAuditEventRepository.cs
 │   │   │   │   ├── EfDashboardRepository.cs
 │   │   │   │   ├── EfOutboxRepository.cs
@@ -456,6 +475,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   └── InMemoryServiceCollectionExtensions.cs
 │   │   ├── Persistence
 │   │   │   ├── InMemoryAgentRepository.cs
+│   │   │   ├── InMemoryAiDashboardRepository.cs
+│   │   │   ├── InMemoryAssistantMetricsSink.cs
 │   │   │   ├── InMemoryAuditEventRepository.cs
 │   │   │   ├── InMemoryConversationStore.cs
 │   │   │   ├── InMemoryDashboardRepository.cs
@@ -522,6 +543,15 @@ The repository is organized into layered projects and mirrored test projects.
 │       │   │   └── Users
 │       │   │       └── Pages
 │       │   │           └── UsersPage.razor
+│       │   ├── AiInsights
+│       │   │   ├── Components
+│       │   │   │   ├── ToolUsageTable.razor
+│       │   │   │   └── ToolUsageTable.razor.css
+│       │   │   ├── Pages
+│       │   │   │   ├── AiInsightsPage.razor
+│       │   │   │   ├── AiInsightsPage.razor.cs
+│       │   │   │   └── AiInsightsPage.razor.css
+│       │   │   └── Format.cs
 │       │   ├── Assistant
 │       │   │   └── Pages
 │       │   │       ├── AssistantChatPage.razor
@@ -649,6 +679,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── TransientFaultTests.cs
 │   │   │   └── UpdateTicketToolInputTests.cs
 │   │   ├── Dashboard
+│   │   │   ├── AiDashboardEndpointTests.cs
 │   │   │   └── DashboardEndpointTests.cs
 │   │   ├── ErrorHandling
 │   │   │   ├── BadRequest_Binding_Tests.cs
@@ -668,6 +699,10 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Tests.Api.csproj
 │   ├── ServiceDeskLite.Tests.Application
+│   │   ├── Assistant
+│   │   │   └── GetAiDashboard
+│   │   │       ├── AiDashboardAggregationTests.cs
+│   │   │       └── GetAiDashboardHandlerTests.cs
 │   │   ├── Common
 │   │   │   └── ResultTests.cs
 │   │   ├── Fakes
@@ -732,6 +767,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Tests.EndToEnd.csproj
 │   ├── ServiceDeskLite.Tests.Infrastructure.InMemory
+│   │   ├── InMemoryAiDashboardRepositoryTests.cs
 │   │   ├── InMemoryOutboxRepositoryTests.cs
 │   │   ├── InMemoryTicketRepositoryTests.cs
 │   │   ├── packages.lock.json

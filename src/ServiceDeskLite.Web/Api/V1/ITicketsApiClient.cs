@@ -48,4 +48,7 @@ public interface ITicketsApiClient
 
     Task<ApiResult<DashboardSummaryResponse>> GetDashboardSummaryAsync(
         CancellationToken ct = default);
+
+    Task<ApiResult<AiDashboardResponse>> GetAiDashboardAsync(
+        CancellationToken ct = default);
 }

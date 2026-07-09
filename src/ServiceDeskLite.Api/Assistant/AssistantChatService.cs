@@ -40,6 +40,7 @@ public sealed partial class AssistantChatService
     private readonly RecallMemoryTool _recallTool;
     private readonly IConversationStore _conversations;
     private readonly ICurrentUser _currentUser;
+    private readonly IAssistantMetricsSink _metrics;
     private readonly AnthropicOptions _options;
     private readonly IClock _clock;
     private readonly ILogger<AssistantChatService> _logger;
@@ -59,6 +60,7 @@ public sealed partial class AssistantChatService
         RecallMemoryTool recallTool,
         IConversationStore conversations,
         ICurrentUser currentUser,
+        IAssistantMetricsSink metrics,
         IOptions<AnthropicOptions> options,
         IClock clock,
         ILogger<AssistantChatService> logger)
@@ -77,6 +79,7 @@ public sealed partial class AssistantChatService
         _recallTool = recallTool ?? throw new ArgumentNullException(nameof(recallTool));
         _conversations = conversations ?? throw new ArgumentNullException(nameof(conversations));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+        _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -190,6 +193,10 @@ public sealed partial class AssistantChatService
                 }
             }
 
+            // One chat turn can span several model round trips; each is billed on its own.
+            await _metrics.RecordTokenUsageAsync(
+                new AssistantTokenUsage(_options.Model, turn.InputTokens, turn.OutputTokens, _clock.UtcNow), ct);
+
             if (turn.StopReason != StopReason.ToolUse || turn.ToolCalls.Count == 0)
             {
                 await PersistTurnAsync(conversation, owner, nextSequence, newMessage.Content, assistantText.ToString(), ct);
@@ -219,6 +226,17 @@ public sealed partial class AssistantChatService
 
                 if (result.Confidence is { } score)
                     _logger.LogInformation("Tool {Tool} returned confidence {Confidence:P0}.", call.Name, score);
+
+                await _metrics.RecordToolInvocationAsync(
+                    new AssistantToolInvocation(
+                        ToolName: call.Name,
+                        Kind: KindOf(call.Name),
+                        IsError: result.IsError,
+                        Confidence: result.Confidence,
+                        MatchCount: result.MatchCount,
+                        SemanticAvailable: result.SemanticAvailable,
+                        OccurredAt: _clock.UtcNow),
+                    ct);
 
                 yield return new SseItem<AssistantSseEvent>(
                     new AssistantSseEvent(
@@ -286,6 +304,22 @@ public sealed partial class AssistantChatService
             RememberTool.Name => _rememberTool.ExecuteAsync(call.Input, ct),
             RecallMemoryTool.Name => _recallTool.ExecuteAsync(call.Input, ct),
             _ => Task.FromResult(new ToolResult($"Unknown tool '{call.Name}'.", true)),
+        };
+
+    /// <summary>
+    /// What each tool is for, from the dashboard's point of view. Sits next to
+    /// <see cref="ExecuteToolAsync"/> on purpose: a tool added there without a kind here
+    /// would be reported as an action it is not.
+    /// </summary>
+    private static AssistantToolKind KindOf(string toolName) =>
+        toolName switch
+        {
+            FindSimilarTicketsTool.Name => AssistantToolKind.DuplicateCheck,
+            SearchTicketsTool.Name => AssistantToolKind.Retrieval,
+            SearchKnowledgeBaseTool.Name => AssistantToolKind.Retrieval,
+            RecallMemoryTool.Name => AssistantToolKind.Retrieval,
+            CheckGroundingTool.Name => AssistantToolKind.Evaluation,
+            _ => AssistantToolKind.Action,
         };
 
     private static SseItem<AssistantSseEvent> ErrorItem(string message) =>
@@ -376,11 +410,25 @@ public sealed partial class AssistantChatService
                 return null;
             }
 
-            if (streamEvent.TryPickDelta(out var messageDelta) && messageDelta.Delta.StopReason is { } stopReason)
-                StopReason = stopReason;
+            if (streamEvent.TryPickDelta(out var messageDelta))
+            {
+                if (messageDelta.Delta.StopReason is { } stopReason)
+                    StopReason = stopReason;
+
+                // The final message_delta reports this turn's cumulative token cost.
+                // It is the only place the API states it, so it is the only place to read it.
+                if (messageDelta.Usage is { } usage)
+                {
+                    InputTokens = usage.InputTokens ?? 0;
+                    OutputTokens = usage.OutputTokens;
+                }
+            }
 
             return null;
         }
+
+        public long InputTokens { get; private set; }
+        public long OutputTokens { get; private set; }
 
         public List<ContentBlockParam> ToAssistantContent() => _content;
     }

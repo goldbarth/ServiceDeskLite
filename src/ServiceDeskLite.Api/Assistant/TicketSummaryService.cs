@@ -7,6 +7,8 @@ using Anthropic.Models.Messages;
 
 using Microsoft.Extensions.Options;
 
+using ServiceDeskLite.Application.Abstractions.Assistant;
+using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
 
 namespace ServiceDeskLite.Api.Assistant;
@@ -21,15 +23,21 @@ namespace ServiceDeskLite.Api.Assistant;
 public sealed partial class TicketSummaryService
 {
     private readonly AnthropicClient _client;
+    private readonly IAssistantMetricsSink _metrics;
+    private readonly IClock _clock;
     private readonly AnthropicOptions _options;
     private readonly ILogger<TicketSummaryService> _logger;
 
     public TicketSummaryService(
         AnthropicClient client,
+        IAssistantMetricsSink metrics,
+        IClock clock,
         IOptions<AnthropicOptions> options,
         ILogger<TicketSummaryService> logger)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
+        _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -49,6 +57,7 @@ public sealed partial class TicketSummaryService
         };
 
         var parser = new SummarySectionParser();
+        long inputTokens = 0, outputTokens = 0;
         var stream = _client.Messages.CreateStreaming(parameters, cancellationToken: ct)
             .GetAsyncEnumerator(ct);
 
@@ -89,12 +98,23 @@ public sealed partial class TicketSummaryService
             if (!moved)
                 break;
 
+            // A summary costs tokens like any other turn; leaving it out would understate
+            // what the assistant actually spends.
+            if (stream.Current.TryPickDelta(out var messageDelta) && messageDelta.Usage is { } usage)
+            {
+                inputTokens = usage.InputTokens ?? 0;
+                outputTokens = usage.OutputTokens;
+            }
+
             if (!TryReadTextDelta(stream.Current, out var text))
                 continue;
 
             foreach (var delta in parser.Feed(text))
                 yield return DeltaItem(delta);
         }
+
+        await _metrics.RecordTokenUsageAsync(
+            new AssistantTokenUsage(_options.Model, inputTokens, outputTokens, _clock.UtcNow), ct);
 
         foreach (var delta in parser.Flush())
             yield return DeltaItem(delta);

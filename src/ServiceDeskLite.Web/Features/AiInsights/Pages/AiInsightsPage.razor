@@ -1,0 +1,85 @@
+@page "/ai-insights"
+
+@using MudBlazor
+@using ServiceDeskLite.Web.Components.Feedback
+@using ServiceDeskLite.Web.Features.AiInsights
+@using ServiceDeskLite.Web.Features.AiInsights.Components
+@using ServiceDeskLite.Web.Features.Dashboard.Components
+
+<PageTitle>AI Insights</PageTitle>
+
+<div class="ai-page">
+    <h1 class="u-screen-reader-only">AI Insights</h1>
+
+    @if (_isLoading)
+    {
+        <MudSkeleton Height="214px" Class="ai-page__hero-skeleton" />
+
+        <div class="ai-page__grid">
+            @for (var i = 0; i < 6; i++)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Class="ai-page__card-skeleton" />
+            }
+        </div>
+    }
+    else if (_error is not null)
+    {
+        <AppErrorPanel Error="_error" />
+    }
+    else if (_metrics is not null)
+    {
+        <DashboardHero Badge="AI operations"
+                       Title="Assistant insights"
+                       Description="@HeroDescription"
+                       Stats="HeroStats" />
+
+        @if (!HasAssistantActivity)
+        {
+            <MudAlert Severity="Severity.Info" Class="ai-page__notice" Dense="true">
+                The assistant has not run in the last @_metrics.WindowDays days, so the retrieval,
+                tool and token figures below have nothing to report yet.
+            </MudAlert>
+        }
+
+        <div class="ai-page__grid">
+            <KpiCard Label="Tickets"
+                     Value="@Format.Count(_metrics.Volume.TotalTickets)"
+                     Icon="@Icons.Material.Filled.ConfirmationNumber"
+                     Accent="blue"
+                     SupportingText="@VolumeSupport" />
+
+            <KpiCard Label="Automation rate"
+                     Value="@Format.Percent(_metrics.Automation.Rate)"
+                     Icon="@Icons.Material.Filled.AutoMode"
+                     Accent="violet"
+                     SupportingText="@AutomationSupport" />
+
+            <KpiCard Label="Duplicate rate"
+                     Value="@Format.Percent(_metrics.Retrieval.DuplicateRate)"
+                     Icon="@Icons.Material.Filled.ContentCopy"
+                     Accent="amber"
+                     SupportingText="@DuplicateSupport" />
+
+            <KpiCard Label="RAG confidence"
+                     Value="@RagConfidenceValue"
+                     Icon="@Icons.Material.Filled.Verified"
+                     Accent="@RagConfidenceAccent"
+                     ChipText="@RagConfidenceChip"
+                     SupportingText="@RagConfidenceSupport" />
+
+            <KpiCard Label="Tool calls"
+                     Value="@Format.Count(TotalToolCalls)"
+                     Icon="@Icons.Material.Filled.Build"
+                     Accent="slate"
+                     SupportingText="@ToolCallsSupport" />
+
+            <KpiCard Label="Tokens"
+                     Value="@Format.Tokens(_metrics.Tokens.TotalTokens)"
+                     Icon="@Icons.Material.Filled.Toll"
+                     Accent="rose"
+                     SupportingText="@TokensSupport" />
+        </div>
+
+        <ToolUsageTable Tools="_metrics.Tools" WindowDays="_metrics.WindowDays" />
+    }
+</div>

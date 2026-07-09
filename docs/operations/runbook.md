@@ -73,6 +73,8 @@ Open **`http://localhost:5310`** (explicitly `http://` — the default launch pr
    - It can also edit a ticket it did *not* create in this conversation: ask *"Setze das Login-Ticket auf hohe Priorität"* — the model resolves the description via `search_tickets`, then calls `update_ticket` on the matched id (and asks which one if several match).
 4. **Ticket details** — open the created ticket: due date matches local time, and the audit history shows `ticket.created` / `ticket.details_updated` events with actor `ai-assistant`. The pencil icon in the header opens an inline edit form (title, description, priority, due date); Save PATCHes only the changed fields and refreshes the ticket, Cancel discards. Editing is disabled for closed tickets (domain rule); status and assignee keep their dedicated dialogs. In the Comments tab the reply author is picked from the seeded agent roster (no real login yet — in production this would be the signed-in user).
 
+5. **AI Insights** — after the assistant has run, this page reports the last 7 days: automation rate, duplicate-check hit rate, retrieval confidence, per-tool call counts, and token usage. On a fresh start it shows `n/a` rather than `0 %` for every rate, because nothing has been measured yet.
+
 Everything the assistant does runs through the same command handlers as the UI and API — validation, audit trail, and outbox apply unchanged.
 
 ## 2. API
@@ -93,6 +95,7 @@ All endpoints require the `X-Api-Key` header (Development value: `dev-api-key-no
 | GET    | `/api/v1/tickets/{id}/audit-events` | Audit history |
 | GET    | `/api/v1/tickets/{id}/summary` | AI ticket summary, streams SSE |
 | GET    | `/api/v1/dashboard/summary` | Dashboard KPIs |
+| GET    | `/api/v1/dashboard/ai` | AI operations metrics (trailing 7 days) |
 | POST   | `/api/v1/assistant/chat` | AI assistant, streams SSE |
 
 Errors follow RFC 9457 ProblemDetails with machine-readable `code` fields.
@@ -137,6 +140,35 @@ data: {}
 The model emits marker-delimited sections (`<<SUMMARY>>`, `<<NEXT_STEPS>>`, `<<RISKS>>`, `<<MISSING_INFO>>`) which the API recovers from the token stream and never forwards to the client.
 Output is capped by `Anthropic:SummaryMaxTokens` (default 2048).
 The web client streams the summary on first open of the ticket's `AI Summary` tab and keeps it for the lifetime of the page; there is no server-side caching and no rate limiting.
+
+### AI dashboard endpoint
+
+`GET /api/v1/dashboard/ai` returns assistant metrics over a trailing 7-day window (ADR 0034):
+ticket volume, automation rate, duplicate-check hit rate, retrieval confidence, per-tool call
+statistics, and token usage.
+The web UI renders it at **`http://localhost:5310/ai-insights`** ("AI Insights" in the navigation).
+
+Two figures come from data the system already keeps: ticket volume from the tickets themselves, and the automation rate from audit events whose actor is `ai-assistant`.
+The rest is captured as the assistant runs: one record per tool call, one per model turn.
+A metrics write that fails is logged and dropped; it never fails the chat turn it was measuring.
+
+**Rates are `null`, not `0`, when nothing backs them.** The UI renders these as `n/a`:
+
+```json
+{
+  "windowDays": 7,
+  "automation": { "aiActions": 0, "totalActions": 0, "rate": null },
+  "retrieval": { "duplicateChecks": 0, "duplicateRate": null, "averageConfidence": null, "semanticAvailable": false },
+  "tools": [],
+  "tokens": { "modelTurns": 0, "inputTokens": 0, "outputTokens": 0, "totalTokens": 0 }
+}
+```
+
+`semanticAvailable: false` means this deployment has no Voyage key or no pgvector, so retrieval confidence is not measurable at all — distinct from a measured low score.
+A duplicate check that ran keyword-only still reports its matches, so the duplicate rate stays meaningful where confidence is not.
+
+On the InMemory provider the metrics live in process memory and reset when the API restarts; on Postgres they are persisted (tables `AssistantToolInvocations`, `AssistantTokenUsages`) and are never pruned.
+Seeded demo tickets carry no audit events, so a fresh deployment shows many tickets next to zero audited actions.
 
 ### Tests
 

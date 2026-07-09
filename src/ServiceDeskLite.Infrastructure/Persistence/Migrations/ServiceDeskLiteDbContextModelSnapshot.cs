@@ -281,6 +281,71 @@ namespace ServiceDeskLite.Infrastructure.Persistence.Migrations
                     b.ToTable("TicketEmbeddings", (string)null);
                 });
 
+            modelBuilder.Entity("ServiceDeskLite.Infrastructure.Persistence.AssistantMetrics.AssistantTokenUsageRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("InputTokens")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("OutputTokens")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OccurredAt");
+
+                    b.ToTable("AssistantTokenUsages", (string)null);
+                });
+
+            modelBuilder.Entity("ServiceDeskLite.Infrastructure.Persistence.AssistantMetrics.AssistantToolInvocationRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double?>("Confidence")
+                        .HasColumnType("double precision");
+
+                    b.Property<bool>("IsError")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int?>("MatchCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool?>("SemanticAvailable")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ToolName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OccurredAt");
+
+                    b.ToTable("AssistantToolInvocations", (string)null);
+                });
+
             modelBuilder.Entity("ServiceDeskLite.Infrastructure.Persistence.Conversations.ConversationMessageRecord", b =>
                 {
                     b.Property<Guid>("ConversationId")

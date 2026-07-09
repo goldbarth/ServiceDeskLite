@@ -7,6 +7,7 @@ public static class AppRoutes
     public const string TicketDetails = "/tickets/{id:guid}";
     public const string TicketBoard = "/tickets/board";
     public const string Assistant = "/assistant";
+    public const string AiInsights = "/ai-insights";
 
     public static class Admin
     {

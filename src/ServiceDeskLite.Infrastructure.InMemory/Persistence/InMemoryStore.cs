@@ -15,6 +15,8 @@ internal sealed class InMemoryStore
     private readonly ConcurrentBag<AuditEvent> _auditEvents = new();
     private readonly ConcurrentBag<OutboxMessage> _outboxMessages = new();
     private readonly ConcurrentDictionary<ConversationId, ConversationLog> _conversations = new();
+    private readonly ConcurrentBag<AssistantToolInvocation> _toolInvocations = new();
+    private readonly ConcurrentBag<AssistantTokenUsage> _tokenUsages = new();
 
     public bool TryGetAgent(AgentId id, out Agent? agent)
         => _agents.TryGetValue(id, out agent);
@@ -74,6 +76,18 @@ internal sealed class InMemoryStore
 
     public IReadOnlyCollection<OutboxMessage> SnapshotOutboxMessages()
         => _outboxMessages.ToArray();
+
+    public void AppendToolInvocation(AssistantToolInvocation invocation)
+        => _toolInvocations.Add(invocation);
+
+    public IReadOnlyCollection<AssistantToolInvocation> SnapshotToolInvocations()
+        => _toolInvocations.ToArray();
+
+    public void AppendTokenUsage(AssistantTokenUsage usage)
+        => _tokenUsages.Add(usage);
+
+    public IReadOnlyCollection<AssistantTokenUsage> SnapshotTokenUsages()
+        => _tokenUsages.ToArray();
 
     public IReadOnlyList<ConversationMessage> GetConversation(ConversationId id, OwnerId owner)
     {

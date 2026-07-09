@@ -1,0 +1,75 @@
+.tool-usage {
+    display: grid;
+    gap: 1.15rem;
+    padding: 1.6rem;
+    border-radius: var(--shell-radius-lg);
+    border: 1px solid var(--shell-border, #e3e8ef);
+}
+
+.tool-usage__header {
+    display: grid;
+    gap: 0.3rem;
+}
+
+.tool-usage__title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.tool-usage__subtitle,
+.tool-usage__empty {
+    margin: 0;
+    font-size: 0.86rem;
+    color: var(--shell-text-muted, #66768c);
+}
+
+/* The table is the one element here that can outgrow a narrow viewport;
+   it scrolls inside its own box so the page never scrolls sideways. */
+.tool-usage__scroll {
+    overflow-x: auto;
+    min-width: 0;
+}
+
+.tool-usage__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.tool-usage__table th,
+.tool-usage__table td {
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--shell-border, #e3e8ef);
+    white-space: nowrap;
+}
+
+.tool-usage__table th {
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--shell-text-muted, #66768c);
+}
+
+.tool-usage__table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Qualified by the table: the shared th/td rule above is one element more specific
+   than a bare class, and would otherwise keep these columns left-aligned. */
+.tool-usage__table th.tool-usage__numeric,
+.tool-usage__table td.tool-usage__numeric {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.tool-usage__name {
+    font-family: var(--shell-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 0.84rem;
+}
+
+.tool-usage__muted {
+    color: var(--shell-text-muted, #66768c);
+}

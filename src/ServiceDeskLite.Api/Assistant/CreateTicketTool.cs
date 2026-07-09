@@ -4,6 +4,7 @@ using Anthropic.Models.Messages;
 
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
+using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Api.Assistant;
@@ -16,7 +17,6 @@ namespace ServiceDeskLite.Api.Assistant;
 public sealed partial class CreateTicketTool
 {
     public const string Name = "create_ticket";
-    private const string AssistantActor = "ai-assistant";
 
     private readonly CreateTicketHandler _handler;
     private readonly IClock _clock;
@@ -127,7 +127,7 @@ public sealed partial class CreateTicketTool
             Priority: priority,
             CreatedAt: createdAt,
             DueAt: dueAt,
-            Actor: AssistantActor);
+            Actor: AuditActors.AiAssistant);
 
         error = null;
         return true;
