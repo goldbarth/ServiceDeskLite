@@ -18,6 +18,10 @@
     <ItemGroup>
         <PackageReference Include="Anthropic" Version="12.34.1" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2" />
+        <!-- Pins the transitive Microsoft.OpenApi (pulled in at 2.4.1 by Swashbuckle) up past
+             GHSA-v5pm-xwqc-g5wc: a circular schema reference could terminate OpenAPI parsing.
+             Patched in 2.7.5; remove once Swashbuckle/AspNetCore.OpenApi require a patched version. -->
+        <PackageReference Include="Microsoft.OpenApi" Version="2.7.6" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3" PrivateAssets="all" />
         <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.16.0" />
         <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.16.0-beta.1" />
@@ -28,10 +32,6 @@
         <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\ServiceDeskLite.Application\ServiceDeskLite.Application.csproj" />
     </ItemGroup>
 
     <!-- Knowledge-base corpus: copied next to the app so FileKnowledgeCorpus can read it at runtime. -->
