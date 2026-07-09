@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.6.0 — Autonomous Ticket Worker
+
+### Summary
+
+Every earlier release built an assistant that waits to be spoken to; this one lets it work when nobody is there (milestone M8, the last one on the roadmap).
+A background loop reviews open tickets on a schedule: it asks for missing information, parks the ticket while it waits, proposes solutions grounded in the knowledge base, and refers every high-impact decision to a person.
+It is not a second agent — the tool-calling loop was extracted out of the chat endpoint, so the worker and the assistant run the same loop, the same tools, the same guards and the same command handlers.
+Two things differ, and both come from the scope the worker opens per ticket: it audits as `ai-worker` rather than `ai-assistant`, and a review guard holds back the writes a human should have approved.
+A refused call comes back to the model as an ordinary error result telling it to comment instead, so the reasoning reaches a person and the ticket is untouched until that person agrees.
+
+### Highlights
+
+- Autonomous ticket worker: `TicketWorker` owns *when* (interval, oldest-first candidates, one bad ticket never ends the loop), `TicketReviewer` owns *what*; off unless `AutonomousWorker:Enabled` says otherwise (ADR 0037)
+- The agentic loop is extracted from `AssistantChatService` into `AgentLoop` + `ToolDispatcher`; the chat endpoint becomes an SSE adapter, and a second loop that would drift from the first was deliberately not written
+- `HumanReviewGuard` constrains autonomous runs only: reads always pass, `add_comment` passes because it changes nothing, triaging and parking pass because they sort a ticket without finishing it — everything else is refused with the way out named
+- New `add_comment` tool for both agents: a write on a ticket that changes no state
+- `ai-worker` is a distinct audit actor; both AI actors count as automated through one shared list, so the EF and InMemory dashboard repositories cannot disagree about what "automated" means
+- The worker's authority is validated configuration, not a sentence in a prompt; collections bind into an empty list so a narrower policy replaces the defaults rather than being appended to them
+- Seven deterministic worker scenarios join the evaluation suite, alongside guard, options-binding and tool-input tests
+
+### Known limitations
+
+- Still no real auth — a busy worker and a busy user share one per-owner rate-limit bucket
+- The worker is single-instance by construction: candidate selection takes no lease, so two enabled instances would review the same tickets
+- A guard refusal counts as an error on the AI dashboard's per-tool error rate, so a healthy worker raises the error rate of the tools it is not allowed to call
+- A proposal reaches a person as a comment, not as an approval queue with its own state; accepting or rejecting it is a human action on the ticket
+- The worker never learns from a rejected proposal, and the evaluation suite proves the harness is correct, not that the model's questions are useful
+
+_Full notes: [docs/releases/v1.6.0.md](docs/releases/v1.6.0.md)_
+
 ## v1.5.0 — Agent Sandbox, Evaluation Suite & Observability
 
 ### Summary

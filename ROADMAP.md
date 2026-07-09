@@ -116,14 +116,15 @@ A background process that works tickets end to end.
 ## Milestones Overview
 
 Each phase maps to a GitHub milestone, and every roadmap item is tracked as its own issue.
+Every milestone has shipped; the roadmap is complete as of v1.6.0.
 
-| Milestone | Phase | Focus                  | Issues    | Status  |
-|:---------:|:-----:|------------------------|-----------|---------|
-| **M4**    | 1     | Agent Autonomy         | #153–#155 | Planned |
-| **M5**    | 2     | RAG Expansion          | #156–#158 | Planned |
-| **M6**    | 3     | Product Features       | #159–#161 | Planned |
-| **M7**    | 4     | Architectural Maturity | #162–#164 | Planned |
-| **M8**    | 5     | Autonomous Worker      | #165      | Planned |
+| Milestone | Phase | Focus                  | Issues    | Status  | Shipped in |
+|:---------:|:-----:|------------------------|-----------|---------|------------|
+| **M4**    | 1     | Agent Autonomy         | #153–#155 | Done    | v1.3.0     |
+| **M5**    | 2     | RAG Expansion          | #156–#158 | Done    | v1.3.0     |
+| **M6**    | 3     | Product Features       | #159–#161 | Done    | v1.4.0     |
+| **M7**    | 4     | Architectural Maturity | #162–#164 | Done    | v1.5.0     |
+| **M8**    | 5     | Autonomous Worker      | #165      | Done    | v1.6.0     |
 
 ### M4 — Agent Autonomy
 - **#153** Agent memory — persistent short/long-term state + retrieval tool
