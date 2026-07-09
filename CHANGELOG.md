@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.4.0 — Auto-Routing, Streaming Summaries & AI Insights
+
+### Summary
+
+Turns the assistant from something you talk to into something that works alongside you (milestone M6).
+Incoming tickets are triaged on arrival into category, priority, assignee, and status, and an uncertain decision comes back as a suggestion rather than a silent write.
+A ticket's history collapses into a structured summary that streams token by token into its own tab.
+A new AI Insights page reports what the assistant actually did: automation rate, duplicate-check hit rate, retrieval confidence, per-tool call statistics, and token usage.
+The model still reaches the domain only through the same command handlers, every change is audited, and a number the system cannot measure is reported as unknown rather than as zero.
+
+### Highlights
+
+- AI auto-routing: a deterministic `ITicketRouter` classifies category, priority, assignee, and status; `route_ticket` applies it through the existing handlers, and a confidence gate turns an uncertain decision into a suggestion (ADR 0032)
+- `TicketCategory` becomes a real domain field, with `Uncategorized` distinct from a ticket deliberately routed to `Other`
+- Streaming ticket summaries: `GET /api/v1/tickets/{id}/summary` streams summary, next steps, risks, and missing information into the ticket's `AI Summary` tab; unknowns land in *missing information* instead of being invented (ADR 0033)
+- AI operations dashboard: `GET /api/v1/dashboard/ai` and an `AI Insights` page report automation, duplicate rate, retrieval confidence, tool statistics, and token usage over a trailing seven days (ADR 0034)
+- Assistant metrics are persisted behind a port on both providers; the sink writes on its own DbContext and swallows its failures, so telemetry can never fail the chat turn it measures
+- Every rate is nullable to the wire and renders as `n/a` — an unused system has not achieved 0 % automation
+- New assistant tool `route_ticket` (eleven tools total)
+
+### Known limitations
+
+- Still no real auth — the roster is seeded fictitious accounts, not authenticated identities
+- Routing is a keyword classifier with a hand-tuned threshold, chosen so triage is always available and reproducible; an embedding or LLM classifier can sit behind the same port later
+- Summaries are not persisted and have no rate limiting, so reloading the tab costs a model call
+- Assistant metrics are never pruned, and reset with the process on the InMemory provider
+- Retrieval confidence needs PostgreSQL + a Voyage key; without them it is reported as unmeasurable rather than low
+
+_Full notes: [docs/releases/v1.4.0.md](docs/releases/v1.4.0.md)_
+
 ## v1.3.0 — Knowledge-Base RAG, Hybrid Retrieval & Grounding
 
 ### Summary
