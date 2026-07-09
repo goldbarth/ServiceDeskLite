@@ -1,5 +1,34 @@
 # Changelog
 
+## v1.5.0 — Agent Sandbox, Evaluation Suite & Observability
+
+### Summary
+
+Earlier releases grew what the assistant can do; this one makes it fit to operate (milestone M7).
+The agent is fenced in — every tool call passes a guard pipeline before it reaches a handler, with per-owner rate limits, a write budget per turn, input caps, and outright refusal of unknown tool names.
+A new evaluation suite drives the real endpoint, loop, guards, and tools against a scripted model, so tool-calling, RAG grounding, and streaming are regression-tested offline.
+Runtime behaviour is now observable: a Prometheus scrape endpoint and OpenTelemetry traces expose tool latency, error rates, token usage, retrieval confidence, and a span-level trace of which tools ran and why.
+The model still reaches the domain only through the same command handlers, a refused call reads like any validation error, and a number the system cannot measure is reported as unknown rather than as zero.
+
+### Highlights
+
+- Agent sandbox: a `ToolGuardPipeline` at the single admission point where model intent becomes execution; guards split `Check` from `Commit`, so a rate-limit token is never spent on a write another guard refuses (ADR 0035)
+- Per-owner token buckets for tool calls and Anthropic round trips, the latter shared by the chat loop and the ticket-summary endpoint; a write budget per turn, argument-size caps, and refusal of unknown tool names, with retrievals never counted against the write budget
+- Agent evaluation suite: a new `Tests.Evaluation` project exercises the assistant end to end against a scripted model, faking only the HTTP transport under the Anthropic client — offline, deterministic, no database
+- Observability: a `GET /metrics` Prometheus endpoint and OpenTelemetry traces, fed by one decorator over the metrics sink so Prometheus and the AI dashboard cannot drift; tool calls carry an `error` label instead of a pre-computed rate, and each conversation is a span tree from chat to model turn to tool call (ADR 0036)
+- Tool-call latency is persisted and shown per tool on the AI Insights page
+- Security: pinned `Microsoft.OpenApi` past GHSA-v5pm-xwqc-g5wc, a high-severity advisory pulled in transitively by Swashbuckle
+
+### Known limitations
+
+- Still no real auth — the owner is a constant demo identity, so the per-owner limits are effectively global
+- Rate limits and write budgets are per API instance and reset on restart; a multi-instance deployment would need a shared store (ADR 0035)
+- The evaluation suite proves the harness is correct, not that the model is good — measuring the model's judgment needs a live model and a different test
+- Metrics are per instance and the Prometheus exporter is a pre-release package; traces are exported only when an OTLP endpoint is configured
+- Assistant metrics are never pruned, and reset with the process on the InMemory provider
+
+_Full notes: [docs/releases/v1.5.0.md](docs/releases/v1.5.0.md)_
+
 ## v1.4.0 — Auto-Routing, Streaming Summaries & AI Insights
 
 ### Summary
