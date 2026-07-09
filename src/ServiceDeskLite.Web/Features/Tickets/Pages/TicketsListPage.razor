@@ -237,6 +237,9 @@
                                 <MudIcon Icon="@SortIcon(TicketSortField.Priority)" Class="tickets-sort__icon" />
                             </button>
                         </MudTh>
+                        <MudTh Class="tickets-table__th tickets-table__th--category">
+                            <span class="tickets-table__th-label">Category</span>
+                        </MudTh>
                         <MudTh Class="tickets-table__th tickets-table__th--due">
                             <button type="button"
                                     class="@SortButtonClass(TicketSortField.DueAt)"
@@ -281,6 +284,19 @@
                                      Size="Size.Small">
                                 @FormatPriority(context.Priority)
                             </MudChip>
+                        </MudTd>
+
+                        <MudTd DataLabel="Category" Class="tickets-table__cell tickets-table__cell--category">
+                            @if (context.Category == TicketCategory.Uncategorized)
+                            {
+                                <span class="tickets-table__cell--muted">—</span>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Class="tickets-chip tickets-chip--category" Size="Size.Small">
+                                    @context.Category
+                                </MudChip>
+                            }
                         </MudTd>
 
                         <MudTd DataLabel="Due" Class="tickets-table__cell tickets-table__cell--due">

@@ -9,6 +9,7 @@ public record TicketDetailsDto(
     string Description,
     TicketStatus Status,
     TicketPriority Priority,
+    TicketCategory Category,
     DateTimeOffset CreatedAt,
     DateTimeOffset? DueAt,
     string? Assignee,

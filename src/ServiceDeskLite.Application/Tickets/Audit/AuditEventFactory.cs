@@ -62,7 +62,8 @@ internal static class AuditEventFactory
             newTitle = e.NewTitle,
             newDescription = e.NewDescription,
             newPriority = e.NewPriority?.ToString(),
-            newDueAt = e.NewDueAt
+            newDueAt = e.NewDueAt,
+            newCategory = e.NewCategory?.ToString()
         });
 
         return new AuditEvent(

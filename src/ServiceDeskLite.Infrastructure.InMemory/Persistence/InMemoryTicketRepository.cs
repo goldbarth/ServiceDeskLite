@@ -107,6 +107,7 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
                 t.Title,
                 t.Status,
                 t.Priority,
+                t.Category,
                 t.CreatedAt,
                 t.DueAt,
                 t.AssignedAgentId is { } aid && agentNames.TryGetValue(aid, out var an) ? an : null,

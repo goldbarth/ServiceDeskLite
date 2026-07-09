@@ -83,6 +83,12 @@ else
                         <span class="@($"ticket-detail-badge ticket-detail-badge--priority {PriorityBadgeClass(_ticket.Priority)}")">
                             @FormatPriority(_ticket.Priority)
                         </span>
+                        @if (_ticket.Category != TicketCategory.Uncategorized)
+                        {
+                            <span class="ticket-detail-badge ticket-detail-badge--category">
+                                @_ticket.Category
+                            </span>
+                        }
                     </div>
                 </div>
 

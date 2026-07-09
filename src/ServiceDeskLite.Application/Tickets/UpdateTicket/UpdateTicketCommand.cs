@@ -9,4 +9,5 @@ public sealed record UpdateTicketCommand(
     string? Description = null,
     TicketPriority? Priority = null,
     DateTimeOffset? DueAt = null,
-    string? Actor = null);
+    string? Actor = null,
+    TicketCategory? Category = null);

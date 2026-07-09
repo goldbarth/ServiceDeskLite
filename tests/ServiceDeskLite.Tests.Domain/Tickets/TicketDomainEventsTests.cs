@@ -165,6 +165,35 @@ public sealed class TicketDomainEventsTests
     }
 
     // -----------------------------------------------------------------------
+    // UpdateDetails - category (auto-routing, #159)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void UpdateDetails_NewCategory_RaisesDetailsUpdatedEventCarryingCategory()
+    {
+        var ticket = CreateTicket();
+        ticket.Category.Should().Be(TicketCategory.Uncategorized);
+        ticket.ClearDomainEvents();
+
+        ticket.UpdateDetails(category: TicketCategory.Network);
+
+        ticket.Category.Should().Be(TicketCategory.Network);
+        var e = ticket.DomainEvents.OfType<TicketDetailsUpdatedDomainEvent>().Single();
+        e.NewCategory.Should().Be(TicketCategory.Network);
+    }
+
+    [Fact]
+    public void UpdateDetails_SameCategory_RaisesNoEvent()
+    {
+        var ticket = CreateTicket();
+        ticket.ClearDomainEvents();
+
+        ticket.UpdateDetails(category: TicketCategory.Uncategorized);
+
+        ticket.DomainEvents.Should().BeEmpty();
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
 

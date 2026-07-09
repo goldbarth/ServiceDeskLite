@@ -193,7 +193,7 @@ public sealed class TicketBoardFeatureStateTests
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private static TicketListItemResponse MakeTicket(TicketStatus status = TicketStatus.New) =>
-        new(Guid.NewGuid(), "Test ticket", TicketPriority.Low, status, DateTimeOffset.UtcNow, null, null, [], false, "#ABC1234");
+        new(Guid.NewGuid(), "Test ticket", TicketPriority.Low, TicketCategory.Uncategorized, status, DateTimeOffset.UtcNow, null, null, [], false, "#ABC1234");
 
     // ── Fakes ────────────────────────────────────────────────────────────────
 
@@ -249,6 +249,7 @@ public sealed class TicketBoardFeatureStateTests
                         "T",
                         "D",
                         TicketPriority.Low,
+                        TicketCategory.Uncategorized,
                         TicketStatus.New,
                         DateTimeOffset.UtcNow,
                         null,

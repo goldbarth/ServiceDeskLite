@@ -97,6 +97,7 @@ public class EfTicketRepository : ITicketRepository
                 t.Title,
                 t.Status,
                 t.Priority,
+                t.Category,
                 t.CreatedAt,
                 t.DueAt,
                 AssigneeName = _dbContext.Agents
@@ -113,6 +114,7 @@ public class EfTicketRepository : ITicketRepository
                 t.Title,
                 t.Status,
                 t.Priority,
+                t.Category,
                 t.CreatedAt,
                 t.DueAt,
                 t.AssigneeName,
