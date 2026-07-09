@@ -582,6 +582,18 @@
           null
         ]
       },
+      "TicketCategory": {
+        "enum": [
+          "Uncategorized",
+          "Network",
+          "Hardware",
+          "Software",
+          "Access",
+          "Account",
+          "Other"
+        ],
+        "type": "string"
+      },
       "TicketListItemResponse": {
         "properties": {
           "allowedTransitions": {
@@ -595,6 +607,9 @@
               "null",
               "string"
             ]
+          },
+          "category": {
+            "$ref": "#/components/schemas/TicketCategory"
           },
           "createdAt": {
             "format": "date-time",
@@ -631,6 +646,7 @@
           "id",
           "title",
           "priority",
+          "category",
           "status",
           "createdAt",
           "dueAt",
@@ -663,6 +679,9 @@
               "null",
               "string"
             ]
+          },
+          "category": {
+            "$ref": "#/components/schemas/TicketCategory"
           },
           "conversation": {
             "items": {
@@ -718,6 +737,7 @@
           "title",
           "description",
           "priority",
+          "category",
           "status",
           "createdAt",
           "dueAt",
@@ -754,6 +774,16 @@
       },
       "UpdateTicketRequest": {
         "properties": {
+          "category": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TicketCategory"
+              }
+            ]
+          },
           "description": {
             "type": [
               "null",

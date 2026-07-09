@@ -8,4 +8,5 @@ public sealed record TicketDetailsUpdatedDomainEvent(
     string? NewTitle,
     string? NewDescription,
     TicketPriority? NewPriority,
-    DateTimeOffset? NewDueAt) : IDomainEvent;
+    DateTimeOffset? NewDueAt,
+    TicketCategory? NewCategory = null) : IDomainEvent;

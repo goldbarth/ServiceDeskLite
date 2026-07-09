@@ -463,6 +463,12 @@
     border-color: #d5eadf;
 }
 
+::deep .tickets-chip--category {
+    color: #4a5568;
+    background: #eef1f5;
+    border-color: #dbe1e8;
+}
+
 ::deep .tickets-chip--priority-low {
     color: #5f6f84;
     background: #f2f5f8;

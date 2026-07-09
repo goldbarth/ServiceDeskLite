@@ -18,7 +18,7 @@ public sealed class HybridTicketSearchTests
         new(id, $"T-{id.Value.ToString()[..4]}", TicketStatus.New, p, sim);
 
     private static TicketListItemDto Kw(TicketId id, TicketPriority p = TicketPriority.Medium) =>
-        new(id, $"T-{id.Value.ToString()[..4]}", TicketStatus.New, p, DateTimeOffset.UtcNow, null, null, [], false, "#ABC123");
+        new(id, $"T-{id.Value.ToString()[..4]}", TicketStatus.New, p, TicketCategory.Uncategorized, DateTimeOffset.UtcNow, null, null, [], false, "#ABC123");
 
     private static HybridTicketSearchQuery Query(
         int limit = 10,

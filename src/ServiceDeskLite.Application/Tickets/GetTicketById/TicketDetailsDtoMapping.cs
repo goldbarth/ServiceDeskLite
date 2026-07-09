@@ -23,6 +23,7 @@ internal static class TicketDetailsDtoMapping
             ticket.Description,
             ticket.Status,
             ticket.Priority,
+            ticket.Category,
             ticket.CreatedAt,
             ticket.DueAt,
             assigneeName,

@@ -5,6 +5,7 @@ public sealed record TicketResponse(
     string Title,
     string Description,
     TicketPriority Priority,
+    TicketCategory Category,
     TicketStatus Status,
     DateTimeOffset CreatedAt,
     DateTimeOffset? DueAt,

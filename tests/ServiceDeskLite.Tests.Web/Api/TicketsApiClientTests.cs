@@ -31,6 +31,7 @@ public class TicketsApiClientTests
             "Test",
             "Desc",
             TicketPriority.Low,
+            TicketCategory.Uncategorized,
             TicketStatus.New,
             DateTimeOffset.UtcNow,
             null,
@@ -138,7 +139,7 @@ public class TicketsApiClientTests
     {
         var ticketId = Guid.NewGuid();
         var body = new TicketResponse(
-            ticketId, "Updated", "Desc", TicketPriority.High, TicketStatus.New,
+            ticketId, "Updated", "Desc", TicketPriority.High, TicketCategory.Uncategorized, TicketStatus.New,
             DateTimeOffset.UtcNow, null, null, [], [TicketStatus.Triaged],
             IsOverdue: false, DisplayRef: "#ABC1234", StatusGuidance: string.Empty, SuggestedNextSteps: []);
 

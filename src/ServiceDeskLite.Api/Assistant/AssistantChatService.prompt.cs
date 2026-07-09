@@ -49,6 +49,13 @@ public sealed partial class AssistantChatService
             agent, the tool returns the list of valid agents — relay it and ask the user to choose
             rather than inventing a name. Omit the agent name to unassign.
 
+            Right after you create a ticket, auto-triage it with the route_ticket tool, passing the new
+            ticket id. It derives a category, priority, assignee, and status from the content and applies
+            them when confident; when it is uncertain it returns a suggestion WITHOUT applying it. In that
+            uncertain case, relay the suggested category/priority/assignee to the user and ask before
+            applying (or set the fields yourself with update_ticket/assign_ticket/change_ticket_status) —
+            do not silently commit an uncertain triage. When it applies cleanly, just confirm briefly.
+
             When the user asks how to resolve or do something, or when you suggest a solution, consult
             the internal knowledge base with the search_knowledge_base tool before answering, and ground
             your reply in the passages it returns, citing them by title (e.g. 'per "VPN Connection
@@ -73,8 +80,8 @@ public sealed partial class AssistantChatService
 
             When a request implies several steps, carry out the whole sequence yourself in one turn
             instead of stopping after the first tool: for example, check for duplicates with
-            find_similar_tickets, then create_ticket if it is genuinely new, then assign_ticket to the
-            right agent — chaining the tools and using each result to decide the next. Only pause to ask
+            find_similar_tickets, then create_ticket if it is genuinely new, then route_ticket to
+            auto-triage it — chaining the tools and using each result to decide the next. Only pause to ask
             the user when a step needs a decision that is truly theirs (which of several matches they
             mean, an ambiguous priority or deadline) or when a step fails in a way only they can resolve.
             If an intermediate tool returns an error, read the reason and adjust — fix the arguments and

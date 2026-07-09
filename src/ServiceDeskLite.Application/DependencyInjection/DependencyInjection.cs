@@ -10,7 +10,9 @@ using ServiceDeskLite.Application.Tickets.CreateTicket;
 using ServiceDeskLite.Application.Tickets.GetAuditEvents;
 using ServiceDeskLite.Application.Tickets.GetDashboardSummary;
 using ServiceDeskLite.Application.Tickets.GetTicketById;
+using ServiceDeskLite.Application.Abstractions.Routing;
 using ServiceDeskLite.Application.Abstractions.Search;
+using ServiceDeskLite.Application.Tickets.Routing;
 using ServiceDeskLite.Application.Tickets.Search;
 using ServiceDeskLite.Application.Tickets.SearchTickets;
 using ServiceDeskLite.Application.Tickets.UpdateTicket;
@@ -44,6 +46,11 @@ public static class DependencyInjection
         // Hybrid ticket retrieval composes the semantic + keyword ports; provider-agnostic,
         // so it is registered once here and shared by both persistence providers.
         services.AddScoped<IHybridTicketSearch, HybridTicketSearch>();
+
+        // Auto-routing: deterministic rule-based classifier + the use-case that applies it
+        // through the existing command handlers (issue #159).
+        services.AddSingleton<ITicketRouter, KeywordTicketRouter>();
+        services.AddScoped<RouteTicketHandler>();
 
         return services;
     }

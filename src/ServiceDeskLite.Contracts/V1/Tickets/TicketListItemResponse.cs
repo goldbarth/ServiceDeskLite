@@ -4,6 +4,7 @@ public sealed record TicketListItemResponse(
     Guid Id,
     string Title,
     TicketPriority Priority,
+    TicketCategory Category,
     TicketStatus Status,
     DateTimeOffset CreatedAt,
     DateTimeOffset? DueAt,

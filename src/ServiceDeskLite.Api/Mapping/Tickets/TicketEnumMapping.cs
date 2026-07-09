@@ -3,6 +3,7 @@ using ServiceDeskLite.Contracts.V1.Tickets;
 
 using AppSortDirection = ServiceDeskLite.Application.Tickets.Shared.SortDirection;
 using AppTicketSortField = ServiceDeskLite.Application.Tickets.Shared.TicketSortField;
+using DomainTicketCategory = ServiceDeskLite.Domain.Tickets.TicketCategory;
 using DomainTicketPriority = ServiceDeskLite.Domain.Tickets.TicketPriority;
 using DomainTicketStatus = ServiceDeskLite.Domain.Tickets.TicketStatus;
 
@@ -28,6 +29,30 @@ internal static class TicketEnumMapping
         _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unsupported TicketPriority.")
     };
     
+    public static TicketCategory ToContract(this DomainTicketCategory value) => value switch
+    {
+        DomainTicketCategory.Uncategorized => TicketCategory.Uncategorized,
+        DomainTicketCategory.Network => TicketCategory.Network,
+        DomainTicketCategory.Hardware => TicketCategory.Hardware,
+        DomainTicketCategory.Software => TicketCategory.Software,
+        DomainTicketCategory.Access => TicketCategory.Access,
+        DomainTicketCategory.Account => TicketCategory.Account,
+        DomainTicketCategory.Other => TicketCategory.Other,
+        _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unsupported TicketCategory.")
+    };
+
+    public static DomainTicketCategory ToDomain(this TicketCategory value) => value switch
+    {
+        TicketCategory.Uncategorized => DomainTicketCategory.Uncategorized,
+        TicketCategory.Network => DomainTicketCategory.Network,
+        TicketCategory.Hardware => DomainTicketCategory.Hardware,
+        TicketCategory.Software => DomainTicketCategory.Software,
+        TicketCategory.Access => DomainTicketCategory.Access,
+        TicketCategory.Account => DomainTicketCategory.Account,
+        TicketCategory.Other => DomainTicketCategory.Other,
+        _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unsupported TicketCategory.")
+    };
+
     public static AppTicketSortField ToApplication(this TicketSortField value) => value switch
     {
         TicketSortField.CreatedAt => AppTicketSortField.CreatedAt,

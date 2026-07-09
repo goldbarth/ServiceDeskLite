@@ -5,4 +5,5 @@ public sealed record UpdateTicketRequest(
     string? Title = null,
     string? Description = null,
     TicketPriority? Priority = null,
-    DateTimeOffset? DueAt = null);
+    DateTimeOffset? DueAt = null,
+    TicketCategory? Category = null);

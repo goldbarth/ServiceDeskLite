@@ -198,7 +198,8 @@ public static class TicketsEndpoints
             Title: request.Title,
             Description: request.Description,
             Priority: request.Priority?.ToDomain(),
-            DueAt: request.DueAt);
+            DueAt: request.DueAt,
+            Category: request.Category?.ToDomain());
 
         var result = await handler.HandleAsync(cmd, ct);
 

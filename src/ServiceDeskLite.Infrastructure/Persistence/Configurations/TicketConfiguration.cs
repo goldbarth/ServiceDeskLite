@@ -42,6 +42,11 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
         builder.Property(t => t.Status)
             .IsRequired();
 
+        // Stored as int like Priority/Status (EF enum default). Uncategorized (0) is the
+        // pre-routing default, so existing rows backfill to it without a data migration.
+        builder.Property(t => t.Category)
+            .IsRequired();
+
         builder.Property(t => t.CreatedAt)
             .IsRequired();
 

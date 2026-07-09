@@ -14,6 +14,12 @@ public sealed class Ticket
     public string Description { get; private set; }
     public TicketPriority Priority { get; private set; }
     public TicketStatus Status { get; private set; }
+
+    // Triage category, set by auto-routing (issue #159). Defaults to Uncategorized
+    // until a router classifies the ticket; changed through UpdateDetails so the
+    // change is audited like any other field edit.
+    public TicketCategory Category { get; private set; }
+
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset? DueAt { get; private set; }
 
@@ -55,6 +61,7 @@ public sealed class Ticket
         Description = description;
         Priority = priority;
         Status = TicketStatus.New;
+        Category = TicketCategory.Uncategorized;
         CreatedAt = createdAt;
         DueAt = dueAt;
 
@@ -93,7 +100,8 @@ public sealed class Ticket
         string? title = null,
         string? description = null,
         TicketPriority? priority = null,
-        DateTimeOffset? dueAt = null)
+        DateTimeOffset? dueAt = null,
+        TicketCategory? category = null)
     {
         if (Status == TicketStatus.Closed)
             throw new DomainException(TicketErrors.CannotUpdateClosed());
@@ -114,17 +122,20 @@ public sealed class Ticket
         var changedDescription = description is not null && description != Description ? description : null;
         TicketPriority? changedPriority = priority is not null && priority != Priority ? priority : null;
         DateTimeOffset? changedDueAt = dueAt is not null && dueAt != DueAt ? dueAt : null;
+        TicketCategory? changedCategory = category is not null && category != Category ? category : null;
 
-        if (changedTitle is null && changedDescription is null && changedPriority is null && changedDueAt is null)
+        if (changedTitle is null && changedDescription is null && changedPriority is null
+            && changedDueAt is null && changedCategory is null)
             return;
 
         Title = changedTitle ?? Title;
         Description = changedDescription ?? Description;
         Priority = changedPriority ?? Priority;
         DueAt = changedDueAt ?? DueAt;
+        Category = changedCategory ?? Category;
 
         _domainEvents.Add(new TicketDetailsUpdatedDomainEvent(
-            Id, changedTitle, changedDescription, changedPriority, changedDueAt));
+            Id, changedTitle, changedDescription, changedPriority, changedDueAt, changedCategory));
     }
 
     public Comment AddComment(string content, DateTimeOffset createdAt, string? author = null)

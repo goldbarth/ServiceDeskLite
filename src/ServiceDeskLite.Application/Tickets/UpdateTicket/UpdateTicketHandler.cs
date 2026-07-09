@@ -61,7 +61,7 @@ public sealed class UpdateTicketHandler
 
         try
         {
-            ticket.UpdateDetails(command.Title, command.Description, command.Priority, command.DueAt);
+            ticket.UpdateDetails(command.Title, command.Description, command.Priority, command.DueAt, command.Category);
 
             // No-op updates (all values equal to current state) raise no event
             // and are returned successfully without an audit entry.
