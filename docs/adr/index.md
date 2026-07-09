@@ -37,3 +37,4 @@
 | 0032 | [ADR 0032: AI Auto-Routing (deterministic triage applied through command handlers)](0032-ai-auto-routing.md) |
 | 0033 | [ADR 0033: Streaming Ticket Summaries (marker-delimited sections over SSE)](0033-streaming-ticket-summaries.md) |
 | 0034 | [ADR 0034: AI Operations Metrics (persisted assistant telemetry, honest empty states)](0034-ai-operations-metrics.md) |
+| 0035 | [ADR 0035: Agent Sandbox (uniform tool admission, rate limits, write budgets)](0035-agent-sandbox.md) |

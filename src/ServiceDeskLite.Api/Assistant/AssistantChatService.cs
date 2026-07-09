@@ -9,6 +9,7 @@ using Anthropic.Models.Messages;
 
 using Microsoft.Extensions.Options;
 
+using ServiceDeskLite.Api.Assistant.Sandbox;
 using ServiceDeskLite.Application.Abstractions.Assistant;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Contracts.V1.Assistant;
@@ -41,6 +42,8 @@ public sealed partial class AssistantChatService
     private readonly IConversationStore _conversations;
     private readonly ICurrentUser _currentUser;
     private readonly IAssistantMetricsSink _metrics;
+    private readonly ToolGuardPipeline _guards;
+    private readonly ModelTurnLimiter _modelTurns;
     private readonly AnthropicOptions _options;
     private readonly IClock _clock;
     private readonly ILogger<AssistantChatService> _logger;
@@ -61,6 +64,8 @@ public sealed partial class AssistantChatService
         IConversationStore conversations,
         ICurrentUser currentUser,
         IAssistantMetricsSink metrics,
+        ToolGuardPipeline guards,
+        ModelTurnLimiter modelTurns,
         IOptions<AnthropicOptions> options,
         IClock clock,
         ILogger<AssistantChatService> logger)
@@ -80,6 +85,8 @@ public sealed partial class AssistantChatService
         _conversations = conversations ?? throw new ArgumentNullException(nameof(conversations));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
         _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
+        _guards = guards ?? throw new ArgumentNullException(nameof(guards));
+        _modelTurns = modelTurns ?? throw new ArgumentNullException(nameof(modelTurns));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -118,9 +125,19 @@ public sealed partial class AssistantChatService
         // persisted (with the user message) once the model produces its final answer.
         var assistantText = new StringBuilder();
         var nextSequence = stored.Count;
+        var turnState = new ToolTurnState();
 
         for (var iteration = 0; iteration <= _options.MaxToolIterations; iteration++)
         {
+            // Checked per round trip, not per request: a long tool chain is several billable
+            // calls, and the budget must see each of them.
+            if (!_modelTurns.TryConsume(owner))
+            {
+                _logger.LogWarning("Model-turn rate limit reached for owner {Owner}", owner.Value);
+                yield return ErrorItem(_modelTurns.LimitMessage);
+                yield break;
+            }
+
             var parameters = new MessageCreateParams
             {
                 Model = _options.Model,
@@ -221,8 +238,16 @@ public sealed partial class AssistantChatService
                 yield return new SseItem<AssistantSseEvent>(
                     new AssistantSseEvent(ToolName: call.Name), AssistantSseEvent.ToolCallEvent);
 
-                var result = await ToolRetryPolicy.ExecuteAsync(
-                    c => ExecuteToolAsync(call, c), _options.MaxToolRetries, Backoff, _logger, ct);
+                // Admission runs before execution, so a refused call never reaches a command
+                // handler. A refusal is an ordinary error tool_result: the model reads the reason
+                // and adjusts, exactly as it does for a validation failure.
+                var admission = _guards.Admit(
+                    new ToolInvocationContext(call.Name, call.Input, owner, turnState));
+
+                var result = admission.IsAllowed
+                    ? await ToolRetryPolicy.ExecuteAsync(
+                        c => ExecuteToolAsync(call, c), _options.MaxToolRetries, Backoff, _logger, ct)
+                    : new ToolResult(admission.Reason!, IsError: true);
 
                 if (result.Confidence is { } score)
                     _logger.LogInformation("Tool {Tool} returned confidence {Confidence:P0}.", call.Name, score);
@@ -230,7 +255,7 @@ public sealed partial class AssistantChatService
                 await _metrics.RecordToolInvocationAsync(
                     new AssistantToolInvocation(
                         ToolName: call.Name,
-                        Kind: KindOf(call.Name),
+                        Kind: ToolCatalog.KindOf(call.Name),
                         IsError: result.IsError,
                         Confidence: result.Confidence,
                         MatchCount: result.MatchCount,
@@ -304,22 +329,6 @@ public sealed partial class AssistantChatService
             RememberTool.Name => _rememberTool.ExecuteAsync(call.Input, ct),
             RecallMemoryTool.Name => _recallTool.ExecuteAsync(call.Input, ct),
             _ => Task.FromResult(new ToolResult($"Unknown tool '{call.Name}'.", true)),
-        };
-
-    /// <summary>
-    /// What each tool is for, from the dashboard's point of view. Sits next to
-    /// <see cref="ExecuteToolAsync"/> on purpose: a tool added there without a kind here
-    /// would be reported as an action it is not.
-    /// </summary>
-    private static AssistantToolKind KindOf(string toolName) =>
-        toolName switch
-        {
-            FindSimilarTicketsTool.Name => AssistantToolKind.DuplicateCheck,
-            SearchTicketsTool.Name => AssistantToolKind.Retrieval,
-            SearchKnowledgeBaseTool.Name => AssistantToolKind.Retrieval,
-            RecallMemoryTool.Name => AssistantToolKind.Retrieval,
-            CheckGroundingTool.Name => AssistantToolKind.Evaluation,
-            _ => AssistantToolKind.Action,
         };
 
     private static SseItem<AssistantSseEvent> ErrorItem(string message) =>

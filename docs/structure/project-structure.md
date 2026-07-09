@@ -50,6 +50,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── 0032-ai-auto-routing.md
 │   │   ├── 0033-streaming-ticket-summaries.md
 │   │   ├── 0034-ai-operations-metrics.md
+│   │   ├── 0035-agent-sandbox.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
@@ -110,6 +111,17 @@ The repository is organized into layered projects and mirrored test projects.
 ├── src
 │   ├── ServiceDeskLite.Api
 │   │   ├── Assistant
+│   │   │   ├── Sandbox
+│   │   │   │   ├── AgentSandboxOptions.cs
+│   │   │   │   ├── InputSizeGuard.cs
+│   │   │   │   ├── IToolGuard.cs
+│   │   │   │   ├── KnownToolGuard.cs
+│   │   │   │   ├── ModelTurnLimiter.cs
+│   │   │   │   ├── RateLimitGuard.cs
+│   │   │   │   ├── TokenBucketRegistry.cs
+│   │   │   │   ├── ToolCatalog.cs
+│   │   │   │   ├── ToolGuardPipeline.cs
+│   │   │   │   └── WriteBudgetGuard.cs
 │   │   │   ├── AnthropicOptions.cs
 │   │   │   ├── AssignTicketTool.cs
 │   │   │   ├── AssignTicketTool.prompt.cs
@@ -660,6 +672,10 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── Agents
 │   │   │   └── AgentsEndpointTests.cs
 │   │   ├── Assistant
+│   │   │   ├── Sandbox
+│   │   │   │   ├── SandboxTestContext.cs
+│   │   │   │   ├── ToolGuardPipelineTests.cs
+│   │   │   │   └── ToolGuardTests.cs
 │   │   │   ├── AssignTicketToolInputTests.cs
 │   │   │   ├── ChangeTicketStatusToolInputTests.cs
 │   │   │   ├── CheckGroundingToolTests.cs

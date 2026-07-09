@@ -87,13 +87,15 @@ Browser ─POST msg + convId─▶ API adapter ──stream──▶ Anthropic M
 
 **Streaming ticket summaries.** `GET /api/v1/tickets/{id}/summary` streams a structured triage summary of one ticket — summary, next steps, risks, and missing information — rendered live in the ticket's `AI Summary` tab. Structure and token-by-token streaming pull against each other: a JSON schema would guarantee the shape but reach the client as partial JSON that cannot be rendered progressively. Instead the model writes marker-delimited prose, and the API recovers the section boundaries from the token stream, re-emitting each fragment as an SSE `delta` tagged with its section — so all four panels fill as the text arrives. Markers do not arrive whole (`<<NEXT_` then `STEPS>>`), so the parser holds back any viable marker prefix and never leaks a fragment into the UI. This is a read, not an action: it is a separate endpoint with no tools, deliberately outside the assistant's agentic loop. Whatever the ticket does not say lands in *missing information* rather than being invented in the summary. Design and scope cuts: [ADR-0033](docs/adr/0033-streaming-ticket-summaries.md).
 
+**Agent sandbox.** Every tool call passes a guard pipeline before it reaches a command handler: unknown tool names are refused, argument size is capped before anything parses it, writes are budgeted per chat turn, and tool calls and model turns are rate limited per owner with in-process token buckets. The pipeline sits at the single point where the model's intent becomes execution, so a tool cannot be added past it - unlike a base class a new tool may simply not inherit from. Guards separate `Check` from `Commit` and nothing is spent until every guard has admitted the call, so a rate-limit token is never burned on a write the write budget then rejects. A refusal is not a failure: it returns to the model as an ordinary `is_error` tool result with the reason, and the model explains to the user what it did not do. Structured error propagation was already in place - `ToolRetryPolicy` turns any non-transient tool exception into an `is_error` result, so the stream never breaks. Design and the reversal of the earlier "no rate limiting" stance: [ADR-0035](docs/adr/0035-agent-sandbox.md).
+
 **AI operations dashboard.** `GET /api/v1/dashboard/ai` reports what the assistant actually did over the last seven days — automation rate, duplicate-check hit rate, retrieval confidence, per-tool call statistics, and token usage — rendered on the `AI Insights` page. The automation rate needs no new plumbing: the assistant reaches the domain only through the same command handlers as everyone else, so its work is audited like everyone else's and the actor is the entire difference. Tool calls and token usage are captured as they happen, on a sink that writes on its own DbContext (a telemetry `SaveChanges` must never commit a failed command's staged entities) and swallows its own failures (a dropped metric costs a dashboard row; a thrown one costs the user's chat turn). Every rate is nullable to the wire and renders as `n/a`: a system nobody has used has not achieved 0 % automation, and where semantic retrieval is unconfigured, confidence is not low but unmeasurable. Design and scope cuts: [ADR-0034](docs/adr/0034-ai-operations-metrics.md).
 
 **Statelessness and time.** The API holds no conversation state — the client resends the transcript each turn, which is what lets the model reference the id of a ticket it created earlier. Because the model has no calendar, the current date (with weekday) and the configured user timezone are injected into the system prompt per request, so relative deadlines ("by Friday") resolve correctly and due times render in the user's local time. Vague times of day ("morning") trigger a clarifying question rather than a guess.
 
 ## Architecture decisions
 
-Every non-obvious choice is recorded as an ADR — 34 records, browsable on the [ADR index](https://goldbarth.github.io/ServiceDeskLite/adr/index.html). A selection:
+Every non-obvious choice is recorded as an ADR — 35 records, browsable on the [ADR index](https://goldbarth.github.io/ServiceDeskLite/adr/index.html). A selection:
 
 | ADR | Decision | In short |
 |-----|----------|----------|
@@ -148,7 +150,7 @@ CI runs all suites on every push and additionally guards the OpenAPI contract ag
 - Real authentication/authorization — the API key middleware is a demo-grade guard, not an identity system
 - Outbox dispatching — messages are staged transactionally but not yet relayed to a broker (ADR-0021)
 - Conversation persistence for the assistant — transcripts live in the browser session only
-- LLM prompt caching and multi-tenant rate limiting
+- LLM prompt caching, and rate limiting beyond the in-process per-owner buckets of the agent sandbox
 - RAG refinements — chunking (tickets are short), hybrid FTS+vector search, re-ranking, and a vector index (HNSW/IVFFlat) are deliberately cut at this data size ([ADR-0024](docs/adr/0024-semantic-ticket-search-rag.md))
 - Multi-language localization of the UI
 
