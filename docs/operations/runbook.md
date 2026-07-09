@@ -97,6 +97,7 @@ All endpoints require the `X-Api-Key` header (Development value: `dev-api-key-no
 | GET    | `/api/v1/dashboard/summary` | Dashboard KPIs |
 | GET    | `/api/v1/dashboard/ai` | AI operations metrics (trailing 7 days) |
 | POST   | `/api/v1/assistant/chat` | AI assistant, streams SSE |
+| GET    | `/metrics` | Prometheus scrape (no API key — see Observability) |
 
 Errors follow RFC 9457 ProblemDetails with machine-readable `code` fields.
 
@@ -198,6 +199,48 @@ A duplicate check that ran keyword-only still reports its matches, so the duplic
 
 On the InMemory provider the metrics live in process memory and reset when the API restarts; on Postgres they are persisted (tables `AssistantToolInvocations`, `AssistantTokenUsages`) and are never pruned.
 Seeded demo tickets carry no audit events, so a fresh deployment shows many tickets next to zero audited actions.
+
+### Observability (Prometheus + tracing)
+
+The same assistant signals the AI dashboard aggregates are also emitted as OpenTelemetry metrics and traces (ADR 0036).
+The dashboard answers "how is the assistant doing" on a page; these answer an operator's questions — alert on an error rate, graph token spend over a week, open one slow conversation.
+One recording point feeds both, so they cannot drift.
+
+`GET /metrics` exposes the Prometheus scrape and **needs no API key** — a scraper is infrastructure, not a client, and the endpoint carries only aggregate counters, no ticket or conversation content:
+
+```bash
+curl http://localhost:5300/metrics | grep '^servicedesklite'
+```
+
+| Setting | Default | What it controls |
+|---------|---------|------------------|
+| `Observability:PrometheusEnabled` | `true` | Whether `/metrics` is mapped |
+| `Observability:MetricsPath` | `/metrics` | Scrape path (also the API-key bypass path) |
+| `Observability:ServiceName` | `servicedesklite-api` | `service.name` resource attribute |
+| `Observability:OtlpEndpoint` | *(empty)* | OTLP trace collector; spans are exported only when set |
+
+Instruments (all prefixed `servicedesklite_assistant_`):
+
+| Metric | Type | Labels |
+|--------|------|--------|
+| `tool_calls_total` | counter | `tool`, `kind`, `error` |
+| `tool_duration_milliseconds` | histogram | `tool`, `kind`, `error` |
+| `retrieval_confidence` | histogram (0..1) | `tool`, `kind` — recorded only for retrieval/dup-check kinds |
+| `model_turns_total` | counter | `model` |
+| `tokens_total` | counter | `model`, `direction` (`input`/`output`) |
+
+There is deliberately no error-rate metric: a ratio recorded at record time cannot be re-aggregated across windows.
+The call counter carries an `error` label instead, and the rate is a query-time division. Error rate per tool over five minutes:
+
+```promql
+sum by (tool) (rate(servicedesklite_assistant_tool_calls_total{error="true"}[5m]))
+/
+sum by (tool) (rate(servicedesklite_assistant_tool_calls_total[5m]))
+```
+
+Tracing is off until `Observability:OtlpEndpoint` points at a collector; the spans always exist and cost almost nothing without a listener.
+The trace of one conversation is an `assistant.chat` span with an `assistant.model_turn` child per Anthropic round trip and an `assistant.tool` child per tool call — the tool span carries the tool, its kind, whether it errored, the duration, the retrieval confidence, the ticket it touched, and, on a guard refusal, the guard and its reason (span status set to error).
+That is the "which tools, why" trail: a write is traceable to the ticket it changed, a refusal to the rule that refused it.
 
 ### Tests
 

@@ -44,6 +44,7 @@ public sealed class EfAssistantMetricsSink : IAssistantMetricsSink
             Confidence = invocation.Confidence,
             MatchCount = invocation.MatchCount,
             SemanticAvailable = invocation.SemanticAvailable,
+            DurationMs = invocation.Duration.TotalMilliseconds,
             OccurredAt = invocation.OccurredAt,
         }, ct);
 

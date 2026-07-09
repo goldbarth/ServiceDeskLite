@@ -38,3 +38,4 @@
 | 0033 | [ADR 0033: Streaming Ticket Summaries (marker-delimited sections over SSE)](0033-streaming-ticket-summaries.md) |
 | 0034 | [ADR 0034: AI Operations Metrics (persisted assistant telemetry, honest empty states)](0034-ai-operations-metrics.md) |
 | 0035 | [ADR 0035: Agent Sandbox (uniform tool admission, rate limits, write budgets)](0035-agent-sandbox.md) |
+| 0036 | [ADR 0036: Observability (Prometheus metrics and decision tracing for the assistant)](0036-observability.md) |

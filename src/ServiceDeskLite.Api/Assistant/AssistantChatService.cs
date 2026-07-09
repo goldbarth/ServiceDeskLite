@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.ServerSentEvents;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -10,6 +11,7 @@ using Anthropic.Models.Messages;
 using Microsoft.Extensions.Options;
 
 using ServiceDeskLite.Api.Assistant.Sandbox;
+using ServiceDeskLite.Api.Observability;
 using ServiceDeskLite.Application.Abstractions.Assistant;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Contracts.V1.Assistant;
@@ -100,6 +102,12 @@ public sealed partial class AssistantChatService
         var owner = _currentUser.Owner;
         var conversation = conversationId is { } id ? new ConversationId(id) : ConversationId.New();
 
+        // Parent of every model turn and tool call in this request, so one trace shows the whole
+        // chain of decisions rather than a handful of unrelated spans.
+        using var chatActivity = AssistantInstrumentation.ActivitySource.StartActivity("assistant.chat");
+        chatActivity?.SetTag("conversation.id", conversation.Value);
+        chatActivity?.SetTag("owner.id", owner.Value);
+
         // First event: hand the client the conversation id so its next turn sends
         // only the id + new message instead of the whole transcript.
         yield return new SseItem<AssistantSseEvent>(
@@ -159,6 +167,10 @@ public sealed partial class AssistantChatService
                 ],
                 Messages = messages,
             };
+
+            using var turnActivity = AssistantInstrumentation.ActivitySource.StartActivity("assistant.model_turn");
+            turnActivity?.SetTag("model", _options.Model);
+            turnActivity?.SetTag("turn.iteration", iteration);
 
             var turn = new TurnAccumulator();
             var stream = _client.Messages.CreateStreaming(parameters, cancellationToken: ct)
@@ -227,6 +239,10 @@ public sealed partial class AssistantChatService
                 yield break;
             }
 
+            turnActivity?.SetTag("tokens.input", turn.InputTokens);
+            turnActivity?.SetTag("tokens.output", turn.OutputTokens);
+            turnActivity?.SetTag("stop_reason", turn.StopReason?.ToString());
+
             // One chat turn can span several model round trips; each is billed on its own.
             await _metrics.RecordTokenUsageAsync(
                 new AssistantTokenUsage(_options.Model, turn.InputTokens, turn.OutputTokens, _clock.UtcNow), ct);
@@ -255,19 +271,7 @@ public sealed partial class AssistantChatService
                 yield return new SseItem<AssistantSseEvent>(
                     new AssistantSseEvent(ToolName: call.Name), AssistantSseEvent.ToolCallEvent);
 
-                // Admission runs before execution, so a refused call never reaches a command
-                // handler. A refusal is an ordinary error tool_result: the model reads the reason
-                // and adjusts, exactly as it does for a validation failure.
-                var admission = _guards.Admit(
-                    new ToolInvocationContext(call.Name, call.Input, owner, turnState));
-
-                var result = admission.IsAllowed
-                    ? await ToolRetryPolicy.ExecuteAsync(
-                        c => ExecuteToolAsync(call, c), _options.MaxToolRetries, Backoff, _logger, ct)
-                    : new ToolResult(admission.Reason!, IsError: true);
-
-                if (result.Confidence is { } score)
-                    _logger.LogInformation("Tool {Tool} returned confidence {Confidence:P0}.", call.Name, score);
+                var (result, duration) = await RunToolAsync(call, owner, turnState, ct);
 
                 await _metrics.RecordToolInvocationAsync(
                     new AssistantToolInvocation(
@@ -277,6 +281,7 @@ public sealed partial class AssistantChatService
                         Confidence: result.Confidence,
                         MatchCount: result.MatchCount,
                         SemanticAvailable: result.SemanticAvailable,
+                        Duration: duration,
                         OccurredAt: _clock.UtcNow),
                     ct);
 
@@ -347,6 +352,68 @@ public sealed partial class AssistantChatService
             RecallMemoryTool.Name => _recallTool.ExecuteAsync(call.Input, ct),
             _ => Task.FromResult(new ToolResult($"Unknown tool '{call.Name}'.", true)),
         };
+
+    /// <summary>
+    /// Admits, executes and times one tool call, and records the decision as a trace span.
+    /// </summary>
+    /// <remarks>
+    /// The span is where "which tool, and why" becomes answerable after the fact: it carries the
+    /// tool, its kind, whether a guard refused it and on what grounds, the confidence a retrieval
+    /// reported, and the ticket a write touched. Duration is measured here rather than around the
+    /// handler, so it is what the user waited for, retries included.
+    /// </remarks>
+    private async Task<(ToolResult Result, TimeSpan Duration)> RunToolAsync(
+        ToolCall call, OwnerId owner, ToolTurnState turnState, CancellationToken ct)
+    {
+        var kind = ToolCatalog.KindOf(call.Name);
+
+        using var activity = AssistantInstrumentation.ActivitySource.StartActivity("assistant.tool");
+        activity?.SetTag("tool.name", call.Name);
+        activity?.SetTag("tool.kind", kind.ToString());
+
+        var startedAt = Stopwatch.GetTimestamp();
+
+        // Admission runs before execution, so a refused call never reaches a command handler.
+        // A refusal is an ordinary error tool_result: the model reads the reason and adjusts,
+        // exactly as it does for a validation failure.
+        var admission = _guards.Admit(new ToolInvocationContext(call.Name, call.Input, owner, turnState));
+
+        ToolResult result;
+        if (admission.IsAllowed)
+        {
+            result = await ToolRetryPolicy.ExecuteAsync(
+                c => ExecuteToolAsync(call, c), _options.MaxToolRetries, Backoff, _logger, ct);
+        }
+        else
+        {
+            activity?.SetTag("tool.refused_by_guard", true);
+            activity?.SetTag("tool.refusal_reason", admission.Reason);
+            result = new ToolResult(admission.Reason!, IsError: true);
+        }
+
+        var duration = Stopwatch.GetElapsedTime(startedAt);
+
+        activity?.SetTag("tool.is_error", result.IsError);
+        activity?.SetTag("tool.duration_ms", duration.TotalMilliseconds);
+
+        if (result.Confidence is { } confidence)
+            activity?.SetTag("tool.confidence", confidence);
+
+        if (result.MatchCount is { } matches)
+            activity?.SetTag("tool.match_count", matches);
+
+        if (result.TicketId is { } ticketId)
+            activity?.SetTag("ticket.id", ticketId);
+
+        if (result.IsError)
+            activity?.SetStatus(ActivityStatusCode.Error, result.Content);
+
+        _logger.LogInformation(
+            "Tool {Tool} ({Kind}) finished in {Duration:F0} ms; error={IsError}, confidence={Confidence}",
+            call.Name, kind, duration.TotalMilliseconds, result.IsError, result.Confidence);
+
+        return (result, duration);
+    }
 
     private static SseItem<AssistantSseEvent> ErrorItem(string message) =>
         new(new AssistantSseEvent(Message: message), AssistantSseEvent.ErrorEvent);

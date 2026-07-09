@@ -52,7 +52,9 @@ public sealed class InMemoryAiDashboardRepositoryTests
 
         var sink = CreateSink();
         await sink.RecordToolInvocationAsync(
-            new AssistantToolInvocation("create_ticket", AssistantToolKind.Action, false, null, null, null, Now.AddDays(-9)),
+            new AssistantToolInvocation(
+                "create_ticket", AssistantToolKind.Action, false, null, null, null,
+                TimeSpan.FromMilliseconds(5), Now.AddDays(-9)),
             CancellationToken.None);
         await sink.RecordTokenUsageAsync(
             new AssistantTokenUsage("claude-opus-4-8", 100, 50, Now.AddDays(-9)), CancellationToken.None);

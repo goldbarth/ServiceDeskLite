@@ -51,6 +51,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── 0033-streaming-ticket-summaries.md
 │   │   ├── 0034-ai-operations-metrics.md
 │   │   ├── 0035-agent-sandbox.md
+│   │   ├── 0036-observability.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
@@ -165,7 +166,9 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── ApiSecurityExtensions.cs
 │   │   │   ├── AssistantComposition.cs
 │   │   │   ├── InfrastructureComposition.cs
-│   │   │   └── OpenApi.cs
+│   │   │   ├── ObservabilityComposition.cs
+│   │   │   ├── OpenApi.cs
+│   │   │   └── ServiceCollectionDecorationExtensions.cs
 │   │   ├── Endpoints
 │   │   │   ├── AgentsEndpoints.cs
 │   │   │   ├── AssistantEndpoints.cs
@@ -197,6 +200,10 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │       ├── SearchTicketsMapping.cs
 │   │   │       ├── TicketEnumMapping.cs
 │   │   │       └── TicketsMapping.cs
+│   │   ├── Observability
+│   │   │   ├── AssistantInstrumentation.cs
+│   │   │   ├── MeterAssistantMetricsSink.cs
+│   │   │   └── ObservabilityOptions.cs
 │   │   ├── Properties
 │   │   │   └── launchSettings.json
 │   │   ├── requests
@@ -466,6 +473,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── 20260708234526_AddTicketCategory.Designer.cs
 │   │   │   │   ├── 20260709080444_AddAssistantMetrics.cs
 │   │   │   │   ├── 20260709080444_AddAssistantMetrics.Designer.cs
+│   │   │   │   ├── 20260709115415_AddToolInvocationDuration.cs
+│   │   │   │   ├── 20260709115415_AddToolInvocationDuration.Designer.cs
 │   │   │   │   └── ServiceDeskLiteDbContextModelSnapshot.cs
 │   │   │   ├── Repositories
 │   │   │   │   ├── EfAgentRepository.cs
@@ -710,6 +719,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── KnowledgeBase
 │   │   │   ├── FileKnowledgeCorpusParseTests.cs
 │   │   │   └── KnowledgeChunkerTests.cs
+│   │   ├── Observability
+│   │   │   └── MeterAssistantMetricsSinkTests.cs
 │   │   ├── Tickets
 │   │   │   ├── AuditEventMappingTests.cs
 │   │   │   └── ChangeTicketStatusEndpointTests.cs
@@ -789,9 +800,11 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── EvaluationHost.cs
 │   │   │   ├── ScriptedKnowledgeBase.cs
 │   │   │   ├── ScriptedModelHandler.cs
-│   │   │   └── ScriptedTurn.cs
+│   │   │   ├── ScriptedTurn.cs
+│   │   │   └── TraceCapture.cs
 │   │   ├── Scenarios
 │   │   │   ├── MetricsRegressionTests.cs
+│   │   │   ├── ObservabilityTests.cs
 │   │   │   ├── PromptSuiteTests.cs
 │   │   │   ├── RagGroundingTests.cs
 │   │   │   ├── StreamingTests.cs
