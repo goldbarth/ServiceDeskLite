@@ -1,18 +1,23 @@
+using System.Text;
+
 using Microsoft.AspNetCore.Components;
 
 using MudBlazor;
 
 using ServiceDeskLite.Contracts.V1.Agents;
+using ServiceDeskLite.Contracts.V1.Assistant;
 using ServiceDeskLite.Contracts.V1.Tickets;
 using ServiceDeskLite.Web.Api.V1;
+using ServiceDeskLite.Web.Api.V1.Assistant;
 using ServiceDeskLite.Web.Features.Tickets.Components;
 using ServiceDeskLite.Web.Features.Tickets.State;
 
 namespace ServiceDeskLite.Web.Features.Tickets.Pages;
 
-public partial class TicketDetailsPage
+public partial class TicketDetailsPage : IDisposable
 {
     [Inject] private ITicketsApiClient TicketsApi { get; set; } = default!;
+    [Inject] private ITicketSummaryApiClient SummaryApi { get; set; } = default!;
     [Inject] private IDialogService DialogService { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
@@ -44,9 +49,20 @@ public partial class TicketDetailsPage
     private TicketPriority _editPriority;
     private DateTime? _editDueAt;
 
+    // The summary costs a model call, so it is streamed once on first open of its tab and
+    // then kept for the lifetime of this page — switching tabs must not re-generate it.
+    private readonly Dictionary<TicketSummarySection, StringBuilder> _summaryBuffers = [];
+    private CancellationTokenSource? _summaryCts;
+    private bool _summaryRequested;
+    private bool _isStreamingSummary;
+    private ApiError? _summaryError;
+
     private bool CanEdit => _ticket is not null && _ticket.Status != TicketStatus.Closed;
 
     private TicketDetailsTab _activeTab = TicketDetailsTab.Details;
+
+    private Dictionary<TicketSummarySection, string> SummaryContent()
+        => _summaryBuffers.ToDictionary(x => x.Key, x => x.Value.ToString());
 
     private int CommentCount
         => _ticket?.Conversation.Count(x => x.Kind == ConversationItemKind.Comment) ?? 0;
@@ -75,9 +91,69 @@ public partial class TicketDetailsPage
         _isEditing = false;
         _editError = null;
 
+        ResetSummary();
+
         await LoadPageAsync();
 
         _isLoading = false;
+    }
+
+    /// <summary>Abandons any in-flight summary: it describes the ticket we just navigated away from.</summary>
+    private void ResetSummary()
+    {
+        _summaryCts?.Cancel();
+        _summaryCts?.Dispose();
+        _summaryCts = null;
+
+        _summaryBuffers.Clear();
+        _summaryRequested = false;
+        _isStreamingSummary = false;
+        _summaryError = null;
+    }
+
+    private async Task StreamSummaryAsync()
+    {
+        _summaryRequested = true;
+        _isStreamingSummary = true;
+        _summaryError = null;
+
+        _summaryCts = new CancellationTokenSource();
+        var ct = _summaryCts.Token;
+
+        try
+        {
+            await foreach (var evt in SummaryApi.StreamAsync(Id, ct))
+            {
+                if (evt.EventType == TicketSummaryStreamEvent.ErrorEvent)
+                {
+                    _summaryError = new ApiError { Title = "Summary unavailable", Detail = evt.Message };
+                    break;
+                }
+
+                if (evt is { EventType: TicketSummaryStreamEvent.DeltaEvent, Section: { } section, Text: { } text })
+                {
+                    if (!_summaryBuffers.TryGetValue(section, out var buffer))
+                        _summaryBuffers[section] = buffer = new StringBuilder();
+
+                    buffer.Append(text);
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigated away or ticket changed — the partial summary is discarded with the page.
+        }
+        finally
+        {
+            _isStreamingSummary = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        _summaryCts?.Cancel();
+        _summaryCts?.Dispose();
     }
 
     private async Task LoadPageAsync()
@@ -94,8 +170,13 @@ public partial class TicketDetailsPage
         }
     }
 
-    private void SelectTab(TicketDetailsTab tab)
-        => _activeTab = tab;
+    private async Task SelectTabAsync(TicketDetailsTab tab)
+    {
+        _activeTab = tab;
+
+        if (tab == TicketDetailsTab.Summary && !_summaryRequested)
+            await StreamSummaryAsync();
+    }
 
     private string TabClass(TicketDetailsTab tab)
         => _activeTab == tab ? "ticket-tabs__tab is-active" : "ticket-tabs__tab";
@@ -472,6 +553,7 @@ public partial class TicketDetailsPage
     {
         Details,
         Comments,
-        History
+        History,
+        Summary
     }
 }

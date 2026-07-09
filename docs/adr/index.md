@@ -34,3 +34,5 @@
 | 0029 | [ADR 0029: Knowledge-Base RAG with Cited Streaming Answers](0029-knowledge-base-rag.md) |
 | 0030 | [ADR 0030: Hybrid Ticket Retrieval (RRF fusion of semantic + keyword + metadata)](0030-hybrid-ticket-retrieval.md) |
 | 0031 | [ADR 0031: RAG Grounding Evaluation (deterministic self-check tool)](0031-rag-grounding-evaluation.md) |
+| 0032 | [ADR 0032: AI Auto-Routing (deterministic triage applied through command handlers)](0032-ai-auto-routing.md) |
+| 0033 | [ADR 0033: Streaming Ticket Summaries (marker-delimited sections over SSE)](0033-streaming-ticket-summaries.md) |

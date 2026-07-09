@@ -60,4 +60,30 @@ public static class ApiClientComposition
 
         return services;
     }
+
+    public static IServiceCollection AddTicketSummaryApiClient(
+        this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<ApiClientOptions>(
+            configuration.GetSection("ApiClient"));
+
+        services.AddTransient<ApiKeyDelegatingHandler>();
+
+        services.AddHttpClient<ITicketSummaryApiClient, TicketSummaryApiClient>((sp, http) =>
+        {
+            var opt = sp.GetRequiredService<IOptions<ApiClientOptions>>().Value;
+
+            if (string.IsNullOrWhiteSpace(opt.BaseUrl))
+                throw new InvalidOperationException("ApiClient:BaseUrl must be configured.");
+
+            http.BaseAddress = new Uri(opt.BaseUrl, UriKind.Absolute);
+
+            // SSE responses stay open while the model streams; the regular
+            // request timeout would cut them off. Cancellation comes from the caller.
+            http.Timeout = Timeout.InfiniteTimeSpan;
+        })
+        .AddHttpMessageHandler<ApiKeyDelegatingHandler>();
+
+        return services;
+    }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
+using ServiceDeskLite.Api.Assistant;
 using ServiceDeskLite.Api.Http.ProblemDetails;
 using ServiceDeskLite.Api.Mapping.Tickets;
 using ServiceDeskLite.Application.Common;
@@ -48,6 +49,17 @@ public static class TicketsEndpoints
             .WithSummary("Get ticket by id")
             .Produces<TicketResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+
+        // GET /api/v1/tickets/{id}/summary  (SSE stream)
+        tickets.MapGet("/{id:guid}/summary", StreamTicketSummaryAsync)
+            .WithName("Tickets_Summary")
+            .WithSummary("Stream an AI summary of a ticket")
+            .WithDescription(
+                "Streams a structured summary as Server-Sent Events (delta, error, done). Each delta " +
+                "carries the section it belongs to: Summary, NextSteps, Risks or MissingInfo.")
+            .Produces(StatusCodes.Status200OK, contentType: "text/event-stream")
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
@@ -141,6 +153,25 @@ public static class TicketsEndpoints
         var result = await handler.HandleAsync(query, ct);
 
         return result.ToHttpResult(ctx, mapper, dto => Results.Ok(dto.ToResponse()));
+    }
+
+    /// <summary>
+    /// Resolves the ticket before opening the stream: a missing ticket must surface as a
+    /// 404 ProblemDetails, not as a 200 stream whose first event happens to be an error.
+    /// </summary>
+    private static async Task<IResult> StreamTicketSummaryAsync(
+        HttpContext ctx,
+        Guid id,
+        GetTicketByIdHandler handler,
+        TicketSummaryService summaries,
+        ResultToProblemDetailsMapper mapper,
+        CancellationToken ct)
+    {
+        var query = new GetTicketByIdQuery(new TicketId(id));
+        var result = await handler.HandleAsync(query, ct);
+
+        return result.ToHttpResult(ctx, mapper, ticket =>
+            TypedResults.ServerSentEvents(summaries.StreamSummaryAsync(ticket, ct)));
     }
 
     private static async Task<IResult> ChangeTicketStatusAsync(
