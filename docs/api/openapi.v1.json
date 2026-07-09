@@ -39,6 +39,45 @@
         ],
         "type": "object"
       },
+      "AiDashboardResponse": {
+        "properties": {
+          "automation": {
+            "$ref": "#/components/schemas/AutomationResponse"
+          },
+          "retrieval": {
+            "$ref": "#/components/schemas/RetrievalResponse"
+          },
+          "tokens": {
+            "$ref": "#/components/schemas/TokenUsageResponse"
+          },
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/ToolUsageResponse"
+            },
+            "type": "array"
+          },
+          "volume": {
+            "$ref": "#/components/schemas/TicketVolumeResponse"
+          },
+          "windowDays": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "windowDays",
+          "volume",
+          "automation",
+          "retrieval",
+          "tools",
+          "tokens"
+        ],
+        "type": "object"
+      },
       "AssignTicketRequest": {
         "properties": {
           "agentId": {
@@ -304,6 +343,41 @@
           "actor",
           "occurredAt",
           "payload"
+        ],
+        "type": "object"
+      },
+      "AutomationResponse": {
+        "properties": {
+          "aiActions": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "rate": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "totalActions": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "aiActions",
+          "totalActions",
+          "rate"
         ],
         "type": "object"
       },
@@ -575,6 +649,64 @@
         },
         "type": "object"
       },
+      "RetrievalResponse": {
+        "properties": {
+          "averageConfidence": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "confidenceSamples": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "duplicateChecks": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "duplicateChecksWithMatch": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "duplicateRate": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "semanticAvailable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "duplicateChecks",
+          "duplicateChecksWithMatch",
+          "duplicateRate",
+          "confidenceSamples",
+          "averageConfidence",
+          "semanticAvailable"
+        ],
+        "type": "object"
+      },
       "SortDirection": {
         "enum": [
           "Asc",
@@ -772,6 +904,123 @@
         ],
         "type": "string"
       },
+      "TicketVolumeResponse": {
+        "properties": {
+          "createdInWindow": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "totalTickets": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "totalTickets",
+          "createdInWindow"
+        ],
+        "type": "object"
+      },
+      "TokenUsageResponse": {
+        "properties": {
+          "inputTokens": {
+            "format": "int64",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "modelTurns": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "outputTokens": {
+            "format": "int64",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "totalTokens": {
+            "format": "int64",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "modelTurns",
+          "inputTokens",
+          "outputTokens",
+          "totalTokens"
+        ],
+        "type": "object"
+      },
+      "ToolUsageResponse": {
+        "properties": {
+          "averageConfidence": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "errorRate": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "errors": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "invocations": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "toolName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "toolName",
+          "invocations",
+          "errors",
+          "errorRate",
+          "averageConfidence"
+        ],
+        "type": "object"
+      },
       "UpdateTicketRequest": {
         "properties": {
           "category": {
@@ -891,6 +1140,38 @@
         "summary": "Chat with the AI assistant",
         "tags": [
           "Assistant"
+        ]
+      }
+    },
+    "/api/v1/dashboard/ai": {
+      "get": {
+        "description": "Returns assistant metrics over a trailing 7-day window: ticket volume, automation rate, duplicate-check hit rate, retrieval confidence, per-tool call statistics, and token usage. Rates are null rather than zero when no data backs them.",
+        "operationId": "Dashboard_GetAiMetrics",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiDashboardResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Get AI operations metrics",
+        "tags": [
+          "Dashboard"
         ]
       }
     },
