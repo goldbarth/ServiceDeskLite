@@ -213,14 +213,14 @@ else
                 <nav class="ticket-tabs" aria-label="Ticket work areas">
                     <button type="button"
                             class="@TabClass(TicketDetailsTab.Details)"
-                            @onclick="() => SelectTab(TicketDetailsTab.Details)"
+                            @onclick="() => SelectTabAsync(TicketDetailsTab.Details)"
                             aria-selected="@(_activeTab == TicketDetailsTab.Details)">
                         <span>Details</span>
                     </button>
 
                     <button type="button"
                             class="@TabClass(TicketDetailsTab.Comments)"
-                            @onclick="() => SelectTab(TicketDetailsTab.Comments)"
+                            @onclick="() => SelectTabAsync(TicketDetailsTab.Comments)"
                             aria-selected="@(_activeTab == TicketDetailsTab.Comments)">
                         <span>Comments</span>
                         <span class="ticket-tabs__count">@CommentCount</span>
@@ -228,10 +228,20 @@ else
 
                     <button type="button"
                             class="@TabClass(TicketDetailsTab.History)"
-                            @onclick="() => SelectTab(TicketDetailsTab.History)"
+                            @onclick="() => SelectTabAsync(TicketDetailsTab.History)"
                             aria-selected="@(_activeTab == TicketDetailsTab.History)">
                         <span>History</span>
                         <span class="ticket-tabs__count">@HistoryCount</span>
+                    </button>
+
+                    <button type="button"
+                            class="@TabClass(TicketDetailsTab.Summary)"
+                            @onclick="() => SelectTabAsync(TicketDetailsTab.Summary)"
+                            aria-selected="@(_activeTab == TicketDetailsTab.Summary)">
+                        <MudIcon Icon="@Icons.Material.Outlined.AutoAwesome"
+                                 Class="ticket-tabs__icon"
+                                 aria-hidden="true" />
+                        <span>AI Summary</span>
                     </button>
                 </nav>
 
@@ -438,6 +448,12 @@ else
                                 }
                             </div>
                         }
+                    }
+                    else if (_activeTab == TicketDetailsTab.Summary)
+                    {
+                        <TicketSummaryPanel Content="SummaryContent()"
+                                            IsStreaming="_isStreamingSummary"
+                                            Error="_summaryError" />
                     }
                 </MudPaper>
             </div>

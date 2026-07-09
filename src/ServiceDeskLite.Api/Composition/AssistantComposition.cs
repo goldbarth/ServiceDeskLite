@@ -19,6 +19,8 @@ public static class AssistantComposition
                 "dotnet user-secrets set Anthropic:ApiKey <key>")
             .Validate(o => o.MaxToolIterations is > 0 and <= 10,
                 "Anthropic:MaxToolIterations must be between 1 and 10.")
+            .Validate(o => o.SummaryMaxTokens is > 0 and <= 8192,
+                "Anthropic:SummaryMaxTokens must be between 1 and 8192.")
             .Validate(o => o.MaxToolRetries is >= 0 and <= 5,
                 "Anthropic:MaxToolRetries must be between 0 and 5.")
             .Validate(o => o.ToolRetryBaseDelayMs is >= 0 and <= 5000,
@@ -49,6 +51,7 @@ public static class AssistantComposition
         services.AddScoped<RememberTool>();
         services.AddScoped<RecallMemoryTool>();
         services.AddScoped<AssistantChatService>();
+        services.AddScoped<TicketSummaryService>();
 
         return services;
     }

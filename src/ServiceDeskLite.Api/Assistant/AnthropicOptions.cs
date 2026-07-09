@@ -12,6 +12,13 @@ public sealed class AnthropicOptions
     public int MaxTokens { get; init; } = 8192;
 
     /// <summary>
+    /// Output budget for a ticket summary. Far below <see cref="MaxTokens"/>: the four
+    /// sections are deliberately short, and a low ceiling keeps a runaway generation from
+    /// filling the panel with prose an agent will not read.
+    /// </summary>
+    public int SummaryMaxTokens { get; init; } = 2048;
+
+    /// <summary>
     /// Upper bound on model→tool→model round trips per request. A full autonomous
     /// chain (find_similar_tickets → create_ticket → assign_ticket) needs three,
     /// plus headroom for a correction/retry round; kept configurable so longer

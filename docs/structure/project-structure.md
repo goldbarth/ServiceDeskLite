@@ -47,6 +47,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── 0029-knowledge-base-rag.md
 │   │   ├── 0030-hybrid-ticket-retrieval.md
 │   │   ├── 0031-rag-grounding-evaluation.md
+│   │   ├── 0032-ai-auto-routing.md
+│   │   ├── 0033-streaming-ticket-summaries.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
@@ -88,7 +90,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   └── toc.yml
 │   ├── releases
 │   │   ├── v1.1.0.md
-│   │   └── v1.2.0.md
+│   │   ├── v1.2.0.md
+│   │   └── v1.3.0.md
 │   ├── structure
 │   │   ├── project-structure.md
 │   │   ├── solution-map.md
@@ -127,10 +130,16 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── RecallMemoryTool.prompt.cs
 │   │   │   ├── RememberTool.cs
 │   │   │   ├── RememberTool.prompt.cs
+│   │   │   ├── RouteTicketTool.cs
+│   │   │   ├── RouteTicketTool.prompt.cs
 │   │   │   ├── SearchKnowledgeBaseTool.cs
 │   │   │   ├── SearchKnowledgeBaseTool.prompt.cs
 │   │   │   ├── SearchTicketsTool.cs
 │   │   │   ├── SearchTicketsTool.prompt.cs
+│   │   │   ├── SummarySectionParser.cs
+│   │   │   ├── TicketSummaryService.cs
+│   │   │   ├── TicketSummaryService.prompt.cs
+│   │   │   ├── TicketSummarySseEvent.cs
 │   │   │   ├── ToolResult.cs
 │   │   │   ├── ToolRetryPolicy.cs
 │   │   │   ├── TransientFault.cs
@@ -202,6 +211,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── IOutboxRepository.cs
 │   │   │   │   ├── ITicketRepository.cs
 │   │   │   │   └── IUnitOfWork.cs
+│   │   │   ├── Routing
+│   │   │   │   └── ITicketRouter.cs
 │   │   │   └── Search
 │   │   │       ├── IHybridTicketSearch.cs
 │   │   │       ├── IKnowledgeBaseSearch.cs
@@ -266,6 +277,10 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   └── TicketDetailsDtoMapping.cs
 │   │   │   ├── Outbox
 │   │   │   │   └── OutboxMessageFactory.cs
+│   │   │   ├── Routing
+│   │   │   │   ├── KeywordTicketRouter.cs
+│   │   │   │   ├── RouteTicketCommand.cs
+│   │   │   │   └── RouteTicketHandler.cs
 │   │   │   ├── Search
 │   │   │   │   ├── HybridTicketSearch.cs
 │   │   │   │   └── ReciprocalRankFusion.cs
@@ -295,7 +310,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   └── AgentResponse.cs
 │   │   │   ├── Assistant
 │   │   │   │   ├── AssistantChatRequest.cs
-│   │   │   │   └── AssistantCitation.cs
+│   │   │   │   ├── AssistantCitation.cs
+│   │   │   │   └── TicketSummarySection.cs
 │   │   │   ├── Common
 │   │   │   │   ├── PagedResponse.cs
 │   │   │   │   ├── ProblemDetailsContract.cs
@@ -313,6 +329,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │       ├── CreateTicketRequest.cs
 │   │   │       ├── CreateTicketResponse.cs
 │   │   │       ├── SearchTicketsRequest.cs
+│   │   │       ├── TicketCategory.cs
 │   │   │       ├── TicketListItemResponse.cs
 │   │   │       ├── TicketPriority.cs
 │   │   │       ├── TicketResponse.cs
@@ -348,6 +365,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── Comment.cs
 │   │   │   ├── CommentId.cs
 │   │   │   ├── Ticket.cs
+│   │   │   ├── TicketCategory.cs
 │   │   │   ├── TicketErrors.cs
 │   │   │   ├── TicketId.cs
 │   │   │   ├── TicketPriority.cs
@@ -415,6 +433,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── 20260708141742_AddAgentMemory.Designer.cs
 │   │   │   │   ├── 20260708173602_AddKnowledgeChunks.cs
 │   │   │   │   ├── 20260708173602_AddKnowledgeChunks.Designer.cs
+│   │   │   │   ├── 20260708234526_AddTicketCategory.cs
+│   │   │   │   ├── 20260708234526_AddTicketCategory.Designer.cs
 │   │   │   │   └── ServiceDeskLiteDbContextModelSnapshot.cs
 │   │   │   ├── Repositories
 │   │   │   │   ├── EfAgentRepository.cs
@@ -455,7 +475,10 @@ The repository is organized into layered projects and mirrored test projects.
 │       │       ├── Assistant
 │       │       │   ├── AssistantApiClient.cs
 │       │       │   ├── AssistantStreamEvent.cs
-│       │       │   └── IAssistantApiClient.cs
+│       │       │   ├── IAssistantApiClient.cs
+│       │       │   ├── ITicketSummaryApiClient.cs
+│       │       │   ├── TicketSummaryApiClient.cs
+│       │       │   └── TicketSummaryStreamEvent.cs
 │       │       ├── ApiClientOptions.cs
 │       │       ├── ApiError.cs
 │       │       ├── ApiKeyDelegatingHandler.cs
@@ -518,7 +541,9 @@ The repository is organized into layered projects and mirrored test projects.
 │       │   ├── Tickets
 │       │   │   ├── Components
 │       │   │   │   ├── AssignTicketDialog.razor
-│       │   │   │   └── ChangeStatusDialog.razor
+│       │   │   │   ├── ChangeStatusDialog.razor
+│       │   │   │   ├── TicketSummaryPanel.razor
+│       │   │   │   └── TicketSummaryPanel.razor.css
 │       │   │   ├── Pages
 │       │   │   │   ├── CreateTicketPage.razor
 │       │   │   │   ├── CreateTicketPage.razor.css
@@ -615,9 +640,11 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── GroundingEvaluatorTests.cs
 │   │   │   ├── RecallMemoryToolInputTests.cs
 │   │   │   ├── RememberToolInputTests.cs
+│   │   │   ├── RouteTicketToolTests.cs
 │   │   │   ├── SearchKnowledgeBaseToolExecuteTests.cs
 │   │   │   ├── SearchKnowledgeBaseToolInputTests.cs
 │   │   │   ├── SearchTicketsToolInputTests.cs
+│   │   │   ├── SummarySectionParserTests.cs
 │   │   │   ├── ToolRetryPolicyTests.cs
 │   │   │   ├── TransientFaultTests.cs
 │   │   │   └── UpdateTicketToolInputTests.cs
@@ -660,6 +687,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   └── GetDashboardSummaryHandlerTests.cs
 │   │   │   ├── GetTicketById
 │   │   │   │   └── GetTicketByIdHandlerTests.cs
+│   │   │   ├── Routing
+│   │   │   │   └── KeywordTicketRouterTests.cs
 │   │   │   ├── Search
 │   │   │   │   ├── HybridTicketSearchTests.cs
 │   │   │   │   └── ReciprocalRankFusionTests.cs
@@ -690,6 +719,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── Tickets
 │   │   │   ├── AgentAssignmentTests.cs
 │   │   │   ├── AssistantChangeStatusTests.cs
+│   │   │   ├── AutoRoutingTests.cs
 │   │   │   ├── ChangeTicketStatusTests.cs
 │   │   │   ├── CommitBoundaryTests.cs
 │   │   │   ├── DeterministicPagingSortingTests.cs
@@ -716,7 +746,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   └── ServiceDeskLite.Tests.Integration.csproj
 │   └── ServiceDeskLite.Tests.Web
 │       ├── Api
-│       │   └── TicketsApiClientTests.cs
+│       │   ├── TicketsApiClientTests.cs
+│       │   └── TicketSummaryApiClientTests.cs
 │       ├── Features
 │       │   └── Tickets
 │       │       └── State

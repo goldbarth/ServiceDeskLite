@@ -1,0 +1,101 @@
+.ticket-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+}
+
+.ticket-summary__intro {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.ticket-panel__eyebrow {
+    color: #677589;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.ticket-summary__disclaimer {
+    margin: 0;
+    color: #7a8798;
+    font-size: 0.84rem;
+    line-height: 1.6;
+}
+
+.ticket-summary__cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+@media (max-width: 900px) {
+    .ticket-summary__cards {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.ticket-summary__card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    padding: 1.15rem 1.25rem;
+    border: 1px solid rgba(216, 223, 232, 0.96);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.86);
+}
+
+.ticket-summary__card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.ticket-summary__card-icon {
+    width: 1.05rem;
+    height: 1.05rem;
+    color: #7a8798;
+}
+
+.ticket-summary__card-title {
+    margin: 0;
+    color: #223041;
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+.ticket-summary__card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    color: #243142;
+    font-size: 0.94rem;
+    line-height: 1.75;
+}
+
+.ticket-summary__paragraph {
+    margin: 0;
+}
+
+.ticket-summary__list {
+    margin: 0;
+    padding-left: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.ticket-summary__card-empty {
+    margin: 0;
+    color: #8b97a6;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.ticket-summary__card-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}

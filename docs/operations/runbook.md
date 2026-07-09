@@ -91,6 +91,7 @@ All endpoints require the `X-Api-Key` header (Development value: `dev-api-key-no
 | POST   | `/api/v1/tickets/{id}/assign` | Assign / unassign |
 | POST   | `/api/v1/tickets/{id}/comments` | Add comment |
 | GET    | `/api/v1/tickets/{id}/audit-events` | Audit history |
+| GET    | `/api/v1/tickets/{id}/summary` | AI ticket summary, streams SSE |
 | GET    | `/api/v1/dashboard/summary` | Dashboard KPIs |
 | POST   | `/api/v1/assistant/chat` | AI assistant, streams SSE |
 
@@ -112,6 +113,30 @@ Event stream: `conversation` (id for the next turn) → `text` (response deltas)
 The model can chain these tools autonomously in a single turn (e.g. dup-check → create → assign, bounded by `Anthropic:MaxToolIterations`, default 6). Transient tool failures (rate limits, upstream 5xx, timeouts) are retried at the edge with bounded backoff (`Anthropic:MaxToolRetries`, `Anthropic:ToolRetryBaseDelayMs`) before surfacing as an error `tool_result`; deterministic failures surface immediately for the model to correct (ADR 0027).
 
 Retrieval tools attach a confidence signal (top-match relevance) to their result, emitted on the `tool_result` SSE event (`confidence`) and logged. `find_similar_tickets` blends semantic + keyword signals via Reciprocal Rank Fusion with optional status/priority filters (ADR 0030); when the semantic signal is unavailable (no Voyage key / InMemory) it degrades to keyword-only, labelled as weaker evidence, and the prompt tells the model to re-plan on weak/empty/contradictory results (ADR 0028).
+
+### Ticket summary endpoint
+
+`GET /api/v1/tickets/{id}/summary` streams a structured, read-only summary of one ticket as Server-Sent Events (ADR 0033).
+It is a single model call with no tools — the summary informs an agent, it never changes a ticket — and is deliberately not part of the assistant's tool list.
+An unknown ticket id returns a 404 ProblemDetails before any stream is opened.
+
+Event stream: `delta` (a chunk of text, tagged with its section) → `done`; failures arrive as an `error` event.
+Sections are `Summary`, `NextSteps`, `Risks`, and `MissingInfo`:
+
+```
+event: delta
+data: {"section":"Summary","text":"This is a critical-priority ticket about a"}
+
+event: delta
+data: {"section":"NextSteps","text":"- Assign the ticket to an agent"}
+
+event: done
+data: {}
+```
+
+The model emits marker-delimited sections (`<<SUMMARY>>`, `<<NEXT_STEPS>>`, `<<RISKS>>`, `<<MISSING_INFO>>`) which the API recovers from the token stream and never forwards to the client.
+Output is capped by `Anthropic:SummaryMaxTokens` (default 2048).
+The web client streams the summary on first open of the ticket's `AI Summary` tab and keeps it for the lifetime of the page; there is no server-side caching and no rate limiting.
 
 ### Tests
 

@@ -1,0 +1,124 @@
+using System.Net.ServerSentEvents;
+using System.Runtime.CompilerServices;
+
+using Anthropic;
+using Anthropic.Exceptions;
+using Anthropic.Models.Messages;
+
+using Microsoft.Extensions.Options;
+
+using ServiceDeskLite.Application.Tickets.GetTicketById;
+
+namespace ServiceDeskLite.Api.Assistant;
+
+/// <summary>
+/// Streams a structured, read-only summary of one ticket. Unlike
+/// <see cref="AssistantChatService"/> this is a single model call with no tools: the
+/// summary informs an agent, it never acts, so the model needs no way to reach the
+/// application layer. Text deltas are routed through <see cref="SummarySectionParser"/>
+/// and re-emitted as per-section SSE events.
+/// </summary>
+public sealed partial class TicketSummaryService
+{
+    private readonly AnthropicClient _client;
+    private readonly AnthropicOptions _options;
+    private readonly ILogger<TicketSummaryService> _logger;
+
+    public TicketSummaryService(
+        AnthropicClient client,
+        IOptions<AnthropicOptions> options,
+        ILogger<TicketSummaryService> logger)
+    {
+        _client = client ?? throw new ArgumentNullException(nameof(client));
+        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async IAsyncEnumerable<SseItem<TicketSummarySseEvent>> StreamSummaryAsync(
+        TicketDetailsDto ticket,
+        [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(ticket);
+
+        var parameters = new MessageCreateParams
+        {
+            Model = _options.Model,
+            MaxTokens = _options.SummaryMaxTokens,
+            System = BuildSystemPrompt(),
+            Messages = [new MessageParam { Role = Role.User, Content = BuildTicketPrompt(ticket) }],
+        };
+
+        var parser = new SummarySectionParser();
+        var stream = _client.Messages.CreateStreaming(parameters, cancellationToken: ct)
+            .GetAsyncEnumerator(ct);
+
+        // Manual enumeration: C# forbids `yield return` inside a catch block, so
+        // MoveNextAsync is guarded separately and errors surface as SSE events.
+        while (true)
+        {
+            var moved = false;
+            var failed = false;
+            try
+            {
+                moved = await stream.MoveNextAsync();
+            }
+            catch (OperationCanceledException)
+            {
+                // client disconnected — nothing left to send
+            }
+            catch (AnthropicApiException ex)
+            {
+                _logger.LogError(ex, "Anthropic API error while summarizing ticket {TicketId}", ticket.Id.Value);
+                failed = true;
+            }
+            finally
+            {
+                if (!moved)
+                    await stream.DisposeAsync();
+            }
+
+            if (ct.IsCancellationRequested)
+                yield break;
+
+            if (failed)
+            {
+                yield return ErrorItem("The AI service is currently unavailable. Please try again.");
+                yield break;
+            }
+
+            if (!moved)
+                break;
+
+            if (!TryReadTextDelta(stream.Current, out var text))
+                continue;
+
+            foreach (var delta in parser.Feed(text))
+                yield return DeltaItem(delta);
+        }
+
+        foreach (var delta in parser.Flush())
+            yield return DeltaItem(delta);
+
+        yield return new SseItem<TicketSummarySseEvent>(
+            new TicketSummarySseEvent(), TicketSummarySseEvent.DoneEvent);
+    }
+
+    private static bool TryReadTextDelta(RawMessageStreamEvent streamEvent, out string text)
+    {
+        if (streamEvent.TryPickContentBlockDelta(out var delta) &&
+            delta.Delta.TryPickText(out TextDelta? textDelta))
+        {
+            text = textDelta.Text;
+            return true;
+        }
+
+        text = string.Empty;
+        return false;
+    }
+
+    private static SseItem<TicketSummarySseEvent> DeltaItem(SummaryDelta delta) =>
+        new(new TicketSummarySseEvent(delta.Section, delta.Text), TicketSummarySseEvent.DeltaEvent);
+
+    private static SseItem<TicketSummarySseEvent> ErrorItem(string message) =>
+        new(new TicketSummarySseEvent(Message: message), TicketSummarySseEvent.ErrorEvent);
+}

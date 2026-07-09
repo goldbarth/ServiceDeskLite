@@ -1,0 +1,150 @@
+@using MudBlazor
+@using ServiceDeskLite.Contracts.V1.Assistant
+@using ServiceDeskLite.Web.Api.V1
+
+<div class="ticket-summary">
+    <div class="ticket-summary__intro">
+        <span class="ticket-panel__eyebrow">AI summary</span>
+        <p class="ticket-summary__disclaimer">
+            Generated from this ticket's description, comments and history. Verify before acting on it.
+        </p>
+    </div>
+
+    @if (Error is not null)
+    {
+        <AppErrorPanel Error="Error" />
+    }
+
+    <div class="ticket-summary__cards">
+        @foreach (var section in Sections)
+        {
+            var text = TextOf(section);
+
+            <section class="ticket-summary__card">
+                <div class="ticket-summary__card-header">
+                    <MudIcon Icon="@IconOf(section)" Class="ticket-summary__card-icon" aria-hidden="true" />
+                    <h2 class="ticket-summary__card-title">@TitleOf(section)</h2>
+                </div>
+
+                @if (text.Length > 0)
+                {
+                    <div class="ticket-summary__card-body">
+                        @foreach (var block in ToBlocks(text))
+                        {
+                            @if (block.IsList)
+                            {
+                                <ul class="ticket-summary__list">
+                                    @foreach (var line in block.Lines)
+                                    {
+                                        <li>@line</li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <p class="ticket-summary__paragraph">@string.Join(' ', block.Lines)</p>
+                            }
+                        }
+                    </div>
+                }
+                else if (IsStreaming)
+                {
+                    <div class="ticket-summary__card-skeleton">
+                        <MudSkeleton Width="100%" Height="16px" />
+                        <MudSkeleton Width="82%" Height="16px" />
+                        <MudSkeleton Width="64%" Height="16px" />
+                    </div>
+                }
+                else
+                {
+                    <p class="ticket-summary__card-empty">No content for this section.</p>
+                }
+            </section>
+        }
+    </div>
+</div>
+
+@code {
+    private static readonly TicketSummarySection[] Sections = Enum.GetValues<TicketSummarySection>();
+
+    /// <summary>A run of consecutive list items, or a run of prose lines forming one paragraph.</summary>
+    private sealed record Block(bool IsList, List<string> Lines);
+
+    // The model writes markdown lists. Rendering the bullets as real <li> elements — rather
+    // than leaving the "- " prefixes in the text — keeps the panel consistent with the rest
+    // of the ticket page. Only the marker is interpreted; the line itself stays plain text,
+    // so model output is never treated as markup.
+    private static List<Block> ToBlocks(string text)
+    {
+        List<Block> blocks = [];
+
+        foreach (var raw in text.Split('\n'))
+        {
+            var line = raw.Trim();
+            if (line.Length == 0)
+                continue;
+
+            var isItem = TryStripBullet(line, out var item);
+            var content = isItem ? item : line;
+
+            if (blocks.Count > 0 && blocks[^1].IsList == isItem)
+                blocks[^1].Lines.Add(content);
+            else
+                blocks.Add(new Block(isItem, [content]));
+        }
+
+        return blocks;
+    }
+
+    private static bool TryStripBullet(string line, out string content)
+    {
+        if (line.StartsWith("- ", StringComparison.Ordinal) || line.StartsWith("* ", StringComparison.Ordinal))
+        {
+            content = line[2..].Trim();
+            return true;
+        }
+
+        // Numbered item: "1. text"
+        var dot = line.IndexOf('.');
+        if (dot > 0 && dot < line.Length - 1 && line[..dot].All(char.IsAsciiDigit))
+        {
+            content = line[(dot + 1)..].Trim();
+            return content.Length > 0;
+        }
+
+        content = line;
+        return false;
+    }
+
+    [Parameter, EditorRequired] public IReadOnlyDictionary<TicketSummarySection, string> Content { get; set; } = default!;
+
+    /// <summary>True while deltas are still arriving; drives the per-section skeletons.</summary>
+    [Parameter] public bool IsStreaming { get; set; }
+
+    [Parameter] public ApiError? Error { get; set; }
+
+    // The model streams trailing newlines before the next section marker; trim on render
+    // rather than in the parser, where trimming would have to span delta boundaries.
+    private string TextOf(TicketSummarySection section)
+        => Content.TryGetValue(section, out var text) ? text.TrimEnd() : string.Empty;
+
+    private static string TitleOf(TicketSummarySection section)
+        => section switch
+        {
+            TicketSummarySection.Summary => "Summary",
+            TicketSummarySection.NextSteps => "Next steps",
+            TicketSummarySection.Risks => "Risks",
+            TicketSummarySection.MissingInfo => "Missing information",
+            _ => section.ToString()
+        };
+
+    private static string IconOf(TicketSummarySection section)
+        => section switch
+        {
+            TicketSummarySection.Summary => Icons.Material.Outlined.Subject,
+            TicketSummarySection.NextSteps => Icons.Material.Outlined.Checklist,
+            TicketSummarySection.Risks => Icons.Material.Outlined.WarningAmber,
+            TicketSummarySection.MissingInfo => Icons.Material.Outlined.HelpOutline,
+            _ => Icons.Material.Outlined.Info
+        };
+}
