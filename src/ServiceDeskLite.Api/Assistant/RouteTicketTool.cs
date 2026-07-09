@@ -2,8 +2,8 @@ using System.Text.Json;
 
 using Anthropic.Models.Messages;
 
+using ServiceDeskLite.Application.Abstractions.Assistant;
 using ServiceDeskLite.Application.Tickets.Routing;
-using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Api.Assistant;
@@ -11,8 +11,8 @@ namespace ServiceDeskLite.Api.Assistant;
 /// <summary>
 /// Auto-triage a ticket from its content: the deterministic router suggests a category,
 /// priority, assignee, and status, and when confident enough the decision is applied
-/// through the existing update/assign/change-status handlers (audited, actor
-/// "ai-assistant"). Below the confidence threshold the tool returns the suggestion
+/// through the existing update/assign/change-status handlers (audited under the acting
+/// agent's actor). Below the confidence threshold the tool returns the suggestion
 /// without applying it, so the model can confirm with the user instead of committing an
 /// uncertain triage (issue #159, ADR-0032).
 /// </summary>
@@ -21,10 +21,12 @@ public sealed partial class RouteTicketTool
     public const string Name = "route_ticket";
 
     private readonly RouteTicketHandler _handler;
+    private readonly IAgentActor _actor;
 
-    public RouteTicketTool(RouteTicketHandler handler)
+    public RouteTicketTool(RouteTicketHandler handler, IAgentActor actor)
     {
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+        _actor = actor ?? throw new ArgumentNullException(nameof(actor));
     }
 
     public static Tool Definition => new()
@@ -90,7 +92,7 @@ public sealed partial class RouteTicketTool
         if (!TryParseInput(input, out var ticketId, out var parseError))
             return new ToolResult($"Invalid tool input: {parseError}", true);
 
-        var result = await _handler.HandleAsync(new RouteTicketCommand(new TicketId(ticketId), AuditActors.AiAssistant), ct);
+        var result = await _handler.HandleAsync(new RouteTicketCommand(new TicketId(ticketId), _actor.Actor), ct);
         if (!result.IsSuccess)
         {
             var e = result.Error!;

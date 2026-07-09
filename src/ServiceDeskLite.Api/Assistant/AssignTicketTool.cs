@@ -2,10 +2,10 @@ using System.Text.Json;
 
 using Anthropic.Models.Messages;
 
+using ServiceDeskLite.Application.Abstractions.Assistant;
 using ServiceDeskLite.Application.Agents.GetAgents;
 using ServiceDeskLite.Application.Tickets.AssignTicket;
 using ServiceDeskLite.Domain.Agents;
-using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Api.Assistant;
@@ -15,7 +15,7 @@ namespace ServiceDeskLite.Api.Assistant;
 /// against the active roster (GetAgentsHandler); an unknown/inactive name is returned
 /// to the model as an error tool_result listing the valid agents, so it can ask the
 /// user instead of inventing one. Execution goes through AssignTicketHandler, so the
-/// closed-ticket rule and audit (actor "ai-assistant") apply unchanged (ADR-0025).
+/// closed-ticket rule and audit apply unchanged (ADR-0025).
 /// </summary>
 public sealed partial class AssignTicketTool
 {
@@ -23,11 +23,13 @@ public sealed partial class AssignTicketTool
 
     private readonly AssignTicketHandler _handler;
     private readonly GetAgentsHandler _agents;
+    private readonly IAgentActor _actor;
 
-    public AssignTicketTool(AssignTicketHandler handler, GetAgentsHandler agents)
+    public AssignTicketTool(AssignTicketHandler handler, GetAgentsHandler agents, IAgentActor actor)
     {
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
         _agents = agents ?? throw new ArgumentNullException(nameof(agents));
+        _actor = actor ?? throw new ArgumentNullException(nameof(actor));
     }
 
     public static Tool Definition => new()
@@ -116,7 +118,7 @@ public sealed partial class AssignTicketTool
             agentId = match.Id;
         }
 
-        var command = new AssignTicketCommand(new TicketId(ticketId), agentId, AuditActors.AiAssistant);
+        var command = new AssignTicketCommand(new TicketId(ticketId), agentId, _actor.Actor);
         var result = await _handler.HandleAsync(command, ct);
 
         if (!result.IsSuccess)

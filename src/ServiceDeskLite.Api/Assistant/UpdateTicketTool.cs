@@ -2,6 +2,7 @@ using System.Text.Json;
 
 using Anthropic.Models.Messages;
 
+using ServiceDeskLite.Application.Abstractions.Assistant;
 using ServiceDeskLite.Application.Tickets.UpdateTicket;
 using ServiceDeskLite.Domain.Audit;
 using ServiceDeskLite.Domain.Tickets;
@@ -12,17 +13,20 @@ namespace ServiceDeskLite.Api.Assistant;
 /// Lets the model apply a partial update to any existing ticket — one it created
 /// earlier in the conversation, or one resolved from the user's description via
 /// search_tickets (find-then-update). Executes through UpdateTicketHandler, so
-/// domain rules and audit trail (actor "ai-assistant") apply unchanged.
+/// domain rules and the audit trail apply unchanged; the actor names whichever
+/// agent ran the tool.
 /// </summary>
 public sealed partial class UpdateTicketTool
 {
     public const string Name = "update_ticket";
 
     private readonly UpdateTicketHandler _handler;
+    private readonly IAgentActor _actor;
 
-    public UpdateTicketTool(UpdateTicketHandler handler)
+    public UpdateTicketTool(UpdateTicketHandler handler, IAgentActor actor)
     {
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+        _actor = actor ?? throw new ArgumentNullException(nameof(actor));
     }
 
     public static Tool Definition => new()
@@ -67,11 +71,13 @@ public sealed partial class UpdateTicketTool
     };
 
     /// <summary>Maps tool input to an UpdateTicketCommand. Static for unit testing.</summary>
+    /// <param name="actor">Audit actor; defaults to the interactive assistant.</param>
     public static bool TryParseInput(
         JsonElement input,
         DateTimeOffset now,
         out UpdateTicketCommand? command,
-        out string? error)
+        out string? error,
+        string actor = AuditActors.AiAssistant)
     {
         command = null;
 
@@ -158,7 +164,7 @@ public sealed partial class UpdateTicketTool
             Description: description,
             Priority: priority,
             DueAt: dueAt,
-            Actor: AuditActors.AiAssistant);
+            Actor: actor);
 
         error = null;
         return true;
@@ -169,7 +175,7 @@ public sealed partial class UpdateTicketTool
         DateTimeOffset now,
         CancellationToken ct)
     {
-        if (!TryParseInput(input, now, out var command, out var parseError))
+        if (!TryParseInput(input, now, out var command, out var parseError, _actor.Actor))
             return ($"Invalid tool input: {parseError}", true, null, null);
 
         var result = await _handler.HandleAsync(command, ct);

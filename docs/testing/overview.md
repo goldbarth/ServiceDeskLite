@@ -17,6 +17,8 @@
 
 `Tests.Evaluation` runs the real agent against a scripted model.
 The API, the SSE endpoint, the agentic loop, the guard pipeline, the tools, the command handlers and the audit trail all execute for real; the only fiction is what the model decided to say.
+Both agents are covered: the chat assistant through its HTTP endpoint, and the autonomous worker (ADR 0037) through one review of one ticket, in the same autonomous scope the background loop opens.
+The worker's scheduling loop is deliberately not exercised — an interval is not what those scenarios are about; what the worker may do unattended is.
 
 The seam is the HTTP transport underneath `AnthropicClient`.
 `ScriptedTurn` renders a model decision as the exact Server-Sent Events the Anthropic API would emit — text arriving one delta per word, tool arguments arriving as partial JSON fragments split mid-token.
@@ -36,6 +38,8 @@ The model's judgment regresses visibly, and is checked against the live API by h
 | `StreamingTests` | Event order, per-word deltas, conversation continuation, and every way a stream can fail |
 | `RagGroundingTests` | Citations only for passages actually retrieved; grounding scored against them |
 | `MetricsRegressionTests` | The AI dashboard reflects what the run recorded |
+| `ObservabilityTests` | The scrape endpoint exposes the instruments; decisions are readable as spans |
+| `AutonomousWorkerTests` | The unattended worker asks, parks, grounds a proposal, and is refused everything a human should approve first |
 
 Fixtures are deterministic and need no API key, no database, and no network.
 

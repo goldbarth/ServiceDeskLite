@@ -1,16 +1,11 @@
-using System.Diagnostics;
 using System.Net.ServerSentEvents;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.Json;
 
-using Anthropic;
-using Anthropic.Exceptions;
 using Anthropic.Models.Messages;
 
 using Microsoft.Extensions.Options;
 
-using ServiceDeskLite.Api.Assistant.Sandbox;
+using ServiceDeskLite.Api.Assistant.Agent;
 using ServiceDeskLite.Api.Observability;
 using ServiceDeskLite.Application.Abstractions.Assistant;
 using ServiceDeskLite.Application.Common;
@@ -19,79 +14,38 @@ using ServiceDeskLite.Contracts.V1.Assistant;
 namespace ServiceDeskLite.Api.Assistant;
 
 /// <summary>
-/// Drives the Anthropic Messages API tool-calling loop with streaming:
-/// text deltas are forwarded as SSE events while tool_use blocks are
-/// assembled from partial-JSON deltas, executed against the application
-/// layer, and fed back to the model until it stops requesting tools.
+/// The chat adapter: loads the conversation, runs <see cref="AgentLoop"/>, and translates what the
+/// agent does into Server-Sent Events for the browser.
 /// </summary>
+/// <remarks>
+/// The tool-calling loop itself lives in <see cref="AgentLoop"/>, shared with the autonomous worker
+/// (ADR-0037). What remains here is everything that is true of a conversation and of nothing else:
+/// server-side transcript state (ADR-0026), the date and timezone the model resolves "by Friday"
+/// against, and the SSE shape the web client reads.
+/// </remarks>
 public sealed partial class AssistantChatService
 {
     private const string UserRole = "user";
     private const string AssistantRole = "assistant";
 
-    private readonly AnthropicClient _client;
-    private readonly CreateTicketTool _createTool;
-    private readonly UpdateTicketTool _updateTool;
-    private readonly FindSimilarTicketsTool _findSimilarTool;
-    private readonly SearchTicketsTool _searchTool;
-    private readonly ChangeTicketStatusTool _changeStatusTool;
-    private readonly AssignTicketTool _assignTool;
-    private readonly RouteTicketTool _routeTool;
-    private readonly SearchKnowledgeBaseTool _knowledgeTool;
-    private readonly CheckGroundingTool _groundingTool;
-    private readonly RememberTool _rememberTool;
-    private readonly RecallMemoryTool _recallTool;
+    private readonly AgentLoop _agent;
     private readonly IConversationStore _conversations;
     private readonly ICurrentUser _currentUser;
-    private readonly IAssistantMetricsSink _metrics;
-    private readonly ToolGuardPipeline _guards;
-    private readonly ModelTurnLimiter _modelTurns;
     private readonly AnthropicOptions _options;
     private readonly IClock _clock;
-    private readonly ILogger<AssistantChatService> _logger;
 
     public AssistantChatService(
-        AnthropicClient client,
-        CreateTicketTool createTool,
-        UpdateTicketTool updateTool,
-        FindSimilarTicketsTool findSimilarTool,
-        SearchTicketsTool searchTool,
-        ChangeTicketStatusTool changeStatusTool,
-        AssignTicketTool assignTool,
-        RouteTicketTool routeTool,
-        SearchKnowledgeBaseTool knowledgeTool,
-        CheckGroundingTool groundingTool,
-        RememberTool rememberTool,
-        RecallMemoryTool recallTool,
+        AgentLoop agent,
         IConversationStore conversations,
         ICurrentUser currentUser,
-        IAssistantMetricsSink metrics,
-        ToolGuardPipeline guards,
-        ModelTurnLimiter modelTurns,
         IOptions<AnthropicOptions> options,
-        IClock clock,
-        ILogger<AssistantChatService> logger)
+        IClock clock)
     {
-        _client = client ?? throw new ArgumentNullException(nameof(client));
-        _createTool = createTool ?? throw new ArgumentNullException(nameof(createTool));
-        _updateTool = updateTool ?? throw new ArgumentNullException(nameof(updateTool));
-        _findSimilarTool = findSimilarTool ?? throw new ArgumentNullException(nameof(findSimilarTool));
-        _searchTool = searchTool ?? throw new ArgumentNullException(nameof(searchTool));
-        _changeStatusTool = changeStatusTool ?? throw new ArgumentNullException(nameof(changeStatusTool));
-        _assignTool = assignTool ?? throw new ArgumentNullException(nameof(assignTool));
-        _routeTool = routeTool ?? throw new ArgumentNullException(nameof(routeTool));
-        _knowledgeTool = knowledgeTool ?? throw new ArgumentNullException(nameof(knowledgeTool));
-        _groundingTool = groundingTool ?? throw new ArgumentNullException(nameof(groundingTool));
-        _rememberTool = rememberTool ?? throw new ArgumentNullException(nameof(rememberTool));
-        _recallTool = recallTool ?? throw new ArgumentNullException(nameof(recallTool));
+        _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _conversations = conversations ?? throw new ArgumentNullException(nameof(conversations));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
-        _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
-        _guards = guards ?? throw new ArgumentNullException(nameof(guards));
-        _modelTurns = modelTurns ?? throw new ArgumentNullException(nameof(modelTurns));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async IAsyncEnumerable<SseItem<AssistantSseEvent>> StreamChatAsync(
@@ -119,7 +73,7 @@ public sealed partial class AssistantChatService
 
         var stored = await _conversations.GetAsync(conversation, owner, ct);
 
-        var messages = stored
+        var seed = stored
             .Select(m => new MessageParam
             {
                 Role = m.Role == AssistantRole ? Role.Assistant : Role.User,
@@ -127,186 +81,51 @@ public sealed partial class AssistantChatService
             })
             .ToList();
 
-        messages.Add(new MessageParam { Role = Role.User, Content = newMessage.Content });
+        seed.Add(new MessageParam { Role = Role.User, Content = newMessage.Content });
 
-        // Accumulates the assistant's text across all tool iterations of this turn;
-        // persisted (with the user message) once the model produces its final answer.
-        var assistantText = new StringBuilder();
         var nextSequence = stored.Count;
-        var turnState = new ToolTurnState();
+        var request = new AgentRequest(systemPrompt, seed, owner, _options.MaxTokens);
 
-        for (var iteration = 0; iteration <= _options.MaxToolIterations; iteration++)
+        await foreach (var step in _agent.RunAsync(request, ct))
         {
-            // Checked per round trip, not per request: a long tool chain is several billable
-            // calls, and the budget must see each of them.
-            if (!_modelTurns.TryConsume(owner))
+            switch (step)
             {
-                _logger.LogWarning("Model-turn rate limit reached for owner {Owner}", owner.Value);
-                yield return ErrorItem(_modelTurns.LimitMessage);
-                yield break;
-            }
-
-            var parameters = new MessageCreateParams
-            {
-                Model = _options.Model,
-                MaxTokens = _options.MaxTokens,
-                System = systemPrompt,
-                Tools =
-                [
-                    CreateTicketTool.Definition,
-                    UpdateTicketTool.Definition,
-                    FindSimilarTicketsTool.Definition,
-                    SearchTicketsTool.Definition,
-                    ChangeTicketStatusTool.Definition,
-                    AssignTicketTool.Definition,
-                    RouteTicketTool.Definition,
-                    SearchKnowledgeBaseTool.Definition,
-                    CheckGroundingTool.Definition,
-                    RememberTool.Definition,
-                    RecallMemoryTool.Definition,
-                ],
-                Messages = messages,
-            };
-
-            using var turnActivity = AssistantInstrumentation.ActivitySource.StartActivity("assistant.model_turn");
-            turnActivity?.SetTag("model", _options.Model);
-            turnActivity?.SetTag("turn.iteration", iteration);
-
-            var turn = new TurnAccumulator();
-            var stream = _client.Messages.CreateStreaming(parameters, cancellationToken: ct)
-                .GetAsyncEnumerator(ct);
-
-            // Manual enumeration: C# forbids `yield return` inside a catch block,
-            // so MoveNextAsync is guarded separately and errors surface as SSE events.
-            while (true)
-            {
-                var moved = false;
-                var failed = false;
-                try
-                {
-                    moved = await stream.MoveNextAsync();
-                }
-                catch (OperationCanceledException)
-                {
-                    // client disconnected — nothing left to send
-                }
-                catch (AnthropicApiException ex)
-                {
-                    _logger.LogError(ex, "Anthropic API error during assistant stream");
-                    failed = true;
-                }
-                catch (Exception ex)
-                {
-                    // Nothing guarantees the upstream response is shaped as documented. The adapter
-                    // promises the stream never breaks, so an unexpected fault becomes an error
-                    // event rather than an unhandled exception mid-response.
-                    _logger.LogError(ex, "Unexpected error while reading the assistant stream");
-                    failed = true;
-                }
-                finally
-                {
-                    if (!moved)
-                        await stream.DisposeAsync();
-                }
-
-                if (ct.IsCancellationRequested)
-                    yield break;
-
-                if (failed)
-                {
-                    yield return ErrorItem("The AI service is currently unavailable. Please try again.");
-                    yield break;
-                }
-
-                if (!moved)
+                case AgentTextEvent text:
+                    yield return new SseItem<AssistantSseEvent>(
+                        new AssistantSseEvent(Text: text.Text), AssistantSseEvent.TextEvent);
                     break;
 
-                var textDelta = turn.Apply(stream.Current);
-                if (textDelta is not null)
-                {
-                    assistantText.Append(textDelta);
+                case AgentToolCallEvent call:
                     yield return new SseItem<AssistantSseEvent>(
-                        new AssistantSseEvent(Text: textDelta), AssistantSseEvent.TextEvent);
-                }
-            }
+                        new AssistantSseEvent(ToolName: call.ToolName), AssistantSseEvent.ToolCallEvent);
+                    break;
 
-            // A turn that ended without a stop reason produced nothing the API promises. Emitting
-            // `done` here would show the user an empty answer and call it success.
-            if (turn.StopReason is null)
-            {
-                _logger.LogError("Assistant stream ended without a stop reason; the response was incomplete");
-                yield return ErrorItem("The AI service returned an incomplete response. Please try again.");
-                yield break;
-            }
-
-            turnActivity?.SetTag("tokens.input", turn.InputTokens);
-            turnActivity?.SetTag("tokens.output", turn.OutputTokens);
-            turnActivity?.SetTag("stop_reason", turn.StopReason?.ToString());
-
-            // One chat turn can span several model round trips; each is billed on its own.
-            await _metrics.RecordTokenUsageAsync(
-                new AssistantTokenUsage(_options.Model, turn.InputTokens, turn.OutputTokens, _clock.UtcNow), ct);
-
-            if (turn.StopReason != StopReason.ToolUse || turn.ToolCalls.Count == 0)
-            {
-                await PersistTurnAsync(conversation, owner, nextSequence, newMessage.Content, assistantText.ToString(), ct);
-                yield return new SseItem<AssistantSseEvent>(new AssistantSseEvent(), AssistantSseEvent.DoneEvent);
-                yield break;
-            }
-
-            if (iteration == _options.MaxToolIterations)
-            {
-                _logger.LogWarning("Assistant exceeded max tool iterations ({Max})", _options.MaxToolIterations);
-                yield return ErrorItem("The assistant exceeded the maximum number of tool calls.");
-                yield break;
-            }
-
-            // Echo the assistant turn, execute each requested tool, and return
-            // all tool_result blocks in a single user message.
-            messages.Add(new MessageParam { Role = Role.Assistant, Content = turn.ToAssistantContent() });
-
-            List<ContentBlockParam> toolResults = [];
-            foreach (var call in turn.ToolCalls)
-            {
-                yield return new SseItem<AssistantSseEvent>(
-                    new AssistantSseEvent(ToolName: call.Name), AssistantSseEvent.ToolCallEvent);
-
-                var (result, duration) = await RunToolAsync(call, owner, turnState, ct);
-
-                await _metrics.RecordToolInvocationAsync(
-                    new AssistantToolInvocation(
-                        ToolName: call.Name,
-                        Kind: ToolCatalog.KindOf(call.Name),
-                        IsError: result.IsError,
-                        Confidence: result.Confidence,
-                        MatchCount: result.MatchCount,
-                        SemanticAvailable: result.SemanticAvailable,
-                        Duration: duration,
-                        OccurredAt: _clock.UtcNow),
-                    ct);
-
-                yield return new SseItem<AssistantSseEvent>(
-                    new AssistantSseEvent(
-                        ToolName: call.Name, TicketId: result.TicketId, IsError: result.IsError,
-                        Message: result.Content, Confidence: result.Confidence),
-                    AssistantSseEvent.ToolResultEvent);
-
-                // Surface knowledge-base sources as a distinct event so the client can show
-                // where the answer came from. Emitted only for sources actually retrieved.
-                if (result.Citations is { Count: > 0 } citations)
+                case AgentToolResultEvent tool:
                     yield return new SseItem<AssistantSseEvent>(
-                        new AssistantSseEvent(ToolName: call.Name, Citations: citations),
-                        AssistantSseEvent.CitationEvent);
+                        new AssistantSseEvent(
+                            ToolName: tool.ToolName, TicketId: tool.Result.TicketId, IsError: tool.Result.IsError,
+                            Message: tool.Result.Content, Confidence: tool.Result.Confidence),
+                        AssistantSseEvent.ToolResultEvent);
 
-                toolResults.Add(new ToolResultBlockParam
-                {
-                    ToolUseID = call.Id,
-                    Content = result.Content,
-                    IsError = result.IsError,
-                });
+                    // Surface knowledge-base sources as a distinct event so the client can show
+                    // where the answer came from. Emitted only for sources actually retrieved.
+                    if (tool.Result.Citations is { Count: > 0 } citations)
+                        yield return new SseItem<AssistantSseEvent>(
+                            new AssistantSseEvent(ToolName: tool.ToolName, Citations: citations),
+                            AssistantSseEvent.CitationEvent);
+                    break;
+
+                case AgentCompletedEvent completed:
+                    await PersistTurnAsync(
+                        conversation, owner, nextSequence, newMessage.Content, completed.Text, ct);
+                    yield return new SseItem<AssistantSseEvent>(new AssistantSseEvent(), AssistantSseEvent.DoneEvent);
+                    yield break;
+
+                case AgentErrorEvent error:
+                    yield return new SseItem<AssistantSseEvent>(
+                        new AssistantSseEvent(Message: error.Message), AssistantSseEvent.ErrorEvent);
+                    yield break;
             }
-
-            messages.Add(new MessageParam { Role = Role.User, Content = toolResults });
         }
     }
 
@@ -328,201 +147,5 @@ public sealed partial class AssistantChatService
             toPersist.Add(new(startSequence + 1, AssistantRole, assistantText, now));
 
         await _conversations.AppendAsync(conversation, owner, toPersist, ct);
-    }
-
-    private TimeSpan Backoff(int attempt)
-    {
-        var ms = _options.ToolRetryBaseDelayMs * Math.Pow(2, attempt);
-        return TimeSpan.FromMilliseconds(Math.Min(ms, 30_000));
-    }
-
-    private Task<ToolResult> ExecuteToolAsync(ToolCall call, CancellationToken ct) =>
-        call.Name switch
-        {
-            CreateTicketTool.Name => _createTool.ExecuteAsync(call.Input, ct),
-            UpdateTicketTool.Name => _updateTool.ExecuteAsync(call.Input, _clock.UtcNow, ct),
-            FindSimilarTicketsTool.Name => _findSimilarTool.ExecuteAsync(call.Input, ct),
-            SearchTicketsTool.Name => _searchTool.ExecuteAsync(call.Input, ct),
-            ChangeTicketStatusTool.Name => _changeStatusTool.ExecuteAsync(call.Input, ct),
-            AssignTicketTool.Name => _assignTool.ExecuteAsync(call.Input, ct),
-            RouteTicketTool.Name => _routeTool.ExecuteAsync(call.Input, ct),
-            SearchKnowledgeBaseTool.Name => _knowledgeTool.ExecuteAsync(call.Input, ct),
-            CheckGroundingTool.Name => _groundingTool.ExecuteAsync(call.Input, ct),
-            RememberTool.Name => _rememberTool.ExecuteAsync(call.Input, ct),
-            RecallMemoryTool.Name => _recallTool.ExecuteAsync(call.Input, ct),
-            _ => Task.FromResult(new ToolResult($"Unknown tool '{call.Name}'.", true)),
-        };
-
-    /// <summary>
-    /// Admits, executes and times one tool call, and records the decision as a trace span.
-    /// </summary>
-    /// <remarks>
-    /// The span is where "which tool, and why" becomes answerable after the fact: it carries the
-    /// tool, its kind, whether a guard refused it and on what grounds, the confidence a retrieval
-    /// reported, and the ticket a write touched. Duration is measured here rather than around the
-    /// handler, so it is what the user waited for, retries included.
-    /// </remarks>
-    private async Task<(ToolResult Result, TimeSpan Duration)> RunToolAsync(
-        ToolCall call, OwnerId owner, ToolTurnState turnState, CancellationToken ct)
-    {
-        var kind = ToolCatalog.KindOf(call.Name);
-
-        using var activity = AssistantInstrumentation.ActivitySource.StartActivity("assistant.tool");
-        activity?.SetTag("tool.name", call.Name);
-        activity?.SetTag("tool.kind", kind.ToString());
-
-        var startedAt = Stopwatch.GetTimestamp();
-
-        // Admission runs before execution, so a refused call never reaches a command handler.
-        // A refusal is an ordinary error tool_result: the model reads the reason and adjusts,
-        // exactly as it does for a validation failure.
-        var admission = _guards.Admit(new ToolInvocationContext(call.Name, call.Input, owner, turnState));
-
-        ToolResult result;
-        if (admission.IsAllowed)
-        {
-            result = await ToolRetryPolicy.ExecuteAsync(
-                c => ExecuteToolAsync(call, c), _options.MaxToolRetries, Backoff, _logger, ct);
-        }
-        else
-        {
-            activity?.SetTag("tool.refused_by_guard", true);
-            activity?.SetTag("tool.refusal_reason", admission.Reason);
-            result = new ToolResult(admission.Reason!, IsError: true);
-        }
-
-        var duration = Stopwatch.GetElapsedTime(startedAt);
-
-        activity?.SetTag("tool.is_error", result.IsError);
-        activity?.SetTag("tool.duration_ms", duration.TotalMilliseconds);
-
-        if (result.Confidence is { } confidence)
-            activity?.SetTag("tool.confidence", confidence);
-
-        if (result.MatchCount is { } matches)
-            activity?.SetTag("tool.match_count", matches);
-
-        if (result.TicketId is { } ticketId)
-            activity?.SetTag("ticket.id", ticketId);
-
-        if (result.IsError)
-            activity?.SetStatus(ActivityStatusCode.Error, result.Content);
-
-        _logger.LogInformation(
-            "Tool {Tool} ({Kind}) finished in {Duration:F0} ms; error={IsError}, confidence={Confidence}",
-            call.Name, kind, duration.TotalMilliseconds, result.IsError, result.Confidence);
-
-        return (result, duration);
-    }
-
-    private static SseItem<AssistantSseEvent> ErrorItem(string message) =>
-        new(new AssistantSseEvent(Message: message), AssistantSseEvent.ErrorEvent);
-
-    private sealed record ToolCall(string Id, string Name, JsonElement Input);
-
-    /// <summary>
-    /// Assembles one assistant turn from raw stream events: text deltas are
-    /// concatenated, tool_use input arrives as partial JSON fragments that are
-    /// buffered per block and parsed once the block stops.
-    /// </summary>
-    private sealed class TurnAccumulator
-    {
-        private readonly List<ContentBlockParam> _content = [];
-        private readonly StringBuilder _textBuffer = new();
-        private readonly StringBuilder _toolJsonBuffer = new();
-        private string? _toolId;
-        private string? _toolName;
-        private bool _inTextBlock;
-
-        public List<ToolCall> ToolCalls { get; } = [];
-        public StopReason? StopReason { get; private set; }
-
-        /// <returns>The text delta to forward to the client, if this event carried one.</returns>
-        public string? Apply(RawMessageStreamEvent streamEvent)
-        {
-            if (streamEvent.TryPickContentBlockStart(out var start))
-            {
-                if (start.ContentBlock.TryPickToolUse(out ToolUseBlock? toolUse))
-                {
-                    _toolId = toolUse.ID;
-                    _toolName = toolUse.Name;
-                    _toolJsonBuffer.Clear();
-                }
-                else if (start.ContentBlock.TryPickText(out TextBlock? _))
-                {
-                    _inTextBlock = true;
-                    _textBuffer.Clear();
-                }
-
-                return null;
-            }
-
-            if (streamEvent.TryPickContentBlockDelta(out var delta))
-            {
-                if (delta.Delta.TryPickText(out TextDelta? text))
-                {
-                    _textBuffer.Append(text.Text);
-                    return text.Text;
-                }
-
-                if (delta.Delta.TryPickInputJson(out InputJsonDelta? inputJson))
-                    _toolJsonBuffer.Append(inputJson.PartialJson);
-
-                return null;
-            }
-
-            if (streamEvent.TryPickContentBlockStop(out _))
-            {
-                if (_toolId is not null && _toolName is not null)
-                {
-                    // Empty input streams as zero fragments; normalize to "{}".
-                    var json = _toolJsonBuffer.Length > 0 ? _toolJsonBuffer.ToString() : "{}";
-                    var input = JsonSerializer.Deserialize<JsonElement>(json);
-
-                    ToolCalls.Add(new ToolCall(_toolId, _toolName, input));
-                    _content.Add(new ToolUseBlockParam
-                    {
-                        ID = _toolId,
-                        Name = _toolName,
-                        Input = input.EnumerateObject().ToDictionary(p => p.Name, p => p.Value),
-                    });
-
-                    _toolId = null;
-                    _toolName = null;
-                    _toolJsonBuffer.Clear();
-                }
-                else if (_inTextBlock)
-                {
-                    if (_textBuffer.Length > 0)
-                        _content.Add(new TextBlockParam { Text = _textBuffer.ToString() });
-
-                    _inTextBlock = false;
-                    _textBuffer.Clear();
-                }
-
-                return null;
-            }
-
-            if (streamEvent.TryPickDelta(out var messageDelta))
-            {
-                if (messageDelta.Delta.StopReason is { } stopReason)
-                    StopReason = stopReason;
-
-                // The final message_delta reports this turn's cumulative token cost.
-                // It is the only place the API states it, so it is the only place to read it.
-                if (messageDelta.Usage is { } usage)
-                {
-                    InputTokens = usage.InputTokens ?? 0;
-                    OutputTokens = usage.OutputTokens;
-                }
-            }
-
-            return null;
-        }
-
-        public long InputTokens { get; private set; }
-        public long OutputTokens { get; private set; }
-
-        public List<ContentBlockParam> ToAssistantContent() => _content;
     }
 }

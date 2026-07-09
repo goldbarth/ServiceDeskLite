@@ -2,6 +2,7 @@ using System.Text.Json;
 
 using Anthropic.Models.Messages;
 
+using ServiceDeskLite.Application.Abstractions.Assistant;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
 using ServiceDeskLite.Domain.Audit;
@@ -20,11 +21,13 @@ public sealed partial class CreateTicketTool
 
     private readonly CreateTicketHandler _handler;
     private readonly IClock _clock;
+    private readonly IAgentActor _actor;
 
-    public CreateTicketTool(CreateTicketHandler handler, IClock clock)
+    public CreateTicketTool(CreateTicketHandler handler, IClock clock, IAgentActor actor)
     {
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _actor = actor ?? throw new ArgumentNullException(nameof(actor));
     }
 
     public static Tool Definition => new()
@@ -66,11 +69,16 @@ public sealed partial class CreateTicketTool
     /// Maps validated tool input to a CreateTicketCommand. Kept static and side-effect
     /// free so it is unit-testable without an API key or handler.
     /// </summary>
+    /// <param name="actor">
+    /// Who the resulting audit event names. Defaults to the interactive assistant; the autonomous
+    /// worker passes its own actor, so the audit trail says which of the two decided.
+    /// </param>
     public static bool TryParseInput(
         JsonElement input,
         DateTimeOffset createdAt,
         out CreateTicketCommand? command,
-        out string? error)
+        out string? error,
+        string actor = AuditActors.AiAssistant)
     {
         command = null;
 
@@ -127,7 +135,7 @@ public sealed partial class CreateTicketTool
             Priority: priority,
             CreatedAt: createdAt,
             DueAt: dueAt,
-            Actor: AuditActors.AiAssistant);
+            Actor: actor);
 
         error = null;
         return true;
@@ -138,7 +146,7 @@ public sealed partial class CreateTicketTool
         JsonElement input,
         CancellationToken ct)
     {
-        if (!TryParseInput(input, _clock.UtcNow, out var command, out var parseError))
+        if (!TryParseInput(input, _clock.UtcNow, out var command, out var parseError, _actor.Actor))
             return ($"Invalid tool input: {parseError}", true, null, null);
 
         var result = await _handler.HandleAsync(command, ct);

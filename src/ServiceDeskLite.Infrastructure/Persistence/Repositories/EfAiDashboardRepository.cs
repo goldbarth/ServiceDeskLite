@@ -66,7 +66,7 @@ public sealed class EfAiDashboardRepository : IAiDashboardRepository
         var events = _dbContext.AuditEvents.AsNoTracking().Where(e => e.OccurredAt >= since);
 
         return new AutomationDto(
-            AiActions: await events.CountAsync(e => e.Actor == AuditActors.AiAssistant, ct),
+            AiActions: await events.CountAsync(e => AuditActors.Automated.Contains(e.Actor), ct),
             TotalActions: await events.CountAsync(ct));
     }
 

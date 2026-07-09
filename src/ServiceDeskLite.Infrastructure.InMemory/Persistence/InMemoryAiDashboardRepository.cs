@@ -27,7 +27,7 @@ internal sealed class InMemoryAiDashboardRepository : IAiDashboardRepository
                 TotalTickets: tickets.Count,
                 CreatedInWindow: tickets.Count(t => t.CreatedAt >= since)),
             Automation: new AutomationDto(
-                AiActions: auditEvents.Count(e => e.Actor == AuditActors.AiAssistant),
+                AiActions: auditEvents.Count(e => AuditActors.IsAutomated(e.Actor)),
                 TotalActions: auditEvents.Count),
             Retrieval: AiDashboardAggregation.Retrieval(invocations),
             Tools: AiDashboardAggregation.Tools(invocations),

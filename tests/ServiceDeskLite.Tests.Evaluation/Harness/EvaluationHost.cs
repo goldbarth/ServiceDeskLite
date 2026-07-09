@@ -6,7 +6,10 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+using ServiceDeskLite.Api.Assistant;
+using ServiceDeskLite.Api.Worker;
 using ServiceDeskLite.Application.Abstractions.Search;
+using ServiceDeskLite.Domain.Tickets;
 
 namespace ServiceDeskLite.Tests.Evaluation.Harness;
 
@@ -52,4 +55,24 @@ public sealed class EvaluationHost : WebApplicationFactory<Program>
 
     protected override void ConfigureClient(HttpClient client)
         => client.DefaultRequestHeaders.Add("X-Api-Key", TestApiKey);
+
+    /// <summary>
+    /// Runs one autonomous review of one ticket, exactly as <c>TicketWorker</c> does: a fresh scope,
+    /// switched to the autonomous actor, then <see cref="TicketReviewer"/>.
+    /// </summary>
+    /// <remarks>
+    /// The scheduling loop is deliberately not exercised — <c>AutonomousWorker:Enabled</c> stays
+    /// false here, so the hosted service returns at once and no timer runs while a test asserts. A
+    /// scan interval is not what these scenarios are about; what the worker may do is.
+    /// </remarks>
+    public async Task<TicketReviewer.ReviewOutcome> ReviewTicketAsync(Guid ticketId)
+    {
+        using var scope = Services.CreateScope();
+
+        scope.ServiceProvider.GetRequiredService<AgentActorContext>().RunAutonomously();
+
+        return await scope.ServiceProvider
+            .GetRequiredService<TicketReviewer>()
+            .ReviewAsync(new TicketId(ticketId));
+    }
 }

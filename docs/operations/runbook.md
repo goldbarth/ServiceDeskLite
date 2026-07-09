@@ -112,7 +112,7 @@ Errors follow RFC 9457 ProblemDetails with machine-readable `code` fields.
 }
 ```
 
-Event stream: `conversation` (id for the next turn) → `text` (response deltas) → `tool_call` / `tool_result` (with `ticketId`) → `citation` (knowledge-base sources, when the answer draws on the KB) → `done`; failures arrive as an `error` event. The model has eleven tools — `create_ticket`, `update_ticket`, `change_ticket_status` (workflow-validated status changes), `assign_ticket` (assign/reassign/unassign against the seeded agent roster), `route_ticket` (deterministic auto-triage of a ticket into category/priority/assignee/status, applied through the update/assign/change-status handlers when confident and returned as a suggestion when not — ADR 0032), `search_tickets` (find existing tickets by filter), `find_similar_tickets` (hybrid dedup — semantic + keyword fused via RRF, with optional status/priority filters), `search_knowledge_base` (semantic retrieval over the KB corpus for cited how-to answers; requires a Voyage key + Postgres, otherwise reports unavailable and cites nothing), `check_grounding` (deterministic grounding score of a drafted answer against retrieved passages, so the agent hedges or re-retrieves on weak support — ADR 0031), and the long-term memory pair `remember` / `recall_memory` (store and recall durable user facts across conversations; requires a Voyage key + Postgres, otherwise reports unavailable) — all executing through the regular application-layer handlers.
+Event stream: `conversation` (id for the next turn) → `text` (response deltas) → `tool_call` / `tool_result` (with `ticketId`) → `citation` (knowledge-base sources, when the answer draws on the KB) → `done`; failures arrive as an `error` event. The model has twelve tools — `add_comment` (write a comment on a ticket: a follow-up question, a proposed solution, or the reasoning behind an action), `create_ticket`, `update_ticket`, `change_ticket_status` (workflow-validated status changes), `assign_ticket` (assign/reassign/unassign against the seeded agent roster), `route_ticket` (deterministic auto-triage of a ticket into category/priority/assignee/status, applied through the update/assign/change-status handlers when confident and returned as a suggestion when not — ADR 0032), `search_tickets` (find existing tickets by filter), `find_similar_tickets` (hybrid dedup — semantic + keyword fused via RRF, with optional status/priority filters), `search_knowledge_base` (semantic retrieval over the KB corpus for cited how-to answers; requires a Voyage key + Postgres, otherwise reports unavailable and cites nothing), `check_grounding` (deterministic grounding score of a drafted answer against retrieved passages, so the agent hedges or re-retrieves on weak support — ADR 0031), and the long-term memory pair `remember` / `recall_memory` (store and recall durable user facts across conversations; requires a Voyage key + Postgres, otherwise reports unavailable) — all executing through the regular application-layer handlers.
 
 The model can chain these tools autonomously in a single turn (e.g. dup-check → create → assign, bounded by `Anthropic:MaxToolIterations`, default 6). Transient tool failures (rate limits, upstream 5xx, timeouts) are retried at the edge with bounded backoff (`Anthropic:MaxToolRetries`, `Anthropic:ToolRetryBaseDelayMs`) before surfacing as an error `tool_result`; deterministic failures surface immediately for the model to correct (ADR 0027).
 
@@ -171,6 +171,46 @@ AgentSandbox__MaxWritesPerTurn=1 dotnet run --project src/ServiceDeskLite.Api
 
 The first `create_ticket` succeeds; the second comes back as an error `tool_result`, and the assistant tells the user which ticket it did not create.
 
+### Autonomous ticket worker
+
+A background loop that reviews open tickets on a schedule (ADR 0037): it asks for missing information, proposes grounded solutions, and refers every high-impact decision to a person.
+It runs the same agent loop, the same tools and the same command handlers as the chat assistant.
+Two things differ, and both come from the scope it opens per ticket: it audits as **`ai-worker`** rather than `ai-assistant`, and the review guardrail holds back the writes a human should have approved.
+
+**It is off by default.** A service that starts writing to tickets the moment it boots is not something to get without asking for it:
+
+```bash
+AutonomousWorker__Enabled=true dotnet run --project src/ServiceDeskLite.Api
+```
+
+| Setting | Default | What it controls |
+|---------|---------|------------------|
+| `AutonomousWorker:Enabled` | `false` | Whether the worker runs at all |
+| `AutonomousWorker:ScanIntervalSeconds` | `300` | Time between scans |
+| `AutonomousWorker:MaxTicketsPerRun` | `5` | Tickets reviewed per scan |
+| `AutonomousWorker:MinTicketAgeMinutes` | `15` | How settled a ticket must be before it is touched |
+| `AutonomousWorker:ScanStatuses` | `New, Triaged, InProgress` | Which tickets are eligible |
+| `AutonomousWorker:AutonomousWrites` | `add_comment` | State-changing tools it may run unattended |
+| `AutonomousWorker:AutonomousStatusTransitions` | `Triaged, Waiting` | Status changes it may apply unattended |
+
+**What it may do on its own.** Read anything. Comment on a ticket — that is how it reaches a person, and it changes nothing. Triage a new ticket, and park a ticket in `Waiting` once it has asked a question.
+
+**What it may not.** Close, resolve, assign, update or route a ticket, or open a new one. Those come back to the model as a refusal that names the way out: post the proposal as a comment, and do not retry. The model complies, the reasoning lands on the ticket, and a person decides. Nothing is written until they do.
+
+`Waiting` is deliberately not scanned — the worker moves a ticket there when it needs an answer, and scanning it again would mean asking the same question twice. Tickets are reviewed oldest first, so none starves behind newer arrivals.
+
+Widening its authority is a configuration change, not a code change. To let it resolve tickets too:
+
+```bash
+AutonomousWorker__Enabled=true \
+AutonomousWorker__AutonomousStatusTransitions__0=Triaged \
+AutonomousWorker__AutonomousStatusTransitions__1=Waiting \
+AutonomousWorker__AutonomousStatusTransitions__2=Resolved \
+dotnet run --project src/ServiceDeskLite.Api
+```
+
+The worker spends the same per-owner sandbox budgets as the chat assistant, and its runs appear in the traces (`worker.scan`, `worker.ticket`) and metrics from ADR 0036; the `agent.mode` span tag tells the two agents apart. A guard refusal is recorded like any other error result, so a healthy worker raises the *error rate* of the tools it is not allowed to call — nothing was written, and the AI dashboard reports it as an error nonetheless.
+
 ### AI dashboard endpoint
 
 `GET /api/v1/dashboard/ai` returns assistant metrics over a trailing 7-day window (ADR 0034):
@@ -178,7 +218,7 @@ ticket volume, automation rate, duplicate-check hit rate, retrieval confidence, 
 statistics, and token usage.
 The web UI renders it at **`http://localhost:5310/ai-insights`** ("AI Insights" in the navigation).
 
-Two figures come from data the system already keeps: ticket volume from the tickets themselves, and the automation rate from audit events whose actor is `ai-assistant`.
+Two figures come from data the system already keeps: ticket volume from the tickets themselves, and the automation rate from audit events whose actor is a model — `ai-assistant` in a conversation, `ai-worker` on a background scan.
 The rest is captured as the assistant runs: one record per tool call, one per model turn.
 A metrics write that fails is logged and dropped; it never fails the chat turn it was measuring.
 
