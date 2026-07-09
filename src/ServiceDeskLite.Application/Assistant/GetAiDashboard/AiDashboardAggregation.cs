@@ -42,7 +42,8 @@ public static class AiDashboardAggregation
                     ToolName: g.Key,
                     Invocations: g.Count(),
                     Errors: g.Count(i => i.IsError),
-                    AverageConfidence: scores.Count == 0 ? null : scores.Average());
+                    AverageConfidence: scores.Count == 0 ? null : scores.Average(),
+                    AverageLatencyMs: g.Average(i => i.Duration.TotalMilliseconds));
             })
             .OrderByDescending(t => t.Invocations)
             .ThenBy(t => t.ToolName, StringComparer.Ordinal)

@@ -61,6 +61,10 @@ public enum AssistantToolKind
 /// Whether the semantic half of a retrieval ran. Absent for non-retrieval tools. Lets the
 /// dashboard say "measured on keyword-only evidence" instead of implying a full signal.
 /// </param>
+/// <param name="Duration">
+/// Wall-clock time the invocation took, including any retries. Measured at the edge, so it is
+/// what the user waited for rather than what the handler spent.
+/// </param>
 public sealed record AssistantToolInvocation(
     string ToolName,
     AssistantToolKind Kind,
@@ -68,6 +72,7 @@ public sealed record AssistantToolInvocation(
     double? Confidence,
     int? MatchCount,
     bool? SemanticAvailable,
+    TimeSpan Duration,
     DateTimeOffset OccurredAt);
 
 /// <param name="Model">Anthropic model id that served the turn.</param>

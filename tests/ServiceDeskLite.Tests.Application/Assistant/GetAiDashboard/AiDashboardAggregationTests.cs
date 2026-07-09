@@ -20,8 +20,10 @@ public sealed class AiDashboardAggregationTests
         bool isError = false,
         double? confidence = null,
         int? matchCount = null,
-        bool? semanticAvailable = null)
-        => new(tool, kind, isError, confidence, matchCount, semanticAvailable, At);
+        bool? semanticAvailable = null,
+        double durationMs = 10)
+        => new(tool, kind, isError, confidence, matchCount, semanticAvailable,
+            TimeSpan.FromMilliseconds(durationMs), At);
 
     [Fact]
     public void Duplicate_rate_is_null_when_no_duplicate_check_ran()
@@ -129,6 +131,33 @@ public sealed class AiDashboardAggregationTests
         create.Errors.Should().Be(1);
         create.ErrorRate.Should().Be(0.5);
         create.AverageConfidence.Should().BeNull("create_ticket reports no confidence");
+    }
+
+    [Fact]
+    public void Average_latency_is_reported_per_tool()
+    {
+        var tools = AiDashboardAggregation.Tools(
+        [
+            Invocation("search_tickets", AssistantToolKind.Retrieval, durationMs: 100),
+            Invocation("search_tickets", AssistantToolKind.Retrieval, durationMs: 300),
+            Invocation("create_ticket", AssistantToolKind.Action, durationMs: 50),
+        ]);
+
+        tools.Single(t => t.ToolName == "search_tickets").AverageLatencyMs.Should().Be(200);
+        tools.Single(t => t.ToolName == "create_ticket").AverageLatencyMs.Should().Be(50);
+    }
+
+    [Fact]
+    public void A_failed_call_still_contributes_its_latency()
+    {
+        // A tool that fails slowly is the interesting case; excluding errors would hide it.
+        var tools = AiDashboardAggregation.Tools(
+        [
+            Invocation("search_knowledge_base", AssistantToolKind.Retrieval, durationMs: 20),
+            Invocation("search_knowledge_base", AssistantToolKind.Retrieval, isError: true, durationMs: 980),
+        ]);
+
+        tools.Single().AverageLatencyMs.Should().Be(500);
     }
 
     [Fact]

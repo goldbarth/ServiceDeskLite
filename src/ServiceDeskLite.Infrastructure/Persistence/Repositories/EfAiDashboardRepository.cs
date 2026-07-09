@@ -20,12 +20,23 @@ public sealed class EfAiDashboardRepository : IAiDashboardRepository
         var volume = await GetVolumeAsync(since, ct);
         var automation = await GetAutomationAsync(since, ct);
 
-        var invocations = await _dbContext.AssistantToolInvocations
+        // Projected in two steps: TimeSpan.FromMilliseconds has no SQL translation, so the
+        // duration is materialized as a double and turned into a TimeSpan client-side.
+        var rows = await _dbContext.AssistantToolInvocations
             .AsNoTracking()
             .Where(i => i.OccurredAt >= since)
-            .Select(i => new AssistantToolInvocation(
-                i.ToolName, i.Kind, i.IsError, i.Confidence, i.MatchCount, i.SemanticAvailable, i.OccurredAt))
+            .Select(i => new
+            {
+                i.ToolName, i.Kind, i.IsError, i.Confidence, i.MatchCount, i.SemanticAvailable,
+                i.DurationMs, i.OccurredAt,
+            })
             .ToListAsync(ct);
+
+        var invocations = rows
+            .Select(i => new AssistantToolInvocation(
+                i.ToolName, i.Kind, i.IsError, i.Confidence, i.MatchCount, i.SemanticAvailable,
+                TimeSpan.FromMilliseconds(i.DurationMs), i.OccurredAt))
+            .ToList();
 
         var tokens = await GetTokensAsync(since, ct);
 

@@ -62,11 +62,13 @@ public sealed record RetrievalDto(
 /// <param name="Invocations">Total calls in the window, including failed ones.</param>
 /// <param name="Errors">Calls that returned an error result to the model.</param>
 /// <param name="AverageConfidence">Mean reported confidence, or null for tools that report none.</param>
+/// <param name="AverageLatencyMs">Mean wall-clock time per call, retries included.</param>
 public sealed record ToolUsageDto(
     string ToolName,
     int Invocations,
     int Errors,
-    double? AverageConfidence)
+    double? AverageConfidence,
+    double AverageLatencyMs)
 {
     /// <summary>Share of calls that failed; null when the tool was never called.</summary>
     public double? ErrorRate => Invocations == 0 ? null : (double)Errors / Invocations;

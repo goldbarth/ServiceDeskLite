@@ -22,6 +22,7 @@
                         <th scope="col" class="tool-usage__numeric">Calls</th>
                         <th scope="col" class="tool-usage__numeric">Errors</th>
                         <th scope="col" class="tool-usage__numeric">Error rate</th>
+                        <th scope="col" class="tool-usage__numeric">Avg. latency</th>
                         <th scope="col" class="tool-usage__numeric">Avg. confidence</th>
                     </tr>
                 </thead>
@@ -33,6 +34,7 @@
                             <td class="tool-usage__numeric">@tool.Invocations</td>
                             <td class="tool-usage__numeric">@tool.Errors</td>
                             <td class="tool-usage__numeric">@Format.Percent(tool.ErrorRate)</td>
+                            <td class="tool-usage__numeric">@Format.Milliseconds(tool.AverageLatencyMs)</td>
                             <td class="tool-usage__numeric">
                                 @if (tool.AverageConfidence is null)
                                 {

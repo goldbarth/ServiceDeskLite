@@ -9,6 +9,7 @@
 internal sealed class ApiKeyMiddleware(RequestDelegate next, IConfiguration configuration)
 {
     private const string HeaderName = "X-Api-Key";
+    private const string DefaultMetricsPath = "/metrics";
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -16,6 +17,15 @@ internal sealed class ApiKeyMiddleware(RequestDelegate next, IConfiguration conf
         // They are only served in Development (see Program.cs), so this
         // does not open a gap in non-development environments.
         if (IsSwaggerPath(context.Request.Path))
+        {
+            await next(context);
+            return;
+        }
+
+        // The Prometheus scrape endpoint is exempt: a scraper is infrastructure, not a client,
+        // and it would have to be handed the demo key to read counters that carry no ticket data.
+        // Reachability is a deployment concern — bind it to an internal network, or disable it.
+        if (context.Request.Path.StartsWithSegments(MetricsPath))
         {
             await next(context);
             return;
@@ -39,6 +49,15 @@ internal sealed class ApiKeyMiddleware(RequestDelegate next, IConfiguration conf
         }
 
         await next(context);
+    }
+
+    private string MetricsPath
+    {
+        get
+        {
+            var configured = configuration["Observability:MetricsPath"];
+            return string.IsNullOrWhiteSpace(configured) ? DefaultMetricsPath : configured;
+        }
     }
 
     private static bool IsSwaggerPath(PathString path)

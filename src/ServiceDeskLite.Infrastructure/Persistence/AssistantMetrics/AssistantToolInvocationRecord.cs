@@ -25,5 +25,12 @@ public sealed class AssistantToolInvocationRecord
     /// <summary>Whether a retrieval's semantic half ran; null for non-retrieval tools.</summary>
     public bool? SemanticAvailable { get; set; }
 
+    /// <summary>
+    /// Wall-clock milliseconds the invocation took, retries included. Stored rather than left to
+    /// the Prometheus histogram, because a scrape window cannot answer what latency looked like
+    /// last Tuesday.
+    /// </summary>
+    public double DurationMs { get; set; }
+
     public DateTimeOffset OccurredAt { get; set; }
 }

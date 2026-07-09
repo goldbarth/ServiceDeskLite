@@ -20,7 +20,7 @@ public static class DashboardMapping
                 AverageConfidence: dto.Retrieval.AverageConfidence,
                 SemanticAvailable: dto.Retrieval.SemanticAvailable),
             Tools: [.. dto.Tools.Select(t => new ToolUsageResponse(
-                t.ToolName, t.Invocations, t.Errors, t.ErrorRate, t.AverageConfidence))],
+                t.ToolName, t.Invocations, t.Errors, t.ErrorRate, t.AverageConfidence, t.AverageLatencyMs))],
             Tokens: new TokenUsageResponse(
                 dto.Tokens.ModelTurns, dto.Tokens.InputTokens, dto.Tokens.OutputTokens, dto.Tokens.TotalTokens));
 

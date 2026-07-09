@@ -37,7 +37,8 @@ public sealed record ToolUsageResponse(
     int Invocations,
     int Errors,
     double? ErrorRate,
-    double? AverageConfidence);
+    double? AverageConfidence,
+    double AverageLatencyMs);
 
 /// <param name="ModelTurns">Model round trips billed in the window. One chat turn can span several.</param>
 public sealed record TokenUsageResponse(
