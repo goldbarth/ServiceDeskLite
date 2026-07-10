@@ -3,3 +3,6 @@
 
 - name: End-to-End
   href: e2e.md
+
+- name: AI Assistant Manual Test Plan
+  href: ai-assistant-manual-test-plan.md
