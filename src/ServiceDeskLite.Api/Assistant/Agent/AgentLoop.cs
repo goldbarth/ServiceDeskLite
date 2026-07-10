@@ -91,6 +91,9 @@ public sealed class AgentLoop
             {
                 Model = _options.Model,
                 MaxTokens = request.MaxTokens,
+                // Sonnet 5 runs adaptive thinking when the field is absent. Thinking tokens
+                // would count against MaxTokens, which a long tool chain already fills.
+                Thinking = new ThinkingConfigDisabled(),
                 System = request.SystemPrompt,
                 Tools = [.. ToolDispatcher.Definitions],
                 Messages = messages,

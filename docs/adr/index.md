@@ -40,3 +40,4 @@
 | 0035 | [ADR 0035: Agent Sandbox (uniform tool admission, rate limits, write budgets)](0035-agent-sandbox.md) |
 | 0036 | [ADR 0036: Observability (Prometheus metrics and decision tracing for the assistant)](0036-observability.md) |
 | 0037 | [ADR 0037: Autonomous Ticket Worker (one agent loop, two agents, one guardrail)](0037-autonomous-ticket-worker.md) |
+| 0038 | [ADR 0038: Assistant Model Selection (Sonnet 5, thinking disabled)](0038-assistant-model-selection.md) |

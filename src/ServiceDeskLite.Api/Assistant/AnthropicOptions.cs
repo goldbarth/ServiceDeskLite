@@ -7,7 +7,7 @@ public sealed class AnthropicOptions
     /// <summary>Set via user-secrets (dev) or environment variable, never in appsettings.json.</summary>
     public string ApiKey { get; init; } = string.Empty;
 
-    public string Model { get; init; } = "claude-opus-4-8";
+    public string Model { get; init; } = "claude-sonnet-5";
 
     public int MaxTokens { get; init; } = 8192;
 

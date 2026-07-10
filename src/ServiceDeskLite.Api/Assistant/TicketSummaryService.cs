@@ -68,6 +68,8 @@ public sealed partial class TicketSummaryService
         {
             Model = _options.Model,
             MaxTokens = _options.SummaryMaxTokens,
+            // See AgentLoop: SummaryMaxTokens is deliberately tight, thinking would eat into it.
+            Thinking = new ThinkingConfigDisabled(),
             System = BuildSystemPrompt(),
             Messages = [new MessageParam { Role = Role.User, Content = BuildTicketPrompt(ticket) }],
         };
