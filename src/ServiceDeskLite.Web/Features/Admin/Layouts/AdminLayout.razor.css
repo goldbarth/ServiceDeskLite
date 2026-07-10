@@ -1,17 +1,17 @@
 .admin-layout {
     display: grid;
-    gap: 1.25rem;
+    gap: var(--sdl-space-4);
 }
 
 ::deep .admin-layout__tabs {
-    border-radius: var(--shell-radius-md);
-    border: 1px solid rgba(221, 228, 236, 0.95);
-    background: rgba(247, 249, 251, 0.92);
-    box-shadow: var(--shell-shadow-soft);
+    border-radius: var(--sdl-radius-md);
+    border: 1px solid var(--sdl-line);
+    background: var(--sdl-surface-muted);
+    box-shadow: var(--sdl-elevation-card);
 }
 
 ::deep .admin-layout__tabs .mud-tabs-toolbar {
-    padding: 0.35rem;
+    padding: var(--sdl-space-1);
     min-height: auto;
 }
 
@@ -22,16 +22,16 @@
 
 ::deep .admin-layout__tabs .mud-tab {
     min-height: 2.5rem;
-    padding-inline: 1rem;
-    border-radius: 13px;
-    color: var(--shell-text-muted);
+    padding-inline: var(--sdl-space-3);
+    border-radius: var(--sdl-radius-md);
+    color: var(--sdl-text-muted);
     font-weight: 600;
     text-transform: none;
 }
 
 ::deep .admin-layout__tabs .mud-tab.mud-tab-active {
-    color: var(--shell-text);
-    background: #ffffff;
+    color: var(--sdl-text);
+    background: var(--sdl-surface);
 }
 
 ::deep .admin-layout__tabs .mud-tabs-slider {

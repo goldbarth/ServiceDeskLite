@@ -5,6 +5,9 @@ namespace ServiceDeskLite.Web.Theme;
 
 public static class AppTheme
 {
+    /// <summary>The design tokens as <c>:root</c> custom properties, rendered into the document head.</summary>
+    public static string RootCss => DesignTokens.RootCss;
+
     private static readonly string[] FontStack =
     [
         "Aptos",
@@ -17,27 +20,27 @@ public static class AppTheme
     {
         PaletteLight = new PaletteLight
         {
-            Primary = new MudColor("#2F5D8A"),
-            Secondary = new MudColor("#7D8795"),
-            Info = new MudColor("#2F6ECA"),
-            Success = new MudColor("#2D7D5B"),
-            Warning = new MudColor("#B87822"),
-            Error = new MudColor("#B85A69"),
-            Background = new MudColor("#F4F6F9"),
-            Surface = new MudColor("#FFFFFF"),
-            AppbarBackground = new MudColor("rgba(248, 249, 251, 0.88)"),
-            AppbarText = new MudColor("#182230"),
-            DrawerBackground = new MudColor("#FBFCFD"),
+            Primary = new MudColor(DesignTokens.Brand.Primary),
+            Secondary = new MudColor(DesignTokens.Brand.Secondary),
+            Info = new MudColor(DesignTokens.Brand.Info),
+            Success = new MudColor(DesignTokens.Brand.Success),
+            Warning = new MudColor(DesignTokens.Brand.Warning),
+            Error = new MudColor(DesignTokens.Brand.Error),
+            Background = new MudColor(DesignTokens.Surface.Background),
+            Surface = new MudColor(DesignTokens.Surface.Default),
+            AppbarBackground = new MudColor(DesignTokens.Surface.AppBar),
+            AppbarText = new MudColor(DesignTokens.Text.Primary),
+            DrawerBackground = new MudColor(DesignTokens.Surface.Drawer),
             DrawerText = new MudColor("#344054"),
-            TextPrimary = new MudColor("#182230"),
-            TextSecondary = new MudColor("#637083"),
+            TextPrimary = new MudColor(DesignTokens.Text.Primary),
+            TextSecondary = new MudColor(DesignTokens.Text.Secondary),
             ActionDefault = new MudColor("#6F7C8F"),
-            LinesDefault = new MudColor("#DDE4EC"),
-            LinesInputs = new MudColor("#D5DDE7")
+            LinesDefault = new MudColor(DesignTokens.Line.Default),
+            LinesInputs = new MudColor(DesignTokens.Line.Strong)
         },
         LayoutProperties = new LayoutProperties
         {
-            DefaultBorderRadius = "16px",
+            DefaultBorderRadius = DesignTokens.Radius.Medium,
             AppbarHeight = "72px",
             DrawerWidthLeft = "292px"
         },

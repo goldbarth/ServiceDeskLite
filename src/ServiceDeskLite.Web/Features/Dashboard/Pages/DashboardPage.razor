@@ -35,33 +35,33 @@
             <KpiCard Label="New"
                      Value="@_summary.NewCount.ToString()"
                      Icon="@Icons.Material.Filled.FiberNew"
-                     Accent="blue"
+                     Accent="KpiAccent.Info"
                      ChipText="Live"
                      SupportingText="Awaiting first review" />
 
             <KpiCard Label="Triaged"
                      Value="@_summary.TriagedCount.ToString()"
                      Icon="@Icons.Material.Filled.Label"
-                     Accent="violet"
+                     Accent="KpiAccent.Highlight"
                      SupportingText="Ready for assignment" />
 
             <KpiCard Label="In Progress"
                      Value="@_summary.InProgressCount.ToString()"
                      Icon="@Icons.Material.Filled.Work"
-                     Accent="amber"
+                     Accent="KpiAccent.Caution"
                      SupportingText="Owned by active agents" />
 
             <KpiCard Label="Overdue"
                      Value="@_summary.OverdueCount.ToString()"
                      Icon="@Icons.Material.Filled.Alarm"
-                     Accent="rose"
+                     Accent="KpiAccent.Critical"
                      ChipText="Priority"
                      SupportingText="Needs immediate attention" />
 
             <KpiCard Label="Resolved (7d)"
                      Value="@_summary.ResolvedLast7DaysCount.ToString()"
                      Icon="@Icons.Material.Filled.CheckCircle"
-                     Accent="green"
+                     Accent="KpiAccent.Positive"
                      SupportingText="Closed during the last week" />
         </div>
     }

@@ -45,19 +45,19 @@
             <KpiCard Label="Tickets"
                      Value="@Format.Count(_metrics.Volume.TotalTickets)"
                      Icon="@Icons.Material.Filled.ConfirmationNumber"
-                     Accent="blue"
+                     Accent="KpiAccent.Info"
                      SupportingText="@VolumeSupport" />
 
             <KpiCard Label="Automation rate"
                      Value="@Format.Percent(_metrics.Automation.Rate)"
                      Icon="@Icons.Material.Filled.AutoMode"
-                     Accent="violet"
+                     Accent="KpiAccent.Highlight"
                      SupportingText="@AutomationSupport" />
 
             <KpiCard Label="Duplicate rate"
                      Value="@Format.Percent(_metrics.Retrieval.DuplicateRate)"
                      Icon="@Icons.Material.Filled.ContentCopy"
-                     Accent="amber"
+                     Accent="KpiAccent.Caution"
                      SupportingText="@DuplicateSupport" />
 
             <KpiCard Label="RAG confidence"
@@ -70,13 +70,13 @@
             <KpiCard Label="Tool calls"
                      Value="@Format.Count(TotalToolCalls)"
                      Icon="@Icons.Material.Filled.Build"
-                     Accent="slate"
+                     Accent="KpiAccent.Neutral"
                      SupportingText="@ToolCallsSupport" />
 
             <KpiCard Label="Tokens"
                      Value="@Format.Tokens(_metrics.Tokens.TotalTokens)"
                      Icon="@Icons.Material.Filled.Toll"
-                     Accent="rose"
+                     Accent="KpiAccent.Critical"
                      SupportingText="@TokensSupport" />
         </div>
 

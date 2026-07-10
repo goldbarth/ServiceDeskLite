@@ -14,6 +14,10 @@
     @* Hello to MudBlazor CSS *@
     <link rel="stylesheet" href="_content/MudBlazor/MudBlazor.min.css" />
 
+    @* Design tokens come from ServiceDeskLite.Web.Theme.DesignTokens, not from a stylesheet. *@
+    @* MarkupString: the default encoder would escape the CSS into entities. *@
+    <style>@((MarkupString)ServiceDeskLite.Web.Theme.AppTheme.RootCss)</style>
+
     <link rel="stylesheet" href="@Assets["app.css"]"/>
     <link rel="stylesheet" href="@Assets["ServiceDeskLite.Web.styles.css"]"/>
 

@@ -33,10 +33,15 @@
     [Parameter, EditorRequired] public string Icon { get; set; } = default!;
     [Parameter] public string? SupportingText { get; set; }
     [Parameter] public string? ChipText { get; set; }
-    [Parameter] public string Accent { get; set; } = "slate";
+    [Parameter] public KpiAccent Accent { get; set; } = KpiAccent.Neutral;
 
-    private string AccentClass
-        => string.IsNullOrWhiteSpace(Accent)
-            ? "kpi-card-shell--slate"
-            : $"kpi-card-shell--{Accent.Trim().ToLowerInvariant()}";
+    private string AccentClass => Accent switch
+    {
+        KpiAccent.Info => "kpi-card-shell--info",
+        KpiAccent.Highlight => "kpi-card-shell--highlight",
+        KpiAccent.Caution => "kpi-card-shell--caution",
+        KpiAccent.Critical => "kpi-card-shell--critical",
+        KpiAccent.Positive => "kpi-card-shell--positive",
+        _ => "kpi-card-shell--neutral"
+    };
 }
