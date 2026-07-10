@@ -65,9 +65,9 @@ public partial class AiInsightsPage
     private string? RagConfidenceChip
         => _metrics is not null && !_metrics.Retrieval.SemanticAvailable ? "Unavailable" : null;
 
-    /// <summary>A green card reads as a good score; an unmeasured one has no score to be good.</summary>
-    private string RagConfidenceAccent
-        => _metrics is not null && _metrics.Retrieval.SemanticAvailable ? "green" : "slate";
+    /// <summary>A positive card reads as a good score; an unmeasured one has no score to be good.</summary>
+    private KpiAccent RagConfidenceAccent
+        => _metrics is not null && _metrics.Retrieval.SemanticAvailable ? KpiAccent.Positive : KpiAccent.Neutral;
 
     private string RagConfidenceSupport
     {

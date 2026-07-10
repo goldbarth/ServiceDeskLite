@@ -1,24 +1,24 @@
 .navmenu {
     display: flex;
     flex-direction: column;
-    gap: 1.55rem;
+    gap: var(--sdl-space-4);
     height: 100%;
 }
 
 .navmenu__group {
     display: grid;
-    gap: 0.95rem;
+    gap: var(--sdl-space-3);
 }
 
 .navmenu__group--secondary {
     margin-top: auto;
-    padding-top: 1.6rem;
-    border-top: 1px solid rgba(221, 228, 236, 0.95);
+    padding-top: var(--sdl-space-4);
+    border-top: 1px solid var(--sdl-line);
 }
 
 .navmenu__label {
-    padding: 0 0.55rem;
-    color: var(--shell-text-muted);
+    padding: 0 var(--sdl-space-2);
+    color: var(--sdl-text-muted);
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -27,19 +27,19 @@
 
 ::deep .navmenu__list {
     display: grid;
-    gap: 0.85rem;
+    gap: var(--sdl-space-3);
 }
 
 ::deep .navmenu__list .mud-nav-link {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
+    gap: var(--sdl-space-3);
     margin: 0;
     min-height: 3.95rem;
-    padding: 1rem 1rem;
-    border-radius: 18px;
+    padding: var(--sdl-space-3);
+    border-radius: var(--sdl-radius-md);
     border: 1px solid transparent;
-    color: var(--shell-text-muted);
+    color: var(--sdl-text-muted);
     font-size: 0.94rem;
     font-weight: 600;
     line-height: 1;
@@ -52,29 +52,29 @@
     justify-content: center;
     align-self: center;
     margin-right: 0;
-    color: #7d8795;
+    color: var(--sdl-icon);
     font-size: 1.05rem;
     line-height: 1;
 }
 
 ::deep .navmenu__list .mud-nav-link:hover {
-    color: var(--shell-text);
-    background: rgba(255, 255, 255, 0.96);
-    border-color: rgba(216, 223, 232, 0.96);
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+    color: var(--sdl-text);
+    background: var(--sdl-surface-translucent);
+    border-color: var(--sdl-line);
+    box-shadow: var(--sdl-elevation-card);
 }
 
 ::deep .navmenu__list .mud-nav-link:hover .mud-nav-link-icon {
-    color: #637083;
+    color: var(--sdl-icon-hover);
 }
 
 ::deep .navmenu__list .mud-nav-link.active {
-    color: var(--shell-text);
-    background: #ffffff;
-    border-color: rgba(216, 223, 232, 0.98);
-    box-shadow: var(--shell-shadow-soft);
+    color: var(--sdl-text);
+    background: var(--sdl-surface);
+    border-color: var(--sdl-line);
+    box-shadow: var(--sdl-elevation-card);
 }
 
 ::deep .navmenu__list .mud-nav-link.active .mud-nav-link-icon {
-    color: #425365;
+    color: var(--sdl-icon-strong);
 }

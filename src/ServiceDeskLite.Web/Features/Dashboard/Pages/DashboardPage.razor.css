@@ -1,18 +1,18 @@
 .dashboard-page {
     display: grid;
-    gap: 1.7rem;
+    gap: var(--sdl-space-4);
 }
 
 .dashboard-page__grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 1.45rem;
+    gap: var(--sdl-space-4);
     grid-auto-rows: 1fr;
 }
 
 ::deep .dashboard-page__hero-skeleton,
 ::deep .dashboard-page__card-skeleton {
-    border-radius: var(--shell-radius-lg);
+    border-radius: var(--sdl-radius-lg);
 }
 
 ::deep .dashboard-page__card-skeleton {

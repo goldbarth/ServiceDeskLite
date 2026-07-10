@@ -1,26 +1,10 @@
-:root {
-    --shell-background: #f4f6f9;
-    --shell-surface: #ffffff;
-    --shell-surface-muted: #f7f9fb;
-    --shell-line: #dde4ec;
-    --shell-text: #182230;
-    --shell-text-muted: #637083;
-    --shell-radius-sm: 12px;
-    --shell-radius-md: 18px;
-    --shell-radius-lg: 24px;
-    --shell-shadow-soft: 0 10px 22px rgba(15, 23, 42, 0.05);
-    --shell-shadow-card: 0 18px 40px rgba(15, 23, 42, 0.06);
-    --shell-max-width: 1660px;
-    --shell-content-max-width: 1520px;
-}
-
 html,
 body {
     margin: 0;
     min-height: 100%;
     font-family: "Aptos", "Segoe UI Variable Text", "Segoe UI", sans-serif;
-    background: var(--shell-background);
-    color: var(--shell-text);
+    background: var(--sdl-background);
+    color: var(--sdl-text);
 }
 
 body {
@@ -44,7 +28,7 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
-    outline: 2px solid rgba(47, 110, 202, 0.28);
+    outline: 2px solid var(--sdl-focus-ring);
     outline-offset: 2px;
 }
 
@@ -61,38 +45,39 @@ textarea:focus-visible {
 }
 
 .valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
+    outline: 1px solid var(--sdl-success);
 }
 
 .invalid {
-    outline: 1px solid #e50000;
+    outline: 1px solid var(--sdl-danger);
 }
 
 .validation-message {
-    color: #c64545;
+    color: var(--sdl-danger);
 }
 
 .blazor-error-boundary {
-    background: #ad2c2c;
-    border-radius: 16px;
-    padding: 1rem 1.2rem;
-    color: white;
+    background: var(--sdl-danger);
+    border-radius: var(--sdl-radius-md);
+    padding: var(--sdl-space-3);
+    color: var(--sdl-text-on-accent);
 }
 
 .blazor-error-boundary::after {
     content: "An error has occurred.";
 }
 
+/* The reconnect banner is a browser-chrome affordance and stays light in any theme. */
 #blazor-error-ui {
     color-scheme: light only;
-    background: #fff7d1;
-    border-top: 1px solid #eadb91;
+    background: var(--sdl-status-inprogress-bg);
+    border-top: 1px solid var(--sdl-status-inprogress-border);
     bottom: 0;
-    box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.08);
+    box-shadow: var(--sdl-elevation-card);
     box-sizing: border-box;
     display: none;
     left: 0;
-    padding: 0.75rem 1.25rem 0.85rem;
+    padding: var(--sdl-space-2) var(--sdl-space-3);
     position: fixed;
     width: 100%;
     z-index: 1000;
@@ -101,17 +86,17 @@ textarea:focus-visible {
 #blazor-error-ui .dismiss {
     cursor: pointer;
     position: absolute;
-    right: 0.85rem;
-    top: 0.65rem;
+    right: var(--sdl-space-3);
+    top: var(--sdl-space-2);
 }
 
 .darker-border-checkbox.form-check-input {
-    border-color: #929292;
+    border-color: var(--sdl-line-strong);
 }
 
 .form-floating > .form-control-plaintext::placeholder,
 .form-floating > .form-control::placeholder {
-    color: var(--bs-secondary-color);
+    color: var(--sdl-text-muted);
     text-align: end;
 }
 

@@ -1,14 +1,14 @@
 .tool-usage {
     display: grid;
-    gap: 1.15rem;
-    padding: 1.6rem;
-    border-radius: var(--shell-radius-lg);
-    border: 1px solid var(--shell-border, #e3e8ef);
+    gap: var(--sdl-space-3);
+    padding: var(--sdl-space-4);
+    border-radius: var(--sdl-radius-lg);
+    border: 1px solid var(--sdl-line);
 }
 
 .tool-usage__header {
     display: grid;
-    gap: 0.3rem;
+    gap: var(--sdl-space-1);
 }
 
 .tool-usage__title {
@@ -21,7 +21,7 @@
 .tool-usage__empty {
     margin: 0;
     font-size: 0.86rem;
-    color: var(--shell-text-muted, #66768c);
+    color: var(--sdl-text-muted);
 }
 
 /* The table is the one element here that can outgrow a narrow viewport;
@@ -39,9 +39,9 @@
 
 .tool-usage__table th,
 .tool-usage__table td {
-    padding: 0.6rem 0.75rem;
+    padding: var(--sdl-space-2) var(--sdl-space-3);
     text-align: left;
-    border-bottom: 1px solid var(--shell-border, #e3e8ef);
+    border-bottom: 1px solid var(--sdl-line);
     white-space: nowrap;
 }
 
@@ -50,7 +50,7 @@
     font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--shell-text-muted, #66768c);
+    color: var(--sdl-text-muted);
 }
 
 .tool-usage__table tbody tr:last-child td {
@@ -66,10 +66,10 @@
 }
 
 .tool-usage__name {
-    font-family: var(--shell-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-family: var(--sdl-font-mono);
     font-size: 0.84rem;
 }
 
 .tool-usage__muted {
-    color: var(--shell-text-muted, #66768c);
+    color: var(--sdl-text-muted);
 }

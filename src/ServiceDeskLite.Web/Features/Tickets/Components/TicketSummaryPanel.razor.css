@@ -1,17 +1,17 @@
 .ticket-summary {
     display: flex;
     flex-direction: column;
-    gap: 1.35rem;
+    gap: var(--sdl-space-4);
 }
 
 .ticket-summary__intro {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: var(--sdl-space-1);
 }
 
 .ticket-panel__eyebrow {
-    color: #677589;
+    color: var(--sdl-text-muted);
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -20,7 +20,7 @@
 
 .ticket-summary__disclaimer {
     margin: 0;
-    color: #7a8798;
+    color: var(--sdl-text-subtle);
     font-size: 0.84rem;
     line-height: 1.6;
 }
@@ -28,7 +28,7 @@
 .ticket-summary__cards {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
+    gap: var(--sdl-space-3);
 }
 
 @media (max-width: 900px) {
@@ -40,28 +40,28 @@
 .ticket-summary__card {
     display: flex;
     flex-direction: column;
-    gap: 0.7rem;
-    padding: 1.15rem 1.25rem;
-    border: 1px solid rgba(216, 223, 232, 0.96);
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.86);
+    gap: var(--sdl-space-2);
+    padding: var(--sdl-space-3);
+    border: 1px solid var(--sdl-line);
+    border-radius: var(--sdl-radius-md);
+    background: var(--sdl-surface-translucent);
 }
 
 .ticket-summary__card-header {
     display: flex;
     align-items: center;
-    gap: 0.55rem;
+    gap: var(--sdl-space-2);
 }
 
 .ticket-summary__card-icon {
     width: 1.05rem;
     height: 1.05rem;
-    color: #7a8798;
+    color: var(--sdl-text-subtle);
 }
 
 .ticket-summary__card-title {
     margin: 0;
-    color: #223041;
+    color: var(--sdl-text);
     font-size: 0.92rem;
     font-weight: 700;
 }
@@ -69,8 +69,8 @@
 .ticket-summary__card-body {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
-    color: #243142;
+    gap: var(--sdl-space-2);
+    color: var(--sdl-text-body);
     font-size: 0.94rem;
     line-height: 1.75;
 }
@@ -81,15 +81,15 @@
 
 .ticket-summary__list {
     margin: 0;
-    padding-left: 1.15rem;
+    padding-left: var(--sdl-space-3);
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: var(--sdl-space-1);
 }
 
 .ticket-summary__card-empty {
     margin: 0;
-    color: #8b97a6;
+    color: var(--sdl-text-subtle);
     font-size: 0.9rem;
     font-style: italic;
 }
@@ -97,5 +97,5 @@
 .ticket-summary__card-skeleton {
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
+    gap: var(--sdl-space-2);
 }
