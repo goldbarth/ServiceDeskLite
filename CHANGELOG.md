@@ -1,5 +1,34 @@
 # Changelog
 
+## v1.7.0 - Sonnet 5, Container Fixes & a Recorded Test Pass
+
+### Summary
+
+The first six releases each closed a roadmap milestone; this one closes none.
+It is what a manual pass over the finished assistant surface produced, tagged before the frontend redesign opens a wide diff across the web layer.
+The model the assistant runs on became a decision instead of the default the first request happened to be written with, and thinking was disabled explicitly rather than inherited.
+Two container defects were fixed - one that made `docker compose up` fail to bind on any host already running Postgres, and one that printed a red error line above an otherwise healthy boot.
+The pass itself was written down, including the six defects it found that this release does not fix.
+
+### Highlights
+
+- The assistant runs on `claude-sonnet-5`: near-Opus quality on tool-calling work, the same 1M context window, roughly 40% of the bill, and a visibly faster first SSE delta (ADR 0038)
+- Thinking is set explicitly at both call sites. Sonnet 5 enables adaptive thinking when the field is absent, where Opus 4.8 does not, and thinking tokens are drawn from `MaxTokens`, which a six-round tool chain already fills
+- `docker compose` host ports are overridable via `DB_PORT` and `API_PORT`, with an `.env.example` naming the collision each default hits. The stack had never once run on a host with a second Postgres, which silently demoted the whole RAG group of the test plan to the InMemory provider while it still looked green
+- `libgssapi-krb5-2` is installed in the aspnet runtime stage, removing the cause of Npgsql's failed Kerberos probe rather than suppressing the symptom
+- A manual test plan over all twelve tools, summaries, the dashboard, the sandbox and the worker, tracing every deviation to a file and line and listing what remains untested
+- The README describes the current surface instead of the v1.2.0 one
+
+### Known limitations
+
+- The manual pass found six defects this release does not fix, recorded rather than silently carried: #190, #191, #193, #194, #195, #196
+- Sonnet 5 follows instructions more literally than Opus 4.8, and reaches for tools less readily with thinking off; the `*.prompt.cs` files are where that is tuned
+- Token counts were not re-baselined against `count_tokens` on a real prompt; the shared tokenizer makes it reasoned, not measured
+- Still no real auth, no outbox dispatching, no HTTP-level rate limiting
+- The port override is documented for `docker compose` only; the `dotnet run` profiles still bind fixed ports
+
+_Full notes: [docs/releases/v1.7.0.md](docs/releases/v1.7.0.md)_
+
 ## v1.6.0 — Autonomous Ticket Worker
 
 ### Summary
