@@ -45,6 +45,12 @@ RUN dotnet publish src/ServiceDeskLite.Api/ServiceDeskLite.Api.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
+# Npgsql loads libgssapi_krb5.so.2 for Kerberos/GSSAPI auth; the aspnet:10.0
+# image ships without it, so install it explicitly.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/publish .
 
 # Port 8080 is the default HTTP port for .NET containers (no HTTPS in containerised dev)

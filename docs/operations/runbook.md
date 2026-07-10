@@ -302,6 +302,15 @@ docker compose up --build
 
 Starts API + PostgreSQL (with pgvector) on `http://localhost:8080` (migrations apply automatically). The web frontend must still be started locally; point it at the Docker API with `ApiClient__BaseUrl=http://localhost:8080 dotnet run --project src/ServiceDeskLite.Web`. To use the AI assistant in this setup, export `ANTHROPIC_API_KEY` before `docker compose up` — without it the API boots with a placeholder and assistant requests fail gracefully. Additionally export `VOYAGE_API_KEY` to enable semantic ticket search: a background worker then embeds all (seeded and new) tickets, and the assistant checks for duplicates via the `find_similar_tickets` tool before creating a ticket (see ADR 0024). The same key also enables knowledge-base RAG: a second worker embeds the `/KnowledgeBase` corpus into pgvector, and the assistant answers how-to questions via `search_knowledge_base`, streaming cited sources (see ADR 0029).
 
+**Port already allocated.** The defaults `5432` and `8080` are the first ports another Postgres or another containerised service takes. If `docker compose up` fails with `Bind for 0.0.0.0:5432 failed: port is already allocated`, override the host ports — the container ports and the connection string stay as they are:
+
+```bash
+cp .env.example .env      # then edit DB_PORT / API_PORT
+DB_PORT=5442 API_PORT=8090 docker compose up --build
+```
+
+Point the web client at the API port you chose: `ApiClient__BaseUrl=http://localhost:8090`. Note that `db` publishes its port only for local tooling (psql, DBeaver); the API always reaches the database over the compose network.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
