@@ -443,3 +443,7 @@ docs/api/swagger-ui/
 
 # Mermaid diagram outputs (generated)
 docs/assets/diagrams/*.svg
+
+# Local docker compose overrides. Holds host ports, and ANTHROPIC_API_KEY / VOYAGE_API_KEY
+# are read from the environment, so this file must never be committed.
+.env

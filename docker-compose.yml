@@ -9,7 +9,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"   # optional: expose for local DB tooling (DBeaver, psql, etc.)
+      # Optional: expose for local DB tooling (DBeaver, psql, etc.). The host port is
+      # overridable because 5432 is the first port any other Postgres on the machine takes;
+      # the container port never moves, so the API's connection string stays untouched.
+      - "${DB_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d servicedesklite"]
       interval: 5s
@@ -22,7 +25,8 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      # Point the Web client at whatever this resolves to: ApiClient__BaseUrl=http://localhost:${API_PORT}
+      - "${API_PORT:-8080}:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       Persistence__Provider: Postgres
