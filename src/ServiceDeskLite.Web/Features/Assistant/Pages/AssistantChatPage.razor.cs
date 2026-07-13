@@ -172,7 +172,8 @@ public partial class AssistantChatPage : IDisposable
         public IReadOnlyList<AssistantCitation> Citations { get; } = citations ?? [];
 
         // Only read once the bubble has stopped growing, so the conversion runs once
-        // per message instead of on every re-render.
-        public string Html => _html ??= AssistantMarkdown.ToHtml(Text);
+        // per message instead of on every re-render. Render anchors an inline badge after
+        // each cited title; the sources list below the bubble carries the same numbering.
+        public string Html => _html ??= AssistantMarkdown.Render(Text, Citations).Html;
     }
 }

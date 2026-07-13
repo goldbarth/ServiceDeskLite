@@ -145,6 +145,72 @@
     color: var(--sdl-text-muted);
 }
 
+/* The badge is injected into the rendered Markdown, so it carries no scope attribute -
+   ::deep under the markdown bubble is the only selector that reaches it. */
+.assistant-chat__bubble--markdown ::deep .assistant-chat__cite {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.15em;
+    padding: 0 var(--sdl-space-1);
+    border-radius: var(--sdl-radius-sm);
+    font-size: 0.72em;
+    font-weight: 600;
+    line-height: 1.4;
+    vertical-align: super;
+    cursor: pointer;
+    color: var(--mud-palette-primary-text);
+    background: var(--mud-palette-primary);
+}
+
+.assistant-chat__bubble--markdown ::deep .assistant-chat__cite:focus-visible {
+    outline: 2px solid var(--mud-palette-primary);
+    outline-offset: 2px;
+}
+
+.assistant-chat__bubble--markdown ::deep .assistant-chat__cite-tip {
+    position: absolute;
+    bottom: calc(100% + var(--sdl-space-1));
+    left: 0;
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    gap: var(--sdl-space-1);
+    width: max-content;
+    max-width: 20rem;
+    padding: var(--sdl-space-2);
+    border: 1px solid var(--sdl-line);
+    border-radius: var(--sdl-radius-md);
+    background: var(--mud-palette-surface);
+    box-shadow: var(--mud-elevation-8);
+    white-space: normal;
+    cursor: auto;
+}
+
+.assistant-chat__bubble--markdown ::deep .assistant-chat__cite:hover .assistant-chat__cite-tip,
+.assistant-chat__bubble--markdown ::deep .assistant-chat__cite:focus .assistant-chat__cite-tip,
+.assistant-chat__bubble--markdown ::deep .assistant-chat__cite:focus-within .assistant-chat__cite-tip {
+    display: flex;
+}
+
+.assistant-chat__bubble--markdown ::deep .assistant-chat__cite-tip-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--mud-palette-text-primary);
+}
+
+.assistant-chat__bubble--markdown ::deep .assistant-chat__cite-tip-meta {
+    font-size: 0.72rem;
+    color: var(--sdl-text-muted);
+}
+
+.assistant-chat__bubble--markdown ::deep .assistant-chat__cite-tip-snippet {
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--mud-palette-text-primary);
+}
+
 .assistant-chat__tool {
     align-self: flex-start;
 }
