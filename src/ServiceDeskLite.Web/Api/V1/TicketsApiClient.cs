@@ -64,6 +64,12 @@ public sealed class TicketsApiClient : ITicketsApiClient
         if (!string.IsNullOrWhiteSpace(request.Assignee))
             queryParams.Add(new("assignee", request.Assignee));
 
+        if (request.Unassigned == true)
+            queryParams.Add(new("unassigned", "true"));
+
+        if (request.Overdue == true)
+            queryParams.Add(new("overdue", "true"));
+
         var url = QueryHelpers.AddQueryString("api/v1/tickets", queryParams);
         var httpRequest = new HttpRequestMessage(HttpMethod.Get, url);
 

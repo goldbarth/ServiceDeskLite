@@ -53,6 +53,18 @@ public class EfTicketRepository : ITicketRepository
                 && _dbContext.Agents.Any(a => a.Id == t.AssignedAgentId && a.Name.Contains(name)));
         }
 
+        if (criteria.Unassigned)
+            q = q.Where(t => t.AssignedAgentId == null);
+
+        if (criteria.Overdue)
+        {
+            // Same definition as the IsOverdue projection below, so the filter never
+            // returns a row the list would render as not overdue.
+            var now = _clock.UtcNow;
+            q = q.Where(t => t.DueAt != null && t.DueAt < now
+                && t.Status != TicketStatus.Resolved && t.Status != TicketStatus.Closed);
+        }
+
         var reference = TicketReference.Normalize(criteria.Reference);
         if (reference is not null)
         {

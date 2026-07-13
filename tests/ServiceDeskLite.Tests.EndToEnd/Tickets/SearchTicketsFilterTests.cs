@@ -2,9 +2,13 @@ using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using ServiceDeskLite.Application.Abstractions.Persistence;
+using ServiceDeskLite.Application.Tickets.AssignTicket;
+using ServiceDeskLite.Application.Tickets.ChangeTicketStatus;
 using ServiceDeskLite.Application.Tickets.CreateTicket;
 using ServiceDeskLite.Application.Tickets.SearchTickets;
 using ServiceDeskLite.Application.Tickets.Shared;
+using ServiceDeskLite.Domain.Agents;
 using ServiceDeskLite.Domain.Tickets;
 using ServiceDeskLite.Tests.EndToEnd.Composition;
 
@@ -51,6 +55,94 @@ public sealed class SearchTicketsFilterTests
     // to SQL), which also affects the REST `?assignee=` filter on Postgres. Deferred
     // to a separate infrastructure fix (issue #144); the tool's assignee-input mapping
     // is covered in Tests.Api SearchTicketsToolInputTests.
+
+    [Theory]
+    [ProviderMatrix]
+    public async Task Filter_unassigned_returns_only_tickets_without_agent(PersistenceProvider provider)
+    {
+        await using var host = await TestServiceProvider.CreateAsync(provider);
+
+        var agent = new Agent(
+            AgentId.New(), "Alex Kim", "alex.kim@servicedesk.example");
+
+        using (var scope = host.CreateScope())
+        {
+            var agents = scope.ServiceProvider.GetRequiredService<IAgentRepository>();
+            var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            await agents.AddAsync(agent);
+            await uow.SaveChangesAsync();
+        }
+
+        TicketId assignedId;
+        using (var scope = host.CreateScope())
+        {
+            var create = scope.ServiceProvider.GetRequiredService<CreateTicketHandler>();
+            assignedId = (await create.HandleAsync(TicketFactory.Command(title: "Assigned one"))).Value!.Id;
+            await create.HandleAsync(TicketFactory.Command(title: "Unassigned one"));
+        }
+
+        using (var scope = host.CreateScope())
+        {
+            var assign = scope.ServiceProvider.GetRequiredService<AssignTicketHandler>();
+            (await assign.HandleAsync(new AssignTicketCommand(
+                assignedId, agent.Id, "test"))).IsSuccess.Should().BeTrue();
+        }
+
+        using (var scope = host.CreateScope())
+        {
+            var search = scope.ServiceProvider.GetRequiredService<SearchTicketsHandler>();
+            var result = await search.HandleAsync(new SearchTicketsQuery(
+                new TicketSearchCriteria(Unassigned: true),
+                Paging.Default));
+
+            result.IsSuccess.Should().BeTrue();
+            result.Value!.Page.Items.Should().ContainSingle()
+                .Which.Title.Should().Be("Unassigned one");
+        }
+    }
+
+    [Theory]
+    [ProviderMatrix]
+    public async Task Filter_overdue_returns_only_open_tickets_past_due(PersistenceProvider provider)
+    {
+        await using var host = await TestServiceProvider.CreateAsync(provider);
+
+        var yesterday = DateTimeOffset.UtcNow.AddDays(-1);
+        var tomorrow = DateTimeOffset.UtcNow.AddDays(1);
+
+        TicketId resolvedId;
+        using (var scope = host.CreateScope())
+        {
+            var create = scope.ServiceProvider.GetRequiredService<CreateTicketHandler>();
+            await create.HandleAsync(TicketFactory.Command(title: "Overdue and open", dueAt: yesterday));
+            await create.HandleAsync(TicketFactory.Command(title: "Due tomorrow", dueAt: tomorrow));
+            await create.HandleAsync(TicketFactory.Command(title: "No due date"));
+            resolvedId = (await create.HandleAsync(TicketFactory.Command(title: "Overdue but resolved", dueAt: yesterday))).Value!.Id;
+        }
+
+        // Past due but no longer open must not count as overdue - same rule as IsOverdue.
+        using (var scope = host.CreateScope())
+        {
+            var change = scope.ServiceProvider.GetRequiredService<ChangeTicketStatusHandler>();
+            (await change.HandleAsync(new ChangeTicketStatusCommand(
+                resolvedId, TicketStatus.Triaged))).IsSuccess.Should().BeTrue();
+            (await change.HandleAsync(new ChangeTicketStatusCommand(
+                resolvedId, TicketStatus.Resolved))).IsSuccess.Should().BeTrue();
+        }
+
+        using (var scope = host.CreateScope())
+        {
+            var search = scope.ServiceProvider.GetRequiredService<SearchTicketsHandler>();
+            var result = await search.HandleAsync(new SearchTicketsQuery(
+                new TicketSearchCriteria(Overdue: true),
+                Paging.Default));
+
+            result.IsSuccess.Should().BeTrue();
+            result.Value!.Page.Items.Should().ContainSingle()
+                .Which.Title.Should().Be("Overdue and open");
+            result.Value.Page.Items.Should().OnlyContain(t => t.IsOverdue);
+        }
+    }
 
     [Theory]
     [ProviderMatrix]
