@@ -85,13 +85,6 @@
     box-shadow: none;
 }
 
-::deep .board-alert {
-    border-radius: var(--sdl-radius-md);
-    border: 1px solid var(--sdl-status-inprogress-border);
-    background: var(--sdl-priority-critical-bg);
-    color: var(--sdl-status-inprogress-fg);
-}
-
 ::deep .board-surface {
     padding: var(--sdl-space-3);
     border: 1px solid var(--sdl-category-border);

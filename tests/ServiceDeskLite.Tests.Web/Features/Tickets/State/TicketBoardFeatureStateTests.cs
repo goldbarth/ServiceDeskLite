@@ -190,10 +190,108 @@ public sealed class TicketBoardFeatureStateTests
         act.Should().NotThrow();
     }
 
+    // ── MoveAsync — optimistic apply ─────────────────────────────────────────
+
+    [Fact]
+    public async Task MoveAsync_MovesCardOptimistically_BeforeTheServerResponds()
+    {
+        var id = Guid.NewGuid();
+        var page = Page(MakeTicket(TicketStatus.New) with { Id = id, AllowedTransitions = [TicketStatus.Triaged] });
+
+        TicketBoardFeatureState sut = null!;
+        TicketStatus? statusDuringCall = null;
+
+        var fake = new FakeApi(
+            (_, _) => Task.FromResult(ApiResult<PagedResponse<TicketListItemResponse>>.Success(page)),
+            (_, _, _) =>
+            {
+                // Captured while the ChangeStatus request is in flight: the board must
+                // already show the moved card, not the origin column.
+                statusDuringCall = (sut.State as TicketBoardState.Loaded)?
+                    .Tickets.FirstOrDefault(t => t.Id == id)?.Status;
+                return Task.FromResult(ApiResult<TicketResponse>.Success(MakeTicketResponse(TicketStatus.Triaged)));
+            });
+
+        sut = new TicketBoardFeatureState(fake);
+        await sut.LoadAsync();
+
+        await sut.MoveAsync(id, TicketStatus.Triaged);
+
+        statusDuringCall.Should().Be(TicketStatus.Triaged);
+    }
+
+    // ── MoveAsync — rollback ─────────────────────────────────────────────────
+
+    [Fact]
+    public async Task MoveAsync_OnRejectedTransition_RollsBackToExactPreviousState()
+    {
+        var id = Guid.NewGuid();
+        var page = Page(MakeTicket(TicketStatus.New) with { Id = id, AllowedTransitions = [TicketStatus.Triaged] });
+        var rejection = new ApiError { Status = 400, Code = "domain.ticket.status.invalid_transition" };
+
+        var fake = new FakeApi(
+            (_, _) => Task.FromResult(ApiResult<PagedResponse<TicketListItemResponse>>.Success(page)),
+            (_, _, _) => Task.FromResult(ApiResult<TicketResponse>.Failure(rejection)));
+
+        var sut = new TicketBoardFeatureState(fake);
+        await sut.LoadAsync();
+
+        var error = await sut.MoveAsync(id, TicketStatus.Closed);
+
+        error!.Code.Should().Be("domain.ticket.status.invalid_transition");
+        var loaded = sut.State.Should().BeOfType<TicketBoardState.Loaded>().Subject;
+        loaded.Tickets.Single().Status.Should().Be(TicketStatus.New);
+        // Rollback is local — a rejected move must not reload from the server.
+        fake.SearchCallCount.Should().Be(1);
+    }
+
+    // ── MoveAsync — concurrency ──────────────────────────────────────────────
+
+    [Fact]
+    public async Task MoveAsync_WhenSuperseded_OlderMoveDoesNotReconcile()
+    {
+        var id = Guid.NewGuid();
+        var page = Page(MakeTicket(TicketStatus.New) with { Id = id, AllowedTransitions = [TicketStatus.Triaged, TicketStatus.InProgress] });
+
+        var first = new TaskCompletionSource<ApiResult<TicketResponse>>();
+        var second = new TaskCompletionSource<ApiResult<TicketResponse>>();
+        var changeCalls = 0;
+
+        var fake = new FakeApi(
+            (_, _) => Task.FromResult(ApiResult<PagedResponse<TicketListItemResponse>>.Success(page)),
+            (_, _, _) => Interlocked.Increment(ref changeCalls) == 1 ? first.Task : second.Task);
+
+        var sut = new TicketBoardFeatureState(fake);
+        await sut.LoadAsync();
+
+        var older = sut.MoveAsync(id, TicketStatus.Triaged);      // move #1, in flight
+        var newer = sut.MoveAsync(id, TicketStatus.InProgress);   // move #2 supersedes #1
+
+        // The newest move settles first and reconciles with a reload.
+        second.SetResult(ApiResult<TicketResponse>.Success(MakeTicketResponse(TicketStatus.InProgress)));
+        await newer;
+
+        // The superseded move now settles: it must pass its result through untouched,
+        // never triggering a second reload that would resurrect stale state.
+        first.SetResult(ApiResult<TicketResponse>.Success(MakeTicketResponse(TicketStatus.Triaged)));
+        await older;
+
+        // One initial load + exactly one reconciliation reload (from the newest move).
+        fake.SearchCallCount.Should().Be(2);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private static TicketListItemResponse MakeTicket(TicketStatus status = TicketStatus.New) =>
         new(Guid.NewGuid(), "Test ticket", TicketPriority.Low, TicketCategory.Uncategorized, status, DateTimeOffset.UtcNow, null, null, [], false, "#ABC1234");
+
+    private static PagedResponse<TicketListItemResponse> Page(params TicketListItemResponse[] tickets) =>
+        new(tickets.ToList(), Page: 1, PageSize: 200, TotalCount: tickets.Length);
+
+    private static TicketResponse MakeTicketResponse(TicketStatus status) =>
+        new(Guid.NewGuid(), "T", "D", TicketPriority.Low, TicketCategory.Uncategorized, status,
+            DateTimeOffset.UtcNow, null, null, [], [], IsOverdue: false, DisplayRef: "#ABC1234",
+            StatusGuidance: string.Empty, SuggestedNextSteps: []);
 
     // ── Fakes ────────────────────────────────────────────────────────────────
 

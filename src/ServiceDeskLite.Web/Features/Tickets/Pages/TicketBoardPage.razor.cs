@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
 
+using MudBlazor;
+
 using ServiceDeskLite.Contracts.V1.Tickets;
 using ServiceDeskLite.Web.Api.V1;
 using ServiceDeskLite.Web.Features.Dashboard.Components;
@@ -10,6 +12,7 @@ namespace ServiceDeskLite.Web.Features.Tickets.Pages;
 public partial class TicketBoardPage : IDisposable
 {
     [Inject] private TicketBoardFeatureState BoardState { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
     private static readonly TicketStatus[] AllColumns =
     [
@@ -44,7 +47,6 @@ public partial class TicketBoardPage : IDisposable
     private TicketListItemResponse? _draggingTicket;
     private TicketStatus? _hoveredStatus;
     private bool _isDragging;
-    private ApiError? _moveError;
 
     private IEnumerable<TicketStatus> VisibleColumns => AllColumns;
 
@@ -72,7 +74,6 @@ public partial class TicketBoardPage : IDisposable
         _draggingTicket = ticket;
         _hoveredStatus = null;
         _isDragging = true;
-        _moveError = null;
     }
 
     private void OnDragEnter(TicketStatus status)
@@ -118,7 +119,18 @@ public partial class TicketBoardPage : IDisposable
         _hoveredStatus = null;
         _isDragging = false;
 
-        _moveError = await BoardState.MoveAsync(ticket.Id, targetStatus);
+        var error = await BoardState.MoveAsync(ticket.Id, targetStatus);
+        if (error is not null)
+            Snackbar.Add(FormatMoveError(ticket, targetStatus, error), Severity.Error);
+    }
+
+    // Surfaces the machine-readable reason the domain rejected the move, not a generic
+    // failure. The ProblemDetails code is the stable contract; detail/title are the prose.
+    private string FormatMoveError(TicketListItemResponse ticket, TicketStatus targetStatus, ApiError error)
+    {
+        var reason = error.Detail ?? error.Title ?? "the transition was rejected";
+        var suffix = error.Code is { Length: > 0 } code ? $" [{code}]" : string.Empty;
+        return $"Could not move {ticket.DisplayRef} to {FormatStatus(targetStatus)}: {reason}{suffix}";
     }
 
     private static IReadOnlyList<TicketListItemResponse> TicketsForColumn(

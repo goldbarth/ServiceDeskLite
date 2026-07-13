@@ -190,10 +190,14 @@ public partial class TicketDetailsPage : IDisposable
         if (_ticket is null || _isChangingStatus || status == _ticket.Status)
             return;
 
+        // Optimistic: reflect the new status at once; a rejected transition restores the
+        // exact ticket the user saw and explains why via the ProblemDetails code.
+        var previous = _ticket;
+        _ticket = _ticket with { Status = status };
         _isChangingStatus = true;
 
         var result = await TicketsApi.ChangeStatusAsync(
-            _ticket.Id, new ChangeTicketStatusRequest(status));
+            previous.Id, new ChangeTicketStatusRequest(status));
 
         _isChangingStatus = false;
 
@@ -205,7 +209,8 @@ public partial class TicketDetailsPage : IDisposable
             return;
         }
 
-        Snackbar.Add(result.Error?.Detail ?? "Could not update status.", Severity.Error);
+        _ticket = previous;
+        Snackbar.Add(FormatActionError(result.Error, "Could not update status."), Severity.Error);
     }
 
     private async Task AssignAsync(Guid? agentId)
@@ -233,7 +238,18 @@ public partial class TicketDetailsPage : IDisposable
             return;
         }
 
-        Snackbar.Add(result.Error?.Detail ?? "Could not update assignee.", Severity.Error);
+        Snackbar.Add(FormatActionError(result.Error, "Could not update assignee."), Severity.Error);
+    }
+
+    // Prefers the server's reason and appends the machine-readable code, so a rejection
+    // explains itself instead of reading as a generic failure.
+    private static string FormatActionError(ApiError? error, string fallback)
+    {
+        if (error is null)
+            return fallback;
+
+        var reason = error.Detail ?? error.Title ?? fallback;
+        return error.Code is { Length: > 0 } code ? $"{reason} [{code}]" : reason;
     }
 
     private void BeginEdit()

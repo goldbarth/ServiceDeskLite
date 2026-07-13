@@ -49,17 +49,6 @@
         </div>
     </div>
 
-    @if (_moveError is not null)
-    {
-        <MudAlert Severity="Severity.Warning"
-                  Class="board-alert"
-                  Dense="true"
-                  ShowCloseIcon="true"
-                  CloseIconClicked="@(() => _moveError = null)">
-            <strong>Status change rejected:</strong> @(_moveError.Detail ?? _moveError.Title)
-        </MudAlert>
-    }
-
     @if (BoardState.State is TicketBoardState.Error loadError)
     {
         <AppErrorPanel Error="loadError.ApiError" />

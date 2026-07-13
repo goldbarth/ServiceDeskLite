@@ -21,6 +21,7 @@ public sealed class TicketBoardFeatureState : IDisposable
 
     private CancellationTokenSource? _cts;
     private long _seq;
+    private long _moveSeq;
 
     public TicketBoardState State => _state;
 
@@ -80,22 +81,49 @@ public sealed class TicketBoardFeatureState : IDisposable
     }
 
     /// <summary>
-    /// Attempts to move a ticket to a new status by calling the backend.
-    /// Returns null on success (board reloads automatically).
-    /// Returns an <see cref="ApiError"/> when the backend rejects the transition
-    /// so the caller can display it to the user.
+    /// Moves a ticket to a new status. The card is repositioned optimistically before the
+    /// server answers, so a board drag lands immediately instead of snapping back.
+    /// On success the board reloads to reconcile with server truth (fresh transitions);
+    /// on a rejected transition the optimistic move is rolled back to the exact prior state.
+    /// Returns null on success, or the <see cref="ApiError"/> the backend rejected with.
+    ///
+    /// Concurrency: only the most recent move reconciles. An older, superseded move returns
+    /// its result without touching state, so two rapid changes on the same ticket cannot
+    /// leave the board holding a value the server never accepted.
     /// </summary>
     public async Task<ApiError?> MoveAsync(Guid ticketId, TicketStatus newStatus)
     {
+        var move = Interlocked.Increment(ref _moveSeq);
+
+        var snapshot = _state as TicketBoardState.Loaded;
+        if (snapshot is not null)
+        {
+            var optimistic = snapshot.Tickets
+                .Select(t => t.Id == ticketId ? t with { Status = newStatus } : t)
+                .ToList();
+
+            SetState(new TicketBoardState.Loaded(optimistic));
+        }
+
         var result = await _api.ChangeStatusAsync(
             ticketId,
             new ChangeTicketStatusRequest(newStatus));
 
-        if (!result.IsSuccess)
-            return result.Error;
+        // A newer move has started; it owns reconciliation. Do not stomp its state.
+        if (Interlocked.Read(ref _moveSeq) != move)
+            return result.IsSuccess ? null : result.Error;
 
-        await LoadAsync();
-        return null;
+        if (result.IsSuccess)
+        {
+            await LoadAsync();
+            return null;
+        }
+
+        // Rejected: undo the optimistic move back to the exact state the user saw.
+        if (snapshot is not null)
+            SetState(snapshot);
+
+        return result.Error;
     }
 
     /// <summary>
