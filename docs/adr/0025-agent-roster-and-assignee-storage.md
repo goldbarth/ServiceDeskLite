@@ -68,4 +68,10 @@ supposed to live.
   lookup in InMemory) when projecting list/detail DTOs.
 - `GET /api/v1/agents` exposes the active roster; the UI assign dialog and the
   assistant `assign_ticket` tool both resolve agents through it.
+- The assistant's system prompt names the active roster per request (issue #193),
+  so the model knows the valid names before it guesses one; the failed-call error
+  path of `assign_ticket` remains only as a fallback. Injection scales with the
+  demo-sized roster — if the roster ever outgrows a prompt line, the replacement
+  is a `list_agents` retrieval tool (catalog entry, `*.prompt.cs` pair), not a
+  longer prompt.
 - Still fully fictitious — no real accounts, no login (consistent with ADR 0022).
