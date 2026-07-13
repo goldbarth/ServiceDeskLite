@@ -136,7 +136,11 @@
                                             </span>
                                         </div>
 
-                                        <a href="/tickets/@ticket.Id" class="board-card__title">@ticket.Title</a>
+                                        @* Wrapper takes the grid-item slot so the <a> is not a grid item: Chrome
+                                           blockifies a grid item's legacy -webkit-box, which kills -webkit-line-clamp. *@
+                                        <div class="board-card__title-row">
+                                            <a href="/tickets/@ticket.Id" class="board-card__title">@ticket.Title</a>
+                                        </div>
                                         <p class="board-card__summary">@BuildCardSummary(ticket)</p>
 
                                         <div class="board-card__meta">

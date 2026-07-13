@@ -364,6 +364,12 @@
     letter-spacing: 0.03em;
 }
 
+/* The grid item, so the -webkit-box title inside it is not blockified by the grid.
+   min-width: 0 lets a long unbreakable title shrink instead of stretching the column. */
+.board-card__title-row {
+    min-width: 0;
+}
+
 .board-card__title {
     display: -webkit-box;
     overflow: hidden;
