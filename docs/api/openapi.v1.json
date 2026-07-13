@@ -1329,6 +1329,20 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "Unassigned",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "Overdue",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
