@@ -39,6 +39,7 @@ public sealed class AgentLoop
     private readonly ToolGuardPipeline _guards;
     private readonly ModelTurnLimiter _modelTurns;
     private readonly IAgentActor _agent;
+    private readonly IRagRetrievalContext _retrieval;
     private readonly AnthropicOptions _options;
     private readonly IClock _clock;
     private readonly ILogger<AgentLoop> _logger;
@@ -50,6 +51,7 @@ public sealed class AgentLoop
         ToolGuardPipeline guards,
         ModelTurnLimiter modelTurns,
         IAgentActor agent,
+        IRagRetrievalContext retrieval,
         IOptions<AnthropicOptions> options,
         IClock clock,
         ILogger<AgentLoop> logger)
@@ -60,6 +62,7 @@ public sealed class AgentLoop
         _guards = guards ?? throw new ArgumentNullException(nameof(guards));
         _modelTurns = modelTurns ?? throw new ArgumentNullException(nameof(modelTurns));
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
+        _retrieval = retrieval ?? throw new ArgumentNullException(nameof(retrieval));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -76,8 +79,16 @@ public sealed class AgentLoop
         var answer = new StringBuilder();
         var turnState = new ToolTurnState();
 
+        // Enforces the grounding self-check as a mechanism, not a prompt request (ADR-0039):
+        // once a knowledge-base search has recorded passages and no check_grounding has run,
+        // the next turn is constrained to check_grounding so the model verifies its draft
+        // before the first token streams. Force-once - after one check the model is free again.
+        var groundingChecked = false;
+
         for (var iteration = 0; iteration <= _options.MaxToolIterations; iteration++)
         {
+            var forceGrounding = !groundingChecked && _retrieval.Passages.Count > 0;
+
             // Checked per round trip, not per run: a long tool chain is several billable calls,
             // and the budget must see each of them.
             if (!_modelTurns.TryConsume(request.Owner))
@@ -96,6 +107,10 @@ public sealed class AgentLoop
                 Thinking = new ThinkingConfigDisabled(),
                 System = request.SystemPrompt,
                 Tools = [.. ToolDispatcher.Definitions],
+                // Absent tool_choice means auto; only the forced turn narrows it to the check.
+                ToolChoice = forceGrounding
+                    ? new ToolChoiceTool { Name = CheckGroundingTool.Name }
+                    : new ToolChoiceAuto(),
                 Messages = messages,
             };
 
@@ -198,6 +213,10 @@ public sealed class AgentLoop
             List<ContentBlockParam> toolResults = [];
             foreach (var call in turn.ToolCalls)
             {
+                // Whether the model self-checked or was forced to, one check lifts the constraint.
+                if (call.Name == CheckGroundingTool.Name)
+                    groundingChecked = true;
+
                 yield return new AgentToolCallEvent(call.Name);
 
                 var (result, duration) = await RunToolAsync(call, request.Owner, turnState, ct);
