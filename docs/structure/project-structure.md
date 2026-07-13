@@ -53,6 +53,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── 0035-agent-sandbox.md
 │   │   ├── 0036-observability.md
 │   │   ├── 0037-autonomous-ticket-worker.md
+│   │   ├── 0038-assistant-model-selection.md
+│   │   ├── 0039-grounding-check-enforcement.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
@@ -92,12 +94,35 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── commit-conventions.md
 │   │   ├── runbook.md
 │   │   └── toc.yml
+│   ├── Quality Assurance
+│   │   ├── Screenshots
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 10-22-07.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 10-38-08.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 10-38-19.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 10-38-32.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 10-38-41.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 10-57-27.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 10-58-39.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 11-24-46.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 11-41-08.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 11-41-22.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 11-41-33.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 11-42-43.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 12-09-16.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 12-09-23.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 12-13-11.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 12-16-50.png
+│   │   │   ├── Bildschirmfoto vom 2026-07-10 12-24-55.png
+│   │   │   └── docker-output.png
+│   │   └── AI Assistant - Testplan.md
 │   ├── releases
 │   │   ├── v1.1.0.md
 │   │   ├── v1.2.0.md
 │   │   ├── v1.3.0.md
 │   │   ├── v1.4.0.md
-│   │   └── v1.5.0.md
+│   │   ├── v1.5.0.md
+│   │   ├── v1.6.0.md
+│   │   └── v1.7.0.md
 │   ├── structure
 │   │   ├── project-structure.md
 │   │   ├── solution-map.md
@@ -106,6 +131,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   └── styles
 │   │       └── main.css
 │   ├── testing
+│   │   ├── ai-assistant-manual-test-plan.md
 │   │   ├── e2e.md
 │   │   ├── overview.md
 │   │   └── toc.yml
@@ -600,6 +626,7 @@ The repository is organized into layered projects and mirrored test projects.
 │       │   │   │   ├── DashboardHero.razor
 │       │   │   │   ├── DashboardHero.razor.css
 │       │   │   │   ├── DashboardHeroStat.cs
+│       │   │   │   ├── KpiAccent.cs
 │       │   │   │   ├── KpiCard.razor
 │       │   │   │   └── KpiCard.razor.css
 │       │   │   └── Pages
@@ -635,7 +662,8 @@ The repository is organized into layered projects and mirrored test projects.
 │       ├── Properties
 │       │   └── launchSettings.json
 │       ├── Theme
-│       │   └── AppTheme.cs
+│       │   ├── AppTheme.cs
+│       │   └── DesignTokens.cs
 │       ├── wwwroot
 │       │   ├── lib
 │       │   │   └── bootstrap
@@ -824,12 +852,15 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   └── TraceCapture.cs
 │   │   ├── Scenarios
 │   │   │   ├── AutonomousWorkerTests.cs
+│   │   │   ├── GroundingEnforcementTests.cs
 │   │   │   ├── MetricsRegressionTests.cs
 │   │   │   ├── ObservabilityTests.cs
 │   │   │   ├── PromptSuiteTests.cs
 │   │   │   ├── RagGroundingTests.cs
 │   │   │   ├── StreamingTests.cs
-│   │   │   └── ToolCallingTests.cs
+│   │   │   ├── ThinkingPolicyTests.cs
+│   │   │   ├── ToolCallingTests.cs
+│   │   │   └── ToolDescriptionGuidanceTests.cs
 │   │   ├── packages.lock.json
 │   │   └── ServiceDeskLite.Tests.Evaluation.csproj
 │   ├── ServiceDeskLite.Tests.Infrastructure.InMemory
@@ -856,6 +887,8 @@ The repository is organized into layered projects and mirrored test projects.
 │       │           ├── TicketBoardFeatureStateTests.cs
 │       │           ├── TicketQueryParamsTests.cs
 │       │           └── TicketsListFeatureStateTests.cs
+│       ├── Theme
+│       │   └── DesignTokenTests.cs
 │       ├── packages.lock.json
 │       └── ServiceDeskLite.Tests.Web.csproj
 ├── tools
