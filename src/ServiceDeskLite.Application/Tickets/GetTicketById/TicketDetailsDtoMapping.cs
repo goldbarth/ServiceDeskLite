@@ -48,29 +48,49 @@ internal static class TicketDetailsDtoMapping
             _                       => string.Empty
         };
 
-    private static IReadOnlyList<string> BuildSuggestedNextSteps(
+    // Each step is tagged with the manual action it maps to, decided here where the reason for the
+    // suggestion is known. Adding a due date is deliberately left unmapped (None): it is a details
+    // edit, not one of the routed actions (status change, assign, comment).
+    private static IReadOnlyList<SuggestedStepDto> BuildSuggestedNextSteps(
         Ticket ticket,
         IReadOnlyList<TicketStatus> allowedTransitions)
     {
-        var suggestions = new List<string>();
+        var suggestions = new List<SuggestedStepDto>();
+
+        // Actionable steps first, so the primary next-step control is a live action rather than a
+        // caption: the client makes the first step the primary button. Advisory steps (adding a
+        // due date, review reminders) follow, since they route to no one-click action.
 
         if (ticket.AssignedAgentId is null && ticket.Status is not TicketStatus.Closed)
-            suggestions.Add("Assign an owner so responsibility and next handling steps are explicit.");
-
-        if (ticket.DueAt is null && ticket.Status is not TicketStatus.Resolved and not TicketStatus.Closed)
-            suggestions.Add("Add a due date if the ticket should be tracked against a service target or external commitment.");
+            suggestions.Add(new(
+                "Assign an owner so responsibility and next handling steps are explicit.",
+                SuggestedActionKind.Assign));
 
         if (allowedTransitions.Count > 0)
-            suggestions.Add($"Prepare the next workflow move: {string.Join(", ", allowedTransitions.Select(FormatStatus))}.");
+            suggestions.Add(new(
+                $"Prepare the next workflow move: {string.Join(", ", allowedTransitions.Select(FormatStatus))}.",
+                SuggestedActionKind.ChangeStatus,
+                allowedTransitions[0]));
 
         if (ticket.Status == TicketStatus.Waiting)
-            suggestions.Add("Record the blocker clearly in the notes and move the ticket back to In Progress once the dependency responds.");
+            suggestions.Add(new(
+                "Record the blocker clearly in the notes and move the ticket back to In Progress once the dependency responds.",
+                SuggestedActionKind.Comment));
+
+        if (ticket.DueAt is null && ticket.Status is not TicketStatus.Resolved and not TicketStatus.Closed)
+            suggestions.Add(new(
+                "Add a due date if the ticket should be tracked against a service target or external commitment.",
+                SuggestedActionKind.None));
 
         if (ticket.Status == TicketStatus.Resolved)
-            suggestions.Add("Validate the outcome before closing, or reopen to In Progress if follow-up work is required.");
+            suggestions.Add(new(
+                "Validate the outcome before closing, or reopen to In Progress if follow-up work is required.",
+                SuggestedActionKind.None));
 
         if (suggestions.Count == 0)
-            suggestions.Add("No immediate follow-up is suggested. Use comments and history for recordkeeping.");
+            suggestions.Add(new(
+                "No immediate follow-up is suggested. Use comments and history for recordkeeping.",
+                SuggestedActionKind.None));
 
         return suggestions;
     }

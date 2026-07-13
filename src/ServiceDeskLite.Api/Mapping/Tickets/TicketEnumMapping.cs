@@ -2,6 +2,7 @@
 using ServiceDeskLite.Contracts.V1.Tickets;
 
 using AppSortDirection = ServiceDeskLite.Application.Tickets.Shared.SortDirection;
+using AppSuggestedActionKind = ServiceDeskLite.Application.Tickets.GetTicketById.SuggestedActionKind;
 using AppTicketSortField = ServiceDeskLite.Application.Tickets.Shared.TicketSortField;
 using DomainTicketCategory = ServiceDeskLite.Domain.Tickets.TicketCategory;
 using DomainTicketPriority = ServiceDeskLite.Domain.Tickets.TicketPriority;
@@ -90,5 +91,14 @@ internal static class TicketEnumMapping
         DomainTicketStatus.Resolved => TicketStatus.Resolved,
         DomainTicketStatus.Closed => TicketStatus.Closed,
         _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unsupported TicketStatus.")
+    };
+
+    public static SuggestedActionKind ToContract(this AppSuggestedActionKind value) => value switch
+    {
+        AppSuggestedActionKind.None => SuggestedActionKind.None,
+        AppSuggestedActionKind.ChangeStatus => SuggestedActionKind.ChangeStatus,
+        AppSuggestedActionKind.Assign => SuggestedActionKind.Assign,
+        AppSuggestedActionKind.Comment => SuggestedActionKind.Comment,
+        _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unsupported SuggestedActionKind.")
     };
 }

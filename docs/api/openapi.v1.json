@@ -714,6 +714,41 @@
           null
         ]
       },
+      "SuggestedActionKind": {
+        "enum": [
+          "None",
+          "ChangeStatus",
+          "Assign",
+          "Comment"
+        ],
+        "type": "string"
+      },
+      "SuggestedStep": {
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/SuggestedActionKind"
+          },
+          "targetStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TicketStatus"
+              }
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "action",
+          "targetStatus"
+        ],
+        "type": "object"
+      },
       "TicketCategory": {
         "enum": [
           "Uncategorized",
@@ -856,7 +891,7 @@
           },
           "suggestedNextSteps": {
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SuggestedStep"
             },
             "type": "array"
           },

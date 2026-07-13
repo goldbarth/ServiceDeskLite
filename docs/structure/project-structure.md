@@ -56,6 +56,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── 0038-assistant-model-selection.md
 │   │   ├── 0039-grounding-check-enforcement.md
 │   │   ├── 0040-semantic-grounding-evaluation.md
+│   │   ├── 0041-suggested-step-action-routing.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
@@ -123,7 +124,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── v1.4.0.md
 │   │   ├── v1.5.0.md
 │   │   ├── v1.6.0.md
-│   │   └── v1.7.0.md
+│   │   ├── v1.7.0.md
+│   │   └── v1.8.0.md
 │   ├── structure
 │   │   ├── project-structure.md
 │   │   ├── solution-map.md
@@ -347,6 +349,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   │   ├── ConversationItemDto.cs
 │   │   │   │   ├── GetTicketByIdHandler.cs
 │   │   │   │   ├── GetTicketByIdQuery.cs
+│   │   │   │   ├── SuggestedStepDto.cs
 │   │   │   │   ├── TicketDetailsDto.cs
 │   │   │   │   └── TicketDetailsDtoMapping.cs
 │   │   │   ├── Outbox
@@ -404,6 +407,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │       ├── CreateTicketRequest.cs
 │   │   │       ├── CreateTicketResponse.cs
 │   │   │       ├── SearchTicketsRequest.cs
+│   │   │       ├── SuggestedStep.cs
 │   │   │       ├── TicketCategory.cs
 │   │   │       ├── TicketListItemResponse.cs
 │   │   │       ├── TicketPriority.cs
@@ -580,6 +584,11 @@ The repository is organized into layered projects and mirrored test projects.
 │       │   │   └── Loadable.razor
 │       │   ├── Layout
 │       │   │   ├── AppRoutes.cs
+│       │   │   ├── CommandPalette.razor
+│       │   │   ├── CommandPalette.razor.cs
+│       │   │   ├── CommandPalette.razor.css
+│       │   │   ├── CommandPalette.razor.js
+│       │   │   ├── CommandPaletteEntries.cs
 │       │   │   ├── MainLayout.razor
 │       │   │   ├── MainLayout.razor.css
 │       │   │   ├── NavMenu.razor
@@ -621,6 +630,7 @@ The repository is organized into layered projects and mirrored test projects.
 │       │   │   └── Format.cs
 │       │   ├── Assistant
 │       │   │   └── Pages
+│       │   │       ├── AnswerCitationLayout.cs
 │       │   │       ├── AssistantChatPage.razor
 │       │   │       ├── AssistantChatPage.razor.cs
 │       │   │       └── AssistantChatPage.razor.css
@@ -638,8 +648,6 @@ The repository is organized into layered projects and mirrored test projects.
 │       │   │       └── DashboardPage.razor.css
 │       │   ├── Tickets
 │       │   │   ├── Components
-│       │   │   │   ├── AssignTicketDialog.razor
-│       │   │   │   ├── ChangeStatusDialog.razor
 │       │   │   │   ├── TicketSummaryPanel.razor
 │       │   │   │   └── TicketSummaryPanel.razor.css
 │       │   │   ├── Pages
@@ -751,6 +759,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── SearchTicketsToolInputTests.cs
 │   │   │   ├── SemanticGroundingEvaluatorTests.cs
 │   │   │   ├── SummarySectionParserTests.cs
+│   │   │   ├── TicketSummaryPromptTests.cs
 │   │   │   ├── ToolRetryPolicyTests.cs
 │   │   │   ├── TransientFaultTests.cs
 │   │   │   └── UpdateTicketToolInputTests.cs
@@ -861,6 +870,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── ObservabilityTests.cs
 │   │   │   ├── PromptSuiteTests.cs
 │   │   │   ├── RagGroundingTests.cs
+│   │   │   ├── RosterInPromptTests.cs
 │   │   │   ├── StreamingTests.cs
 │   │   │   ├── ThinkingPolicyTests.cs
 │   │   │   ├── ToolCallingTests.cs
@@ -886,6 +896,10 @@ The repository is organized into layered projects and mirrored test projects.
 │       │   ├── TicketsApiClientTests.cs
 │       │   └── TicketSummaryApiClientTests.cs
 │       ├── Features
+│       │   ├── Assistant
+│       │   │   └── AnswerCitationLayoutTests.cs
+│       │   ├── Layout
+│       │   │   └── CommandPaletteEntriesTests.cs
 │       │   └── Tickets
 │       │       └── State
 │       │           ├── TicketBoardFeatureStateTests.cs

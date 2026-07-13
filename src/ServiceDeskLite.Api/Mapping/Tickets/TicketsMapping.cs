@@ -38,6 +38,11 @@ public static class TicketsMapping
             DisplayRef: dto.DisplayRef,
             StatusGuidance: dto.StatusGuidance,
             SuggestedNextSteps: dto.SuggestedNextSteps
+                .Select(step => new SuggestedStep(
+                    step.Text,
+                    step.Action.ToContract(),
+                    step.TargetStatus?.ToContract()))
+                .ToList()
         );
 
     public static TicketListItemResponse ToListItemResponse(this TicketListItemDto dto)

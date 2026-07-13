@@ -241,6 +241,50 @@ public partial class TicketDetailsPage : IDisposable
         Snackbar.Add(FormatActionError(result.Error, "Could not update assignee."), Severity.Error);
     }
 
+    // ── Suggested next steps → workflow actions (issue #211) ──────────────────
+
+    private IReadOnlyList<SuggestedStep> Suggestions => _ticket?.SuggestedNextSteps ?? [];
+
+    private SuggestedStep? PrimaryStep => Suggestions.Count > 0 ? Suggestions[0] : null;
+
+    private IReadOnlyList<SuggestedStep> OverflowSteps =>
+        Suggestions.Count > 1 ? Suggestions.Skip(1).ToList() : [];
+
+    private static bool IsActionable(SuggestedStep step) => step.Action != SuggestedActionKind.None;
+
+    // Concise action label for a mapped step; the advisory prose stays for unmapped steps.
+    private string StepLabel(SuggestedStep step) => step.Action switch
+    {
+        SuggestedActionKind.ChangeStatus when step.TargetStatus is { } target => $"Move to {FormatStatus(target)}",
+        SuggestedActionKind.Assign => "Assign an owner",
+        SuggestedActionKind.Comment => "Add a note",
+        _ => step.Text
+    };
+
+    private static string StepIcon(SuggestedStep step) => step.Action switch
+    {
+        SuggestedActionKind.ChangeStatus => Icons.Material.Filled.SyncAlt,
+        SuggestedActionKind.Assign => Icons.Material.Filled.PersonAddAlt,
+        SuggestedActionKind.Comment => Icons.Material.Filled.AddComment,
+        _ => Icons.Material.Filled.Lightbulb
+    };
+
+    // Routes a suggested step to the same handler the manual controls use. Assign is handled
+    // in markup (it needs an agent picker) and never reaches here.
+    private async Task ExecuteStepAsync(SuggestedStep step)
+    {
+        switch (step.Action)
+        {
+            case SuggestedActionKind.ChangeStatus when step.TargetStatus is { } target:
+                await ChangeStatusAsync(target);
+                break;
+
+            case SuggestedActionKind.Comment:
+                await SelectTabAsync(TicketDetailsTab.Comments);
+                break;
+        }
+    }
+
     // Prefers the server's reason and appends the machine-readable code, so a rejection
     // explains itself instead of reading as a generic failure.
     private static string FormatActionError(ApiError? error, string fallback)

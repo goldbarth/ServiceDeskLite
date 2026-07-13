@@ -46,7 +46,30 @@ public class GetTicketByIdHandlerTests
         result.Value.Title.Should().Be("Title");
         result.Value.AllowedTransitions.Should().Equal(TicketStatus.Triaged);
     }
-    
+
+    [Fact]
+    public async Task Suggested_steps_are_tagged_with_the_action_they_route_to()
+    {
+        var id = TicketId.New();
+        // A fresh ticket is New, unassigned, and has no due date.
+        var ticket = new Ticket(id, "Title", "Desc", TicketPriority.Medium, DateTimeOffset.UtcNow);
+
+        var repo = new FakeTicketRepository(ticket);
+        var handler = new GetTicketByIdHandler(repo, new EmptyAgentRepository(), new FakeAuditEventRepository(), new FakeClock());
+
+        var result = await handler.HandleAsync(new GetTicketByIdQuery(id));
+
+        var steps = result.Value!.SuggestedNextSteps;
+
+        // Unassigned tickets recommend assigning first, and it routes to the Assign action.
+        steps[0].Action.Should().Be(SuggestedActionKind.Assign);
+        // The workflow-move step carries the concrete target status.
+        steps.Should().ContainSingle(s => s.Action == SuggestedActionKind.ChangeStatus)
+            .Which.TargetStatus.Should().Be(TicketStatus.Triaged);
+        // Adding a due date is a details edit, not a routed action - it stays advisory text.
+        steps.Should().Contain(s => s.Text.Contains("due date") && s.Action == SuggestedActionKind.None);
+    }
+
     private sealed class FakeClock : IClock
     {
         public DateTimeOffset UtcNow { get; set; } = DateTimeOffset.UtcNow;

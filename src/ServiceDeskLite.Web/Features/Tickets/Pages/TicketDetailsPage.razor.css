@@ -89,6 +89,20 @@
     line-height: 1.55;
 }
 
+.ticket-detail-header__suggestion {
+    display: flex;
+    align-items: center;
+    gap: var(--sdl-space-1);
+    flex-wrap: wrap;
+}
+
+::deep .ticket-detail-header__suggestion-primary.mud-button-root {
+    min-height: 42px;
+    padding-inline: var(--sdl-space-3);
+    border-radius: var(--sdl-radius-md);
+    box-shadow: none;
+}
+
 .ticket-detail-header__buttons {
     display: flex;
     align-items: center;
