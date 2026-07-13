@@ -15,6 +15,12 @@ public partial class AssistantChatPage : IDisposable
     private const string GroundingToolName = "check_grounding";
 
     private readonly List<ChatEntry> _entries = [];
+
+    // Citations arrive on the `citation` SSE event right after a knowledge-base search,
+    // before the answer text that cites them. They are buffered here and attached to the
+    // next assistant bubble so the badges can anchor to the claim once the text streams in.
+    private readonly List<AssistantCitation> _pendingCitations = [];
+
     private readonly CancellationTokenSource _disposeCts = new();
 
     private MudBlazor.MudTextField<string> _inputRef = default!;
@@ -70,7 +76,8 @@ public partial class AssistantChatPage : IDisposable
                         // Tool events may interleave with text; a new bubble starts after each interruption.
                         if (assistantEntry is null || _entries[^1] != assistantEntry)
                         {
-                            assistantEntry = new ChatEntry(ChatEntryKind.Assistant, string.Empty);
+                            // Hand the buffered citations to this bubble so its text can anchor them inline.
+                            assistantEntry = new ChatEntry(ChatEntryKind.Assistant, string.Empty, citations: DrainPendingCitations());
                             _entries.Add(assistantEntry);
                         }
 
@@ -94,7 +101,7 @@ public partial class AssistantChatPage : IDisposable
 
                     case AssistantStreamEvent.CitationEvent:
                         if (evt.Citations is { Count: > 0 } citations)
-                            _entries.Add(new ChatEntry(ChatEntryKind.Citations, string.Empty, citations: citations));
+                            _pendingCitations.AddRange(citations);
                         break;
 
                     case AssistantStreamEvent.ErrorEvent:
@@ -115,9 +122,24 @@ public partial class AssistantChatPage : IDisposable
         }
         finally
         {
+            // Citations retrieved without a following answer bubble still deserve a sources
+            // block; a text-less assistant entry renders them as the fallback list.
+            if (_pendingCitations.Count > 0)
+                _entries.Add(new ChatEntry(ChatEntryKind.Assistant, string.Empty, citations: DrainPendingCitations()));
+
             _isStreaming = false;
             StateHasChanged();
         }
+    }
+
+    private IReadOnlyList<AssistantCitation> DrainPendingCitations()
+    {
+        if (_pendingCitations.Count == 0)
+            return [];
+
+        var drained = _pendingCitations.ToList();
+        _pendingCitations.Clear();
+        return drained;
     }
 
     public void Dispose()
@@ -132,7 +154,6 @@ public partial class AssistantChatPage : IDisposable
         Assistant,
         ToolCall,
         ToolResult,
-        Citations,
         Grounding,
         Error,
     }

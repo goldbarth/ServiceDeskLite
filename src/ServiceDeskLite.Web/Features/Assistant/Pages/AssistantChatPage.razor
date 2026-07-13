@@ -6,6 +6,31 @@
 
 <PageTitle>Assistant</PageTitle>
 
+@{
+    RenderFragment<NumberedCitation> RenderCitationBadge = citation =>
+        @<span class="assistant-chat__cite" tabindex="0" role="button" aria-label="@($"Source {citation.Number}: {citation.Citation.Title}")">[@citation.Number]<span class="assistant-chat__cite-tip" role="tooltip"><span class="assistant-chat__cite-tip-title">@citation.Citation.Title</span><span class="assistant-chat__cite-tip-meta">@citation.Citation.Source › @citation.Citation.Heading</span><span class="assistant-chat__cite-tip-snippet">@citation.Citation.Snippet</span></span></span>;
+
+    RenderFragment<IReadOnlyList<NumberedCitation>> RenderSources = sources =>
+        @<div class="assistant-chat__sources">
+            <div class="assistant-chat__sources-title">
+                <MudIcon Icon="@Icons.Material.Filled.MenuBook" Size="Size.Small" />
+                <span>Sources</span>
+            </div>
+            @foreach (var source in sources)
+            {
+                <div class="assistant-chat__source">
+                    <div class="assistant-chat__source-head">
+                        <span class="assistant-chat__source-number">[@source.Number]</span>
+                        <span class="assistant-chat__source-title">@source.Citation.Title</span>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Text">@source.Citation.Source</MudChip>
+                        <span class="assistant-chat__source-heading">@source.Citation.Heading</span>
+                    </div>
+                    <p class="assistant-chat__source-snippet">@source.Citation.Snippet</p>
+                </div>
+            }
+        </div>;
+}
+
 <div class="assistant-page">
     <div class="assistant-page__header">
         <span class="assistant-page__eyebrow">AI intake</span>
@@ -35,7 +60,36 @@
                         break;
 
                     case ChatEntryKind.Assistant:
-                        <div class="assistant-chat__bubble assistant-chat__bubble--assistant">@entry.Text</div>
+                        @if (entry.Citations.Count == 0)
+                        {
+                            <div class="assistant-chat__bubble assistant-chat__bubble--assistant">@entry.Text</div>
+                        }
+                        else
+                        {
+                            var layout = AnswerCitationLayout.Build(entry.Text, entry.Citations);
+
+                            @if (!string.IsNullOrEmpty(entry.Text))
+                            {
+                                <div class="assistant-chat__bubble assistant-chat__bubble--assistant">
+                                    @foreach (var run in layout.Runs)
+                                    {
+                                        if (run is AnswerTextRun textRun)
+                                        {
+                                            @textRun.Text
+                                        }
+                                        else if (run is AnswerBadgeRun badgeRun)
+                                        {
+                                            @RenderCitationBadge(badgeRun.Citation)
+                                        }
+                                    }
+                                </div>
+                            }
+
+                            @if (layout.UnanchoredCitations.Count > 0)
+                            {
+                                @RenderSources(layout.UnanchoredCitations)
+                            }
+                        }
                         break;
 
                     case ChatEntryKind.ToolCall:
@@ -75,26 +129,6 @@
                                      Color="@(entry.Score >= 0.6 ? Color.Success : entry.Score >= 0.3 ? Color.Warning : Color.Error)">
                                 Grounding @(entry.Score is { } s ? s.ToString("P0", System.Globalization.CultureInfo.InvariantCulture) : "—")
                             </MudChip>
-                        </div>
-                        break;
-
-                    case ChatEntryKind.Citations:
-                        <div class="assistant-chat__sources">
-                            <div class="assistant-chat__sources-title">
-                                <MudIcon Icon="@Icons.Material.Filled.MenuBook" Size="Size.Small" />
-                                <span>Sources</span>
-                            </div>
-                            @foreach (var citation in entry.Citations)
-                            {
-                                <div class="assistant-chat__source">
-                                    <div class="assistant-chat__source-head">
-                                        <span class="assistant-chat__source-title">@citation.Title</span>
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Text">@citation.Source</MudChip>
-                                        <span class="assistant-chat__source-heading">@citation.Heading</span>
-                                    </div>
-                                    <p class="assistant-chat__source-snippet">@citation.Snippet</p>
-                                </div>
-                            }
                         </div>
                         break;
 
