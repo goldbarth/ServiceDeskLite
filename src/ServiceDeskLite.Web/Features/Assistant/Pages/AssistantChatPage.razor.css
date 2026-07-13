@@ -22,7 +22,10 @@
     opacity: 0.8;
 }
 
-.assistant-chat {
+/* ::deep because .assistant-chat is a MudPaper (a child component): the CSS-isolation
+   scope attribute is not stamped on it, so a plain `.assistant-chat` rule never matches and
+   the panel loses its padding - which let the composer's send button hang past the edge. */
+::deep .assistant-chat {
     display: flex;
     flex-direction: column;
     border-radius: var(--sdl-radius-md);
