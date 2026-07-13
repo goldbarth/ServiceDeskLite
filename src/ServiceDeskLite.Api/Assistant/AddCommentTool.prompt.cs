@@ -4,8 +4,9 @@ public sealed partial class AddCommentTool
 {
     private const string ToolDescription =
         """
-        Add a comment to an existing ticket. Use it to ask the reporter for information the ticket
-        is missing, to record a proposed solution, or to explain an action you are recommending but
+        Add a comment to an existing ticket. Use it when you need to ask the reporter for
+        information the ticket is missing, to record a proposed solution, or to explain an action
+        you are recommending but
         may not take yourself. A comment changes nothing about the ticket — it is how you reach the
         person who owns it. Requires the ticket id, from an earlier create_ticket result or resolved
         with search_tickets first.

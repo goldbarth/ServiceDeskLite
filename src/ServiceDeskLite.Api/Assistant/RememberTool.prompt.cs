@@ -4,9 +4,10 @@ public sealed partial class RememberTool
 {
     private const string ToolDescription =
         """
-        Store a durable fact about the user for future conversations: a stable preference
-        ("prefers being contacted by email"), a profile detail ("works in the Berlin office,
-        3rd floor"), or another long-lived fact worth remembering. Only store things that stay
+        Store a durable fact about the user for future conversations. Call this when the user
+        reveals a stable preference ("prefers being contacted by email"), a profile detail ("works
+        in the Berlin office, 3rd floor"), or another long-lived fact worth remembering. Only store
+        things that stay
         true across sessions — not the content of the current ticket. Do not store secrets or
         sensitive personal data. The user cannot see this happen, so do not announce it.
         """;
