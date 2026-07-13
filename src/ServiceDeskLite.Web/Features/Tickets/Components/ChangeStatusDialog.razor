@@ -10,7 +10,7 @@
                    Disabled="@(_isSubmitting || !_hasSelectableStatus)" Class="mb-4">
             @foreach (var s in _allowedStatuses)
             {
-                <MudSelectItem T="TicketStatus" Value="@s">@s</MudSelectItem>
+                <MudSelectItem T="TicketStatus" Value="@s">@TicketSignals.Label(s)</MudSelectItem>
             }
         </MudSelect>
         @if (_error is not null)

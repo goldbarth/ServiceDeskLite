@@ -126,16 +126,6 @@ public partial class TicketBoardPage : IDisposable
         TicketStatus status)
         => [.. tickets.Where(ticket => ticket.Status == status)];
 
-    private static string FormatStatus(TicketStatus status)
-        => status switch
-        {
-            TicketStatus.InProgress => "In Progress",
-            _ => status.ToString()
-        };
-
-    private static string FormatPriority(TicketPriority priority)
-        => priority.ToString();
-
     private static string BuildCardSummary(TicketListItemResponse ticket)
         => ticket.DueAt is not null
             ? $"Due {ticket.DueAt.Value.ToLocalTime():dd MMM yyyy}"
@@ -145,16 +135,6 @@ public partial class TicketBoardPage : IDisposable
         => ticket.DueAt is not null
             ? $"Due {ticket.DueAt.Value.ToLocalTime():dd MMM}"
             : $"Created {ticket.CreatedAt.ToLocalTime():dd MMM}";
-
-    private static string PriorityClass(TicketPriority priority)
-        => priority switch
-        {
-            TicketPriority.Low => "board-priority--low",
-            TicketPriority.Medium => "board-priority--medium",
-            TicketPriority.High => "board-priority--high",
-            TicketPriority.Critical => "board-priority--critical",
-            _ => string.Empty
-        };
 
     private string ColumnClass(TicketStatus status)
     {
@@ -229,8 +209,8 @@ public partial class TicketBoardPage : IDisposable
         }
 
         return CanDropTo(status)
-            ? $"Drop here to move to {FormatStatus(status)}"
-            : $"Not allowed from {FormatStatus(_draggingTicket.Status)}";
+            ? $"Drop here to move to {TicketSignals.Label(status)}"
+            : $"Not allowed from {TicketSignals.Label(_draggingTicket.Status)}";
     }
 
     private static string AllowedNextText(IReadOnlyList<TicketListItemResponse> columnTickets)
@@ -238,7 +218,7 @@ public partial class TicketBoardPage : IDisposable
         var transitions = columnTickets.Count > 0 ? columnTickets[0].AllowedTransitions : [];
         return transitions.Count == 0
             ? "Final state"
-            : string.Join(", ", transitions.Select(FormatStatus));
+            : string.Join(", ", transitions.Select(TicketSignals.Label));
     }
 
     private static string EmptyStateText(TicketStatus status)

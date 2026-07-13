@@ -143,38 +143,6 @@ public partial class TicketsListPage : IDisposable
     private string SortButtonClass(TicketSortField field)
         => Query.SortField == field ? "tickets-sort is-active" : "tickets-sort";
 
-    private static string FormatStatus(TicketStatus status)
-        => status switch
-        {
-            TicketStatus.InProgress => "In Progress",
-            _ => status.ToString()
-        };
-
-    private static string FormatPriority(TicketPriority priority)
-        => priority.ToString();
-
-    private static string StatusChipClass(TicketStatus status)
-        => status switch
-        {
-            TicketStatus.New => "tickets-chip--status-new",
-            TicketStatus.Triaged => "tickets-chip--status-triaged",
-            TicketStatus.InProgress => "tickets-chip--status-inprogress",
-            TicketStatus.Waiting => "tickets-chip--status-waiting",
-            TicketStatus.Resolved => "tickets-chip--status-resolved",
-            TicketStatus.Closed => "tickets-chip--status-closed",
-            _ => string.Empty
-        };
-
-    private static string PriorityChipClass(TicketPriority priority)
-        => priority switch
-        {
-            TicketPriority.Low => "tickets-chip--priority-low",
-            TicketPriority.Medium => "tickets-chip--priority-medium",
-            TicketPriority.High => "tickets-chip--priority-high",
-            TicketPriority.Critical => "tickets-chip--priority-critical",
-            _ => string.Empty
-        };
-
     private static string BuildSecondaryLine(TicketListItemResponse item)
     {
         if (item.DueAt is not null)

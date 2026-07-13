@@ -96,7 +96,7 @@
                                     <span class="board-column__eyebrow">@columnSpec.WorkflowHint</span>
 
                                     <div class="board-column__title-row">
-                                        <h2 class="board-column__title">@FormatStatus(status)</h2>
+                                        <h2 class="board-column__title">@TicketSignals.Label(status)</h2>
                                         <span class="board-column__count">@columnTickets.Count</span>
                                     </div>
 
@@ -142,9 +142,7 @@
                                                 <span class="board-card__ref">@ticket.DisplayRef</span>
                                             </div>
 
-                                            <span class="@($"board-priority {PriorityClass(ticket.Priority)}")">
-                                                @FormatPriority(ticket.Priority)
-                                            </span>
+                                            <TicketChip Priority="ticket.Priority" />
                                         </div>
 
                                         <a href="/tickets/@ticket.Id" class="board-card__title">@ticket.Title</a>
