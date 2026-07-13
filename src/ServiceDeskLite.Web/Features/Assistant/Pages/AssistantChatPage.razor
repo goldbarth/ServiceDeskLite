@@ -7,25 +7,24 @@
 <PageTitle>Assistant</PageTitle>
 
 @{
-    RenderFragment<NumberedCitation> RenderCitationBadge = citation =>
-        @<span class="assistant-chat__cite" tabindex="0" role="button" aria-label="@($"Source {citation.Number}: {citation.Citation.Title}")">[@citation.Number]<span class="assistant-chat__cite-tip" role="tooltip"><span class="assistant-chat__cite-tip-title">@citation.Citation.Title</span><span class="assistant-chat__cite-tip-meta">@citation.Citation.Source › @citation.Citation.Heading</span><span class="assistant-chat__cite-tip-snippet">@citation.Citation.Snippet</span></span></span>;
-
-    RenderFragment<IReadOnlyList<NumberedCitation>> RenderSources = sources =>
+    RenderFragment<IReadOnlyList<AssistantCitation>> RenderSources = sources =>
         @<div class="assistant-chat__sources">
             <div class="assistant-chat__sources-title">
                 <MudIcon Icon="@Icons.Material.Filled.MenuBook" Size="Size.Small" />
                 <span>Sources</span>
             </div>
+            @{ var n = 0; }
             @foreach (var source in sources)
             {
+                n++;
                 <div class="assistant-chat__source">
                     <div class="assistant-chat__source-head">
-                        <span class="assistant-chat__source-number">[@source.Number]</span>
-                        <span class="assistant-chat__source-title">@source.Citation.Title</span>
-                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Text">@source.Citation.Source</MudChip>
-                        <span class="assistant-chat__source-heading">@source.Citation.Heading</span>
+                        <span class="assistant-chat__source-number">[@n]</span>
+                        <span class="assistant-chat__source-title">@source.Title</span>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Text">@source.Source</MudChip>
+                        <span class="assistant-chat__source-heading">@source.Heading</span>
                     </div>
-                    <p class="assistant-chat__source-snippet">@source.Citation.Snippet</p>
+                    <p class="assistant-chat__source-snippet">@source.Snippet</p>
                 </div>
             }
         </div>;
@@ -60,34 +59,25 @@
                         break;
 
                     case ChatEntryKind.Assistant:
-                        @if (entry.Citations.Count == 0)
+                        @* The live bubble streams as plain text so a partial document never
+                           leaves a half-open element in the DOM; Markdown renders once the
+                           message is complete. *@
+                        if (_isStreaming && entry == _entries[^1])
                         {
                             <div class="assistant-chat__bubble assistant-chat__bubble--assistant">@entry.Text</div>
                         }
                         else
                         {
-                            var layout = AnswerCitationLayout.Build(entry.Text, entry.Citations);
-
                             @if (!string.IsNullOrEmpty(entry.Text))
                             {
-                                <div class="assistant-chat__bubble assistant-chat__bubble--assistant">
-                                    @foreach (var run in layout.Runs)
-                                    {
-                                        if (run is AnswerTextRun textRun)
-                                        {
-                                            @textRun.Text
-                                        }
-                                        else if (run is AnswerBadgeRun badgeRun)
-                                        {
-                                            @RenderCitationBadge(badgeRun.Citation)
-                                        }
-                                    }
-                                </div>
+                                <div class="assistant-chat__bubble assistant-chat__bubble--assistant assistant-chat__bubble--markdown">@((MarkupString)entry.Html)</div>
                             }
 
-                            @if (layout.UnanchoredCitations.Count > 0)
+                            @* Citations retrieved for this answer are listed as its sources.
+                               Anchoring them inline in the rendered Markdown is a follow-up. *@
+                            @if (entry.Citations.Count > 0)
                             {
-                                @RenderSources(layout.UnanchoredCitations)
+                                @RenderSources(entry.Citations)
                             }
                         }
                         break;
@@ -118,17 +108,6 @@
                                     @entry.Text
                                 </MudChip>
                             }
-                        </div>
-                        break;
-
-                    case ChatEntryKind.Grounding:
-                        <div class="assistant-chat__tool">
-                            <MudChip T="string"
-                                     Icon="@(entry.Score >= 0.6 ? Icons.Material.Filled.VerifiedUser : Icons.Material.Filled.GppMaybe)"
-                                     Size="Size.Small"
-                                     Color="@(entry.Score >= 0.6 ? Color.Success : entry.Score >= 0.3 ? Color.Warning : Color.Error)">
-                                Grounding @(entry.Score is { } s ? s.ToString("P0", System.Globalization.CultureInfo.InvariantCulture) : "—")
-                            </MudChip>
                         </div>
                         break;
 

@@ -47,7 +47,7 @@
                            Disabled="@(State is TicketsListState.Loading)">
                     @foreach (var status in Enum.GetValues<TicketStatus>())
                     {
-                        <MudSelectItem T="TicketStatus" Value="status">@FormatStatus(status)</MudSelectItem>
+                        <MudSelectItem T="TicketStatus" Value="status">@TicketSignals.Label(status)</MudSelectItem>
                     }
                 </MudSelect>
             </div>
@@ -68,7 +68,7 @@
                            Disabled="@(State is TicketsListState.Loading)">
                     @foreach (var priority in Enum.GetValues<TicketPriority>())
                     {
-                        <MudSelectItem T="TicketPriority" Value="priority">@FormatPriority(priority)</MudSelectItem>
+                        <MudSelectItem T="TicketPriority" Value="priority">@TicketSignals.Label(priority)</MudSelectItem>
                     }
                 </MudSelect>
             </div>
@@ -110,8 +110,20 @@
     @if (State is TicketsListState.Loading or TicketsListState.Idle)
     {
         <MudPaper Class="tickets-surface tickets-table-shell" Elevation="0">
-            <MudSkeleton Height="42px" Width="240px" Class="mb-3" />
-            <MudSkeleton Height="430px" />
+            @* Mirrors the loaded table's rhythm: one header row, then rows at the fixed
+               row height, so the swap to data does not shift the layout. *@
+            <div class="tickets-skeleton">
+                <div class="tickets-skeleton__head">
+                    <MudSkeleton Height="15px" Width="240px" />
+                </div>
+                @for (var i = 0; i < 10; i++)
+                {
+                    <div class="tickets-skeleton__row">
+                        <MudSkeleton Height="16px" Width="64px" />
+                        <MudSkeleton Height="16px" Width="@($"{34 + (i % 3) * 12}%")" />
+                    </div>
+                }
+            </div>
         </MudPaper>
     }
     else if (State is TicketsListState.Error err)
@@ -121,6 +133,19 @@
     else if (State is TicketsListState.Loaded loaded)
     {
         var data = loaded.Data;
+
+        <div class="tickets-views" role="group" aria-label="Saved views">
+            @foreach (var preset in TicketViewPresets.AllPresets)
+            {
+                var isActive = preset.Matches(Query);
+                <button type="button"
+                        class="@(isActive ? "tickets-views__segment is-active" : "tickets-views__segment")"
+                        aria-pressed="@(isActive ? "true" : "false")"
+                        @onclick="() => ApplyPresetAsync(preset)">
+                    @preset.Label
+                </button>
+            }
+        </div>
 
         <div class="tickets-toolbar">
             <div class="tickets-toolbar__meta">
@@ -266,26 +291,18 @@
                         </MudTd>
 
                         <MudTd DataLabel="Title" Class="tickets-table__cell tickets-table__cell--title">
-                            <div class="tickets-title-cell">
-                                <div class="tickets-title-cell__title">@context.Title</div>
-                                <div class="tickets-title-cell__summary">@BuildSecondaryLine(context)</div>
+                            <div class="tickets-title-cell" title="@($"{context.Title} · {BuildSecondaryLine(context)}")">
+                                <span class="tickets-title-cell__title">@context.Title</span>
+                                <span class="tickets-title-cell__summary">@BuildSecondaryLine(context)</span>
                             </div>
                         </MudTd>
 
                         <MudTd DataLabel="Status" Class="tickets-table__cell tickets-table__cell--status">
-                            <MudChip T="string"
-                                     Class="@($"tickets-chip tickets-chip--status {StatusChipClass(context.Status)}")"
-                                     Size="Size.Small">
-                                @FormatStatus(context.Status)
-                            </MudChip>
+                            <TicketChip Status="context.Status" />
                         </MudTd>
 
                         <MudTd DataLabel="Priority" Class="tickets-table__cell tickets-table__cell--priority">
-                            <MudChip T="string"
-                                     Class="@($"tickets-chip tickets-chip--priority {PriorityChipClass(context.Priority)}")"
-                                     Size="Size.Small">
-                                @FormatPriority(context.Priority)
-                            </MudChip>
+                            <TicketChip Priority="context.Priority" />
                         </MudTd>
 
                         <MudTd DataLabel="Category" Class="tickets-table__cell tickets-table__cell--category">
@@ -302,26 +319,24 @@
                         </MudTd>
 
                         <MudTd DataLabel="Due" Class="tickets-table__cell tickets-table__cell--due">
-                            <div class="tickets-date">
-                                @if (context.DueAt is null)
-                                {
-                                    <span class="tickets-date__value tickets-date__value--muted">No due date</span>
-                                }
-                                else
-                                {
-                                    <span class="@($"tickets-date__value{(context.IsOverdue ? " tickets-date__value--alert" : string.Empty)}")">
-                                        @FormatDate(context.DueAt.Value)
-                                    </span>
-                                    <span class="tickets-date__meta">@FormatTime(context.DueAt.Value)</span>
-                                }
-                            </div>
+                            @if (context.DueAt is null)
+                            {
+                                <span class="tickets-date__value tickets-date__value--muted">No due date</span>
+                            }
+                            else
+                            {
+                                <span class="@($"tickets-date__value{(context.IsOverdue ? " tickets-date__value--alert" : string.Empty)}")"
+                                      title="@FormatCompactDateTime(context.DueAt.Value)">
+                                    @FormatDate(context.DueAt.Value)
+                                </span>
+                            }
                         </MudTd>
 
                         <MudTd DataLabel="Created" Class="tickets-table__cell tickets-table__cell--created">
-                            <div class="tickets-date">
-                                <span class="tickets-date__value tickets-date__value--muted">@FormatDate(context.CreatedAt)</span>
-                                <span class="tickets-date__meta">@FormatTime(context.CreatedAt)</span>
-                            </div>
+                            <span class="tickets-date__value tickets-date__value--muted"
+                                  title="@FormatCompactDateTime(context.CreatedAt)">
+                                @FormatDate(context.CreatedAt)
+                            </span>
                         </MudTd>
                     </RowTemplate>
                 </MudTable>

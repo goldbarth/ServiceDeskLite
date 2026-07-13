@@ -10,13 +10,15 @@ internal static class TicketFactory
     public static CreateTicketCommand Command(
         DateTimeOffset? createdAt = null,
         TicketPriority priority = TicketPriority.Medium,
-        string? title = null)
+        string? title = null,
+        DateTimeOffset? dueAt = null)
     {
         var idx = Interlocked.Increment(ref _counter);
         return new CreateTicketCommand(
             Title: title ?? $"Ticket #{idx}",
             Description: $"Description for ticket #{idx}",
             Priority: priority,
-            CreatedAt: createdAt ?? DateTimeOffset.UtcNow);
+            CreatedAt: createdAt ?? DateTimeOffset.UtcNow,
+            DueAt: dueAt);
     }
 }

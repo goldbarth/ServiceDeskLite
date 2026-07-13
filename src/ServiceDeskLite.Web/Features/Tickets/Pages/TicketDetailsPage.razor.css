@@ -260,55 +260,10 @@
     letter-spacing: 0.02em;
 }
 
-.ticket-detail-badge--status-new,
-.ticket-detail-badge--priority-medium {
-    color: var(--sdl-status-new-fg);
-    background: var(--sdl-status-new-bg);
-    border-color: var(--sdl-status-new-border);
-}
-
-.ticket-detail-badge--status-triaged {
-    color: var(--sdl-status-triaged-fg);
-    background: var(--sdl-status-triaged-bg);
-    border-color: var(--sdl-status-triaged-border);
-}
-
-.ticket-detail-badge--status-inprogress,
-.ticket-detail-badge--priority-high {
-    color: var(--sdl-status-inprogress-fg);
-    background: var(--sdl-status-inprogress-bg);
-    border-color: var(--sdl-status-inprogress-border);
-}
-
-.ticket-detail-badge--status-waiting {
-    color: var(--sdl-status-waiting-fg);
-    background: var(--sdl-status-waiting-bg);
-    border-color: var(--sdl-status-waiting-border);
-}
-
-.ticket-detail-badge--status-resolved,
-.ticket-detail-badge--status-closed {
-    color: var(--sdl-status-resolved-fg);
-    background: var(--sdl-status-resolved-bg);
-    border-color: var(--sdl-status-resolved-border);
-}
-
 .ticket-detail-badge--category {
     color: var(--sdl-category-fg);
     background: var(--sdl-category-bg);
     border-color: var(--sdl-category-border);
-}
-
-.ticket-detail-badge--priority-low {
-    color: var(--sdl-priority-low-fg);
-    background: var(--sdl-priority-low-bg);
-    border-color: var(--sdl-priority-low-border);
-}
-
-.ticket-detail-badge--priority-critical {
-    color: var(--sdl-priority-critical-fg);
-    background: var(--sdl-priority-critical-bg);
-    border-color: var(--sdl-priority-critical-border);
 }
 
 .ticket-conversation {

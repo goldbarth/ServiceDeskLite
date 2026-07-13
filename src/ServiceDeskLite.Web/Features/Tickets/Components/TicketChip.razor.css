@@ -1,0 +1,87 @@
+.ticket-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sdl-space-1);
+    min-height: 1.55rem;
+    padding-inline: var(--sdl-space-2);
+    border: 1px solid transparent;
+    border-radius: var(--sdl-radius-pill);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.ticket-chip--lg {
+    min-height: 1.95rem;
+    padding-inline: var(--sdl-space-3);
+    font-size: 0.76rem;
+}
+
+::deep .ticket-chip__icon {
+    font-size: 0.95rem;
+    width: 0.95rem;
+    height: 0.95rem;
+    color: inherit;
+}
+
+.ticket-chip--status-new {
+    color: var(--sdl-status-new-fg);
+    background: var(--sdl-status-new-bg);
+    border-color: var(--sdl-status-new-border);
+}
+
+.ticket-chip--status-triaged {
+    color: var(--sdl-status-triaged-fg);
+    background: var(--sdl-status-triaged-bg);
+    border-color: var(--sdl-status-triaged-border);
+}
+
+.ticket-chip--status-inprogress {
+    color: var(--sdl-status-inprogress-fg);
+    background: var(--sdl-status-inprogress-bg);
+    border-color: var(--sdl-status-inprogress-border);
+}
+
+.ticket-chip--status-waiting {
+    color: var(--sdl-status-waiting-fg);
+    background: var(--sdl-status-waiting-bg);
+    border-color: var(--sdl-status-waiting-border);
+}
+
+.ticket-chip--status-resolved {
+    color: var(--sdl-status-resolved-fg);
+    background: var(--sdl-status-resolved-bg);
+    border-color: var(--sdl-status-resolved-border);
+}
+
+.ticket-chip--status-closed {
+    color: var(--sdl-status-closed-fg);
+    background: var(--sdl-status-closed-bg);
+    border-color: var(--sdl-status-closed-border);
+}
+
+.ticket-chip--priority-low {
+    color: var(--sdl-priority-low-fg);
+    background: var(--sdl-priority-low-bg);
+    border-color: var(--sdl-priority-low-border);
+}
+
+.ticket-chip--priority-medium {
+    color: var(--sdl-priority-medium-fg);
+    background: var(--sdl-priority-medium-bg);
+    border-color: var(--sdl-priority-medium-border);
+}
+
+.ticket-chip--priority-high {
+    color: var(--sdl-priority-high-fg);
+    background: var(--sdl-priority-high-bg);
+    border-color: var(--sdl-priority-high-border);
+}
+
+.ticket-chip--priority-critical {
+    color: var(--sdl-priority-critical-fg);
+    background: var(--sdl-priority-critical-bg);
+    border-color: var(--sdl-priority-critical-border);
+}
