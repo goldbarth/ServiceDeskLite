@@ -1,0 +1,59 @@
+@using MudBlazor
+
+@if (_open)
+{
+    <div class="command-palette" role="dialog" aria-modal="true" aria-label="Command palette">
+        <div class="command-palette__backdrop" @onclick="() => CloseAsync(restoreFocus: true)"></div>
+
+        <div class="command-palette__panel" @onkeydown="OnKeyDownAsync">
+            <div class="command-palette__search">
+                <MudIcon Icon="@Icons.Material.Outlined.Search" Class="command-palette__search-icon" />
+                <input @ref="_inputRef"
+                       class="command-palette__input"
+                       type="text"
+                       value="@_query"
+                       @oninput="OnInputAsync"
+                       placeholder="Search pages and tickets..."
+                       autocomplete="off"
+                       spellcheck="false"
+                       aria-label="Search pages and tickets" />
+                <kbd class="command-palette__hint-key">Esc</kbd>
+            </div>
+
+            <div class="command-palette__results" role="listbox">
+                @if (_entries.Count == 0)
+                {
+                    <div class="command-palette__empty">No matches for &ldquo;@_query&rdquo;.</div>
+                }
+                else
+                {
+                    @for (var i = 0; i < _entries.Count; i++)
+                    {
+                        var index = i;
+                        var entry = _entries[index];
+
+                        <button type="button"
+                                class="@ResultClass(index)"
+                                role="option"
+                                aria-selected="@(index == _selectedIndex)"
+                                @onclick="() => OnEntryClickAsync(index)"
+                                @onmouseover="() => _selectedIndex = index">
+                            <MudIcon Icon="@entry.Icon" Class="command-palette__result-icon" />
+                            <span class="command-palette__result-label">@entry.Label</span>
+                            @if (entry.Detail is not null)
+                            {
+                                <span class="command-palette__result-detail">@entry.Detail</span>
+                            }
+                        </button>
+                    }
+                }
+            </div>
+
+            <div class="command-palette__footer">
+                <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> navigate</span>
+                <span><kbd>&crarr;</kbd> open</span>
+                <span><kbd>Esc</kbd> close</span>
+            </div>
+        </div>
+    </div>
+}
