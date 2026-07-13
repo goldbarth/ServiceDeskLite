@@ -1,8 +1,10 @@
+@using Microsoft.JSInterop
 @using MudBlazor
 @using ServiceDeskLite.Web.Theme
 @inherits LayoutComponentBase
+@inject IJSRuntime Js
 
-<MudThemeProvider Theme="@AppTheme.Theme" />
+<MudThemeProvider Theme="@AppTheme.Theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -31,6 +33,12 @@
                 <div class="shell-appbar__search">
                     <TopSearch />
                 </div>
+
+                <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)"
+                               Color="Color.Default"
+                               Class="shell-appbar__theme-toggle"
+                               OnClick="ToggleDarkModeAsync"
+                               aria-label="@(_isDarkMode ? "Switch to light mode" : "Switch to dark mode")" />
 
                 <MudAvatar Size="Size.Medium" Class="shell-appbar__avatar">OP</MudAvatar>
             </div>
@@ -64,6 +72,28 @@
 
 @code {
     private bool _drawerOpen = true;
+    private bool _isDarkMode;
 
     private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+
+    // The inline script in App.razor has already put the sdl-dark class on <html> before
+    // first paint; this only aligns MudBlazor's palette with it once interop is available.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        var isDark = await Js.InvokeAsync<bool>("sdlTheme.isDark");
+        if (isDark != _isDarkMode)
+        {
+            _isDarkMode = isDark;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleDarkModeAsync()
+    {
+        _isDarkMode = !_isDarkMode;
+        await Js.InvokeVoidAsync("sdlTheme.apply", _isDarkMode);
+    }
 }

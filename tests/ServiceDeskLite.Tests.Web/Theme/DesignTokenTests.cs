@@ -77,7 +77,44 @@ public sealed class DesignTokenTests
 
     [Fact]
     public void ResolvedAndClosedShareOneChip()
-        => DesignTokens.Status.Closed.Should().BeSameAs(DesignTokens.Status.Resolved);
+    {
+        DesignTokens.Light.Chips.StatusClosed.Should().BeSameAs(DesignTokens.Light.Chips.StatusResolved);
+        DesignTokens.Dark.Chips.StatusClosed.Should().BeSameAs(DesignTokens.Dark.Chips.StatusResolved);
+    }
+
+    // The scales that legitimately exist once, on :root only. Everything else must be
+    // defined by both themes - a token in this list is a conscious "does not vary" call.
+    private static readonly string[] SharedScaleTokens =
+    [
+        "--sdl-space-1", "--sdl-space-2", "--sdl-space-3", "--sdl-space-4",
+        "--sdl-radius-sm", "--sdl-radius-md", "--sdl-radius-lg", "--sdl-radius-pill",
+        "--sdl-font-mono", "--sdl-max-width", "--sdl-content-max-width",
+    ];
+
+    [Fact]
+    public void DarkSchemeDefinesEveryColourToken()
+    {
+        var css = DesignTokens.RootCss;
+        var darkStart = css.IndexOf(":root.sdl-dark{", StringComparison.Ordinal);
+        darkStart.Should().BePositive("the dark scheme renders as an override block on :root.sdl-dark");
+
+        var lightNames = TokenNames(css[..darkStart]);
+        var darkNames = TokenNames(css[darkStart..]);
+
+        darkNames.Should().BeEquivalentTo(
+            lightNames.Except(SharedScaleTokens),
+            "a colour token that exists in one theme and not the other falls back silently to the wrong palette");
+    }
+
+    [Fact]
+    public void SchemesDeclareOppositeColorScheme()
+    {
+        DesignTokens.RootCss.Should().Contain(":root{color-scheme:light;")
+            .And.Contain(":root.sdl-dark{color-scheme:dark;");
+    }
+
+    private static IReadOnlyList<string> TokenNames(string cssBlock) =>
+        Regex.Matches(cssBlock, @"--sdl-[a-z0-9-]+(?=:)").Select(m => m.Value).ToArray();
 
     private static IReadOnlyList<string> EnumerateScopedStylesheets()
     {
