@@ -432,44 +432,6 @@
     color: inherit;
 }
 
-.board-priority {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 1.55rem;
-    padding-inline: var(--sdl-space-2);
-    border: 1px solid transparent;
-    border-radius: var(--sdl-radius-pill);
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    white-space: nowrap;
-}
-
-.board-priority--low {
-    color: var(--sdl-priority-low-fg);
-    background: var(--sdl-priority-low-bg);
-    border-color: var(--sdl-priority-low-border);
-}
-
-.board-priority--medium {
-    color: var(--sdl-status-new-fg);
-    background: var(--sdl-status-new-bg);
-    border-color: var(--sdl-status-new-border);
-}
-
-.board-priority--high {
-    color: var(--sdl-status-inprogress-fg);
-    background: var(--sdl-status-inprogress-bg);
-    border-color: var(--sdl-status-inprogress-border);
-}
-
-.board-priority--critical {
-    color: var(--sdl-priority-critical-fg);
-    background: var(--sdl-priority-critical-bg);
-    border-color: var(--sdl-priority-critical-border);
-}
-
 .board-skeleton {
     display: flex;
     gap: var(--sdl-space-3);

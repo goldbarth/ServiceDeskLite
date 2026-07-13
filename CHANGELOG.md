@@ -1,5 +1,34 @@
 # Changelog
 
+## v1.9.0 - Frontend Redesign: One Visual System, Power-User Speed
+
+### Summary
+
+This release is the M9 milestone: a cohesive overhaul of the web client, from the token scale it is drawn on up to the interactions an operator repeats all day.
+Where v1.8.0 hardened what the assistant does, this one reworks what the desk sees and touches - a single design-token scale, dark mode, richer ticket signals, saved views, a command palette, inline editing, optimistic status moves, and recommended actions that are buttons instead of captions.
+The assistant surface joins the same system: answers render as Markdown, and knowledge-base sources are listed under the reply.
+The design-token foundation (#202) shipped early under the v1.8.0 tag; it is the base every other M9 change is drawn on, and this is the release where the redesign it enabled is complete.
+
+### Highlights
+
+- One design-token scale for spacing, radius, elevation, and semantic color, with a guard test that fails the build on a raw literal where a token applies (#202, tagged in v1.8.0)
+- Dark mode with a PaletteDark, token schemes, and a top-bar toggle - both themes first-class (#203)
+- Status and priority render as chips with an icon, not color alone (#204); the queue has a fixed row height and a monospaced reference (#205)
+- Saved views: segmented presets over the ticket list that filter without a dialog round-trip (#206)
+- Command palette on Ctrl/Cmd+K: navigates from the NavRegistry, finds tickets through the search endpoint (debounced, cancellable), fully keyboard-operable (#210)
+- Inline status/assignee edit instead of modal dialogs (#208); optimistic status moves with rollback and the rejection code on the board and detail view (#209); the first suggested step is a primary button that runs it (#211, ADR 0041)
+- Assistant answers render as sanitized Markdown (#196), knowledge-base sources are listed under the reply (#207), and the grounding check is kept out of the transcript (#189)
+- Redesign defects fixed: category header overlapping Due (#214/#228), the composer send button outside its panel (#215), board-card titles never clamping (#216)
+
+### Known limitations
+
+- Inline citation badges anchored in the answer text are deferred (#243); the assistant lists sources under the Markdown reply instead
+- Ticket search matches case-sensitively across the app-bar search, ticket list, and palette; fix + match-semantics decision tracked as an ADR issue (#241)
+- Scoped stylesheet rules targeting MudBlazor component roots silently do nothing (Blazor CSS isolation); one case fixed (#215), an audit + guard test is tracked (#242)
+- Still no real auth, no outbox dispatching, no HTTP-level rate limiting; conversation resume UI still not built
+
+_Full notes: [docs/releases/v1.9.0.md](docs/releases/v1.9.0.md)_
+
 ## v1.8.0 - Assistant Hardening: Grounding as a Mechanism, Honest Writes
 
 ### Summary

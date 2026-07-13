@@ -74,78 +74,75 @@
     padding: var(--sdl-space-2) var(--sdl-space-3);
 }
 
-.assistant-chat__cite {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 1.5rem;
-    height: 1.25rem;
-    margin: 0 0.15em;
-    padding: 0 0.35em;
-    vertical-align: baseline;
+/* Rendered Markdown brings its own block layout; pre-wrap would double the spacing.
+   ::deep because MarkupString content carries no scope attribute. */
+.assistant-chat__bubble--markdown {
     white-space: normal;
-    font-size: 0.72rem;
-    font-weight: 600;
-    line-height: 1;
-    color: var(--mud-palette-primary);
-    background: color-mix(in srgb, var(--mud-palette-primary) 12%, transparent);
-    border: 1px solid color-mix(in srgb, var(--mud-palette-primary) 35%, transparent);
+}
+
+.assistant-chat__bubble--markdown ::deep p,
+.assistant-chat__bubble--markdown ::deep ul,
+.assistant-chat__bubble--markdown ::deep ol,
+.assistant-chat__bubble--markdown ::deep pre,
+.assistant-chat__bubble--markdown ::deep table,
+.assistant-chat__bubble--markdown ::deep blockquote {
+    margin: 0 0 var(--sdl-space-2);
+}
+
+.assistant-chat__bubble--markdown ::deep > :last-child {
+    margin-bottom: 0;
+}
+
+.assistant-chat__bubble--markdown ::deep h1,
+.assistant-chat__bubble--markdown ::deep h2,
+.assistant-chat__bubble--markdown ::deep h3,
+.assistant-chat__bubble--markdown ::deep h4,
+.assistant-chat__bubble--markdown ::deep h5,
+.assistant-chat__bubble--markdown ::deep h6 {
+    margin: var(--sdl-space-2) 0 var(--sdl-space-1);
+    font-size: 1rem;
+    line-height: 1.3;
+}
+
+.assistant-chat__bubble--markdown ::deep ul,
+.assistant-chat__bubble--markdown ::deep ol {
+    padding-left: var(--sdl-space-4);
+}
+
+.assistant-chat__bubble--markdown ::deep code {
+    font-family: var(--sdl-font-mono);
+    font-size: 0.85em;
+    padding: 0 var(--sdl-space-1);
     border-radius: var(--sdl-radius-sm);
-    cursor: help;
+    background: var(--sdl-surface-sunken);
 }
 
-.assistant-chat__cite:hover,
-.assistant-chat__cite:focus-visible {
-    background: color-mix(in srgb, var(--mud-palette-primary) 20%, transparent);
-    outline: none;
+.assistant-chat__bubble--markdown ::deep pre {
+    padding: var(--sdl-space-2);
+    border-radius: var(--sdl-radius-sm);
+    background: var(--sdl-surface-sunken);
+    overflow-x: auto;
 }
 
-.assistant-chat__cite-tip {
-    position: absolute;
-    bottom: calc(100% + 0.4rem);
-    left: 0;
-    z-index: 10;
-    display: flex;
-    flex-direction: column;
-    gap: var(--sdl-space-1);
-    width: max-content;
-    max-width: 22rem;
-    padding: var(--sdl-space-2) var(--sdl-space-3);
-    white-space: normal;
-    font-weight: 400;
-    color: var(--mud-palette-text-primary);
-    background: var(--mud-palette-surface);
-    border: 1px solid var(--mud-palette-lines-default);
-    border-radius: var(--sdl-radius-md);
-    box-shadow: var(--mud-elevation-8);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.12s ease;
-    pointer-events: none;
+.assistant-chat__bubble--markdown ::deep pre code {
+    padding: 0;
+    background: none;
 }
 
-.assistant-chat__cite:hover .assistant-chat__cite-tip,
-.assistant-chat__cite:focus-visible .assistant-chat__cite-tip,
-.assistant-chat__cite:focus-within .assistant-chat__cite-tip {
-    opacity: 1;
-    visibility: visible;
+.assistant-chat__bubble--markdown ::deep table {
+    border-collapse: collapse;
 }
 
-.assistant-chat__cite-tip-title {
-    font-size: 0.85rem;
-    font-weight: 600;
+.assistant-chat__bubble--markdown ::deep th,
+.assistant-chat__bubble--markdown ::deep td {
+    border: 1px solid var(--sdl-line);
+    padding: var(--sdl-space-1) var(--sdl-space-2);
 }
 
-.assistant-chat__cite-tip-meta {
-    font-size: 0.72rem;
-    opacity: 0.7;
-}
-
-.assistant-chat__cite-tip-snippet {
-    font-size: 0.82rem;
-    line-height: 1.4;
-    opacity: 0.85;
+.assistant-chat__bubble--markdown ::deep blockquote {
+    padding-left: var(--sdl-space-2);
+    border-left: 2px solid var(--sdl-line);
+    color: var(--sdl-text-muted);
 }
 
 .assistant-chat__tool {

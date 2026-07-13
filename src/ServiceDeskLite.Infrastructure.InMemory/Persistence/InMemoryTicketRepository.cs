@@ -66,6 +66,18 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
                               && n.Contains(name, StringComparison.OrdinalIgnoreCase));
         }
 
+        if (criteria.Unassigned)
+            q = q.Where(t => t.AssignedAgentId is null);
+
+        if (criteria.Overdue)
+        {
+            // Same definition as the IsOverdue projection below, so the filter never
+            // returns a row the list would render as not overdue.
+            var now = _clock.UtcNow;
+            q = q.Where(t => t.DueAt is not null && t.DueAt.Value < now
+                && t.Status is not TicketStatus.Resolved and not TicketStatus.Closed);
+        }
+
         var reference = TicketReference.Normalize(criteria.Reference);
         if (reference is not null)
             q = q.Where(t => TicketReference.Suffix(t.Id) == reference);

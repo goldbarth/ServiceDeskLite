@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 
 using ServiceDeskLite.Contracts.V1.Assistant;
 using ServiceDeskLite.Web.Api.V1.Assistant;
+using ServiceDeskLite.Web.Features.Assistant;
 
 namespace ServiceDeskLite.Web.Features.Assistant.Pages;
 
@@ -10,15 +11,16 @@ public partial class AssistantChatPage : IDisposable
 {
     [Inject] private IAssistantApiClient AssistantClient { get; set; } = default!;
 
-    // Server-side tool name (ServiceDeskLite.Api.Assistant.CheckGroundingTool.Name); the web
-    // renders its result as a grounding badge instead of a generic tool chip.
+    // Server-side tool name (ServiceDeskLite.Api.Assistant.CheckGroundingTool.Name). The check
+    // is internal (the prompt tells the model never to mention it), so the chat renders neither
+    // its call nor its score; the dashboard is the place for grounding metrics (#189).
     private const string GroundingToolName = "check_grounding";
 
     private readonly List<ChatEntry> _entries = [];
 
     // Citations arrive on the `citation` SSE event right after a knowledge-base search,
     // before the answer text that cites them. They are buffered here and attached to the
-    // next assistant bubble so the badges can anchor to the claim once the text streams in.
+    // next assistant bubble, which lists them as its sources once the text arrives.
     private readonly List<AssistantCitation> _pendingCitations = [];
 
     private readonly CancellationTokenSource _disposeCts = new();
@@ -76,7 +78,7 @@ public partial class AssistantChatPage : IDisposable
                         // Tool events may interleave with text; a new bubble starts after each interruption.
                         if (assistantEntry is null || _entries[^1] != assistantEntry)
                         {
-                            // Hand the buffered citations to this bubble so its text can anchor them inline.
+                            // Hand the buffered citations to this bubble so it can list them as its sources.
                             assistantEntry = new ChatEntry(ChatEntryKind.Assistant, string.Empty, citations: DrainPendingCitations());
                             _entries.Add(assistantEntry);
                         }
@@ -86,13 +88,12 @@ public partial class AssistantChatPage : IDisposable
                         break;
 
                     case AssistantStreamEvent.ToolCallEvent:
-                        _entries.Add(new ChatEntry(ChatEntryKind.ToolCall, evt.ToolName ?? "tool"));
+                        if (evt.ToolName != GroundingToolName)
+                            _entries.Add(new ChatEntry(ChatEntryKind.ToolCall, evt.ToolName ?? "tool"));
                         break;
 
                     case AssistantStreamEvent.ToolResultEvent:
-                        if (evt.ToolName == GroundingToolName)
-                            _entries.Add(new ChatEntry(ChatEntryKind.Grounding, evt.Message ?? string.Empty, score: evt.Confidence));
-                        else
+                        if (evt.ToolName != GroundingToolName)
                             _entries.Add(new ChatEntry(
                                 ChatEntryKind.ToolResult,
                                 evt.Message ?? string.Empty,
@@ -154,7 +155,6 @@ public partial class AssistantChatPage : IDisposable
         Assistant,
         ToolCall,
         ToolResult,
-        Grounding,
         Error,
     }
 
@@ -162,13 +162,17 @@ public partial class AssistantChatPage : IDisposable
         ChatEntryKind kind,
         string text,
         Guid? ticketId = null,
-        IReadOnlyList<AssistantCitation>? citations = null,
-        double? score = null)
+        IReadOnlyList<AssistantCitation>? citations = null)
     {
+        private string? _html;
+
         public ChatEntryKind Kind { get; } = kind;
         public string Text { get; set; } = text;
         public Guid? TicketId { get; } = ticketId;
         public IReadOnlyList<AssistantCitation> Citations { get; } = citations ?? [];
-        public double? Score { get; } = score;
+
+        // Only read once the bubble has stopped growing, so the conversion runs once
+        // per message instead of on every re-render.
+        public string Html => _html ??= AssistantMarkdown.ToHtml(Text);
     }
 }

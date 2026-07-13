@@ -50,6 +50,18 @@ public partial class TicketsListPage : IDisposable
                 count++;
             }
 
+            // Preset-only filters count too: an invisible filter is worse than a chip
+            // that says one more than the filter bar shows.
+            if (Query.Unassigned)
+            {
+                count++;
+            }
+
+            if (Query.Overdue)
+            {
+                count++;
+            }
+
             return count == 1 ? "1 active filter" : $"{count} active filters";
         }
     }
@@ -113,8 +125,17 @@ public partial class TicketsListPage : IDisposable
             Q = null,
             Statuses = null,
             Priorities = null,
-            Assignee = null
+            Assignee = null,
+            Unassigned = false,
+            Overdue = false
         });
+    }
+
+    private Task ApplyPresetAsync(TicketViewPreset preset)
+    {
+        var next = preset.Apply(Query);
+        SyncFilterFieldsFromQuery(next);
+        return LoadAndSyncUrlAsync(next);
     }
 
     private async Task OnSearchKeyDownAsync(KeyboardEventArgs args)
@@ -143,38 +164,6 @@ public partial class TicketsListPage : IDisposable
     private string SortButtonClass(TicketSortField field)
         => Query.SortField == field ? "tickets-sort is-active" : "tickets-sort";
 
-    private static string FormatStatus(TicketStatus status)
-        => status switch
-        {
-            TicketStatus.InProgress => "In Progress",
-            _ => status.ToString()
-        };
-
-    private static string FormatPriority(TicketPriority priority)
-        => priority.ToString();
-
-    private static string StatusChipClass(TicketStatus status)
-        => status switch
-        {
-            TicketStatus.New => "tickets-chip--status-new",
-            TicketStatus.Triaged => "tickets-chip--status-triaged",
-            TicketStatus.InProgress => "tickets-chip--status-inprogress",
-            TicketStatus.Waiting => "tickets-chip--status-waiting",
-            TicketStatus.Resolved => "tickets-chip--status-resolved",
-            TicketStatus.Closed => "tickets-chip--status-closed",
-            _ => string.Empty
-        };
-
-    private static string PriorityChipClass(TicketPriority priority)
-        => priority switch
-        {
-            TicketPriority.Low => "tickets-chip--priority-low",
-            TicketPriority.Medium => "tickets-chip--priority-medium",
-            TicketPriority.High => "tickets-chip--priority-high",
-            TicketPriority.Critical => "tickets-chip--priority-critical",
-            _ => string.Empty
-        };
-
     private static string BuildSecondaryLine(TicketListItemResponse item)
     {
         if (item.DueAt is not null)
@@ -188,9 +177,6 @@ public partial class TicketsListPage : IDisposable
 
     private static string FormatDate(DateTimeOffset value)
         => value.ToLocalTime().ToString("dd MMM yyyy");
-
-    private static string FormatTime(DateTimeOffset value)
-        => value.ToLocalTime().ToString("HH:mm");
 
     private static string FormatCompactDateTime(DateTimeOffset value)
         => value.ToLocalTime().ToString("dd MMM yyyy, HH:mm");
@@ -251,7 +237,10 @@ public partial class TicketsListPage : IDisposable
 
         string? assignee = qs.TryGetValue("assignee", out var av) ? (string?)av : null;
 
-        return new TicketQueryParams(page, pageSize, sortField, sortDir, q, statuses, priorities, assignee);
+        var unassigned = qs.TryGetValue("unassigned", out var uv) && bool.TryParse(uv, out var ub) && ub;
+        var overdue = qs.TryGetValue("overdue", out var ov) && bool.TryParse(ov, out var ob) && ob;
+
+        return new TicketQueryParams(page, pageSize, sortField, sortDir, q, statuses, priorities, assignee, unassigned, overdue);
     }
 
     private void SyncUrl(TicketQueryParams query)
@@ -303,6 +292,16 @@ public partial class TicketsListPage : IDisposable
         if (!string.IsNullOrWhiteSpace(query.Assignee))
         {
             qs.Add(new("assignee", query.Assignee));
+        }
+
+        if (query.Unassigned)
+        {
+            qs.Add(new("unassigned", "true"));
+        }
+
+        if (query.Overdue)
+        {
+            qs.Add(new("overdue", "true"));
         }
 
         var url = QueryHelpers.AddQueryString("/tickets", qs);

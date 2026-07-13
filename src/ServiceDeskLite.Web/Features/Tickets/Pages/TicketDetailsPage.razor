@@ -77,12 +77,8 @@ else
                     <p class="ticket-detail-header__summary">@BuildHeaderSummary(_ticket.Description)</p>
 
                     <div class="ticket-detail-header__signals">
-                        <span class="@($"ticket-detail-badge ticket-detail-badge--status {StatusBadgeClass(_ticket.Status)}")">
-                            @FormatStatus(_ticket.Status)
-                        </span>
-                        <span class="@($"ticket-detail-badge ticket-detail-badge--priority {PriorityBadgeClass(_ticket.Priority)}")">
-                            @FormatPriority(_ticket.Priority)
-                        </span>
+                        <TicketChip Status="_ticket.Status" Large="true" />
+                        <TicketChip Priority="_ticket.Priority" Large="true" />
                         @if (_ticket.Category != TicketCategory.Uncategorized)
                         {
                             <span class="ticket-detail-badge ticket-detail-badge--category">
@@ -181,7 +177,7 @@ else
                                 @foreach (var status in _ticket.AllowedTransitions)
                                 {
                                     <MudMenuItem OnClick="() => ChangeStatusAsync(status)">
-                                        @FormatStatus(status)
+                                        @TicketSignals.Label(status)
                                     </MudMenuItem>
                                 }
                             </ChildContent>
@@ -263,7 +259,7 @@ else
                                        Disabled="_isSavingEdit">
                                 @foreach (var p in Enum.GetValues<TicketPriority>())
                                 {
-                                    <MudSelectItem Value="@p">@FormatPriority(p)</MudSelectItem>
+                                    <MudSelectItem Value="@p">@TicketSignals.Label(p)</MudSelectItem>
                                 }
                             </MudSelect>
 
@@ -567,18 +563,14 @@ else
                             <div class="ticket-context__row">
                                 <dt>Status</dt>
                                 <dd>
-                                    <span class="@($"ticket-detail-badge ticket-detail-badge--status {StatusBadgeClass(_ticket.Status)}")">
-                                        @FormatStatus(_ticket.Status)
-                                    </span>
+                                    <TicketChip Status="_ticket.Status" Large="true" />
                                 </dd>
                             </div>
 
                             <div class="ticket-context__row">
                                 <dt>Priority</dt>
                                 <dd>
-                                    <span class="@($"ticket-detail-badge ticket-detail-badge--priority {PriorityBadgeClass(_ticket.Priority)}")">
-                                        @FormatPriority(_ticket.Priority)
-                                    </span>
+                                    <TicketChip Priority="_ticket.Priority" Large="true" />
                                 </dd>
                             </div>
 
@@ -623,7 +615,7 @@ else
                             <div class="ticket-next-steps__chips">
                                 @foreach (var status in _ticket.AllowedTransitions)
                                 {
-                                    <span class="ticket-next-steps__chip">@FormatStatus(status)</span>
+                                    <span class="ticket-next-steps__chip">@TicketSignals.Label(status)</span>
                                 }
                             </div>
                         }

@@ -18,6 +18,19 @@
     @* MarkupString: the default encoder would escape the CSS into entities. *@
     <style>@((MarkupString)ServiceDeskLite.Web.Theme.AppTheme.RootCss)</style>
 
+    @* Inline and before the stylesheets: the sdl-dark class must be on <html> at first
+       paint, or a dark-mode user gets a white flash on every load. *@
+    <script>
+        (function () {
+            const stored = localStorage.getItem("sdl-theme");
+            const dark = stored === "dark" || stored === "light"
+                ? stored === "dark"
+                : matchMedia("(prefers-color-scheme: dark)").matches;
+            if (dark) document.documentElement.classList.add("sdl-dark");
+        })();
+    </script>
+    <script src="@Assets["theme.js"]"></script>
+
     <link rel="stylesheet" href="@Assets["app.css"]"/>
     <link rel="stylesheet" href="@Assets["ServiceDeskLite.Web.styles.css"]"/>
 
