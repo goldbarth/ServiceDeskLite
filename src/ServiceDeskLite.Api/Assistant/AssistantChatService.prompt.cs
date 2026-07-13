@@ -11,10 +11,17 @@ public sealed partial class AssistantChatService
     // injected per request: the model has no calendar and would otherwise resolve
     // relative dates like "by Friday" from its training data — producing due
     // dates in the past — or express times in UTC that render shifted in the UI.
-    private static string BuildSystemPrompt(DateTimeOffset localNow, string timeZoneId)
+    // The active agent roster is injected for the same reason (issue #193): without
+    // it the model only ever saw valid names inside a failed assign_ticket result,
+    // and paraphrased them into agents that do not exist.
+    private static string BuildSystemPrompt(
+        DateTimeOffset localNow, string timeZoneId, IReadOnlyList<string> agentNames)
     {
         var localDateTime = localNow.ToString("dddd, yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
         var utcOffset = localNow.ToString("zzz", CultureInfo.InvariantCulture);
+        var rosterLine = agentNames.Count > 0
+            ? $"The active agents on the roster are: {string.Join(", ", agentNames)}."
+            : "The agent roster is currently empty.";
 
         return $"""
             You are the ServiceDeskLite assistant. Users describe IT problems or requests in free text.
@@ -45,9 +52,11 @@ public sealed partial class AssistantChatService
             tell the user the reason it returns instead of guessing another status or retrying blindly.
 
             To assign, reassign or unassign a ticket, use the assign_ticket tool with the resolved
-            ticket id and the agent's name from the roster. If the name does not match an active
-            agent, the tool returns the list of valid agents — relay it and ask the user to choose
-            rather than inventing a name. Omit the agent name to unassign.
+            ticket id and the agent's name from the roster. {rosterLine} Use exactly these names —
+            never infer, translate or invent an agent name, and when the user gives a name that is
+            not on the roster, tell them and list the valid ones instead of picking the closest
+            match. If the tool still rejects a name, relay the list it returns and ask the user to
+            choose. Omit the agent name to unassign.
 
             Right after you create a ticket, auto-triage it with the route_ticket tool, passing the new
             ticket id. It derives a category, priority, assignee, and status from the content and applies

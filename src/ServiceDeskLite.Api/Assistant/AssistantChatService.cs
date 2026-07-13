@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using ServiceDeskLite.Api.Assistant.Agent;
 using ServiceDeskLite.Api.Observability;
 using ServiceDeskLite.Application.Abstractions.Assistant;
+using ServiceDeskLite.Application.Agents.GetAgents;
 using ServiceDeskLite.Application.Common;
 using ServiceDeskLite.Contracts.V1.Assistant;
 
@@ -31,6 +32,7 @@ public sealed partial class AssistantChatService
     private readonly AgentLoop _agent;
     private readonly IConversationStore _conversations;
     private readonly ICurrentUser _currentUser;
+    private readonly GetAgentsHandler _agents;
     private readonly AnthropicOptions _options;
     private readonly IClock _clock;
 
@@ -38,12 +40,14 @@ public sealed partial class AssistantChatService
         AgentLoop agent,
         IConversationStore conversations,
         ICurrentUser currentUser,
+        GetAgentsHandler agents,
         IOptions<AnthropicOptions> options,
         IClock clock)
     {
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _conversations = conversations ?? throw new ArgumentNullException(nameof(conversations));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+        _agents = agents ?? throw new ArgumentNullException(nameof(agents));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
@@ -69,7 +73,14 @@ public sealed partial class AssistantChatService
 
         var timeZone = TimeZoneInfo.FindSystemTimeZoneById(_options.UserTimeZone);
         var localNow = TimeZoneInfo.ConvertTime(_clock.UtcNow, timeZone);
-        var systemPrompt = BuildSystemPrompt(localNow, _options.UserTimeZone);
+
+        // The active roster goes into the prompt so the model knows the valid names before it
+        // guesses one (issue #193). Same query assign_ticket validates against, so the prompt and
+        // the guard cannot disagree; discovery-by-failed-call remains only as the fallback.
+        var roster = await _agents.HandleAsync(new GetAgentsQuery(), ct);
+        var agentNames = roster.Value?.Select(a => a.Name).ToList() ?? [];
+
+        var systemPrompt = BuildSystemPrompt(localNow, _options.UserTimeZone, agentNames);
 
         var stored = await _conversations.GetAsync(conversation, owner, ct);
 
