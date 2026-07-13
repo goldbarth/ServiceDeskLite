@@ -1,5 +1,6 @@
 using FluentAssertions;
 
+using ServiceDeskLite.Contracts.V1.Assistant;
 using ServiceDeskLite.Web.Features.Assistant;
 
 namespace ServiceDeskLite.Tests.Web.Features.Assistant;
@@ -101,5 +102,110 @@ public sealed class AssistantMarkdownTests
         var html = AssistantMarkdown.ToHtml("Steps:\n```bash\ndotnet bu");
 
         html.Should().Contain("dotnet bu");
+    }
+
+    private static AssistantCitation Citation(string title, string source = "kb.md", string heading = "Section", string snippet = "snippet") =>
+        new(title, source, heading, snippet, 0.9);
+
+    [Fact]
+    public void RenderWithoutCitationsMatchesToHtml()
+    {
+        var render = AssistantMarkdown.Render("**bold**", []);
+
+        render.Html.Should().Be(AssistantMarkdown.ToHtml("**bold**"));
+        render.Unanchored.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AnchorsBadgeAfterCitedTitle()
+    {
+        var render = AssistantMarkdown.Render(
+            "See the Printer Setup guide for the steps.",
+            [Citation("Printer Setup")]);
+
+        render.Html.Should().Contain("Printer Setup");
+        render.Html.Should().Contain("assistant-chat__cite");
+        // Numbered by position, so the badge and the sources list agree.
+        render.Html.Should().Contain("[1]");
+        render.Unanchored.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void NumbersBadgesByCitationPosition()
+    {
+        var render = AssistantMarkdown.Render(
+            "First check Alpha, then Beta.",
+            [Citation("Alpha"), Citation("Beta")]);
+
+        var alphaBadge = render.Html.IndexOf("[1]", StringComparison.Ordinal);
+        var betaBadge = render.Html.IndexOf("[2]", StringComparison.Ordinal);
+
+        alphaBadge.Should().BeGreaterThan(0);
+        betaBadge.Should().BeGreaterThan(alphaBadge);
+    }
+
+    [Fact]
+    public void ReportsCitationWhoseTitleIsAbsentAsUnanchored()
+    {
+        var render = AssistantMarkdown.Render(
+            "Nothing relevant here.",
+            [Citation("Printer Setup")]);
+
+        render.Html.Should().NotContain("assistant-chat__cite\"");
+        render.Unanchored.Should().ContainSingle().Which.Title.Should().Be("Printer Setup");
+    }
+
+    [Fact]
+    public void EncodesHostileCitationContentInBadge()
+    {
+        var render = AssistantMarkdown.Render(
+            "See the guide named guide.",
+            [Citation("guide", snippet: "<img src=x onerror=alert(1)>")]);
+
+        render.Html.Should().NotContain("<img");
+        render.Html.Should().Contain("&lt;img");
+    }
+
+    [Fact]
+    public void ModelCannotForgeABadgeWithSentinelCharacters()
+    {
+        // The model echoes ticket content; a smuggled sentinel must not reach the badge swap.
+        var render = AssistantMarkdown.Render(
+            "Fake 0 badge, real guide here.",
+            [Citation("guide")]);
+
+        // Exactly one real badge, from the anchored "guide" title.
+        System.Text.RegularExpressions.Regex
+            .Matches(render.Html, "assistant-chat__cite\"")
+            .Should().HaveCount(1);
+    }
+
+    [Fact]
+    public void OrdersCoLocatedBadgesAscending()
+    {
+        // Two passages from the same article share one title, so both badges anchor at the same
+        // spot; they must read [1][2], not the reverse of the insertion order.
+        var render = AssistantMarkdown.Render(
+            "See the VPN Guide for the fix.",
+            [Citation("VPN Guide", heading: "Auth"), Citation("VPN Guide", heading: "Symptoms")]);
+
+        var one = render.Html.IndexOf("[1]", StringComparison.Ordinal);
+        var two = render.Html.IndexOf("[2]", StringComparison.Ordinal);
+
+        one.Should().BeGreaterThan(0);
+        two.Should().BeGreaterThan(one);
+    }
+
+    [Fact]
+    public void PlacesBadgeAfterClosingQuote()
+    {
+        var render = AssistantMarkdown.Render(
+            "The “Printer Setup” article explains it.",
+            [Citation("Printer Setup")]);
+
+        var quoteThenBadge = render.Html.IndexOf("”", StringComparison.Ordinal);
+        var badge = render.Html.IndexOf("[1]", StringComparison.Ordinal);
+
+        badge.Should().BeGreaterThan(quoteThenBadge);
     }
 }

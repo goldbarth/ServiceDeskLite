@@ -73,8 +73,9 @@
                                 <div class="assistant-chat__bubble assistant-chat__bubble--assistant assistant-chat__bubble--markdown">@((MarkupString)entry.Html)</div>
                             }
 
-                            @* Citations retrieved for this answer are listed as its sources.
-                               Anchoring them inline in the rendered Markdown is a follow-up. *@
+                            @* The bubble carries an inline [n] badge after each cited title;
+                               the same citations are listed here as numbered sources so a badge
+                               and its source entry share a number. *@
                             @if (entry.Citations.Count > 0)
                             {
                                 @RenderSources(entry.Citations)

@@ -6,7 +6,7 @@
 
 This release is the M9 milestone: a cohesive overhaul of the web client, from the token scale it is drawn on up to the interactions an operator repeats all day.
 Where v1.8.0 hardened what the assistant does, this one reworks what the desk sees and touches - a single design-token scale, dark mode, richer ticket signals, saved views, a command palette, inline editing, optimistic status moves, and recommended actions that are buttons instead of captions.
-The assistant surface joins the same system: answers render as Markdown, and knowledge-base sources are listed under the reply.
+The assistant surface joins the same system: answers render as Markdown, each cited passage carries an inline badge anchored to the claim it backs, and the same sources are listed under the reply.
 The design-token foundation (#202) shipped early under the v1.8.0 tag; it is the base every other M9 change is drawn on, and this is the release where the redesign it enabled is complete.
 
 ### Highlights
@@ -17,12 +17,12 @@ The design-token foundation (#202) shipped early under the v1.8.0 tag; it is the
 - Saved views: segmented presets over the ticket list that filter without a dialog round-trip (#206)
 - Command palette on Ctrl/Cmd+K: navigates from the NavRegistry, finds tickets through the search endpoint (debounced, cancellable), fully keyboard-operable (#210)
 - Inline status/assignee edit instead of modal dialogs (#208); optimistic status moves with rollback and the rejection code on the board and detail view (#209); the first suggested step is a primary button that runs it (#211, ADR 0041)
-- Assistant answers render as sanitized Markdown (#196), knowledge-base sources are listed under the reply (#207), and the grounding check is kept out of the transcript (#189)
+- Assistant answers render as sanitized Markdown (#196); each cited passage carries an inline `[n]` badge anchored to the sentence it backs, with a hover/focus tooltip, and the numbered sources are listed under the reply (#207/#243); the grounding check is kept out of the transcript (#189)
 - Redesign defects fixed: category header overlapping Due (#214/#228), the composer send button outside its panel (#215), board-card titles never clamping (#216)
 
 ### Known limitations
 
-- Inline citation badges anchored in the answer text are deferred (#243); the assistant lists sources under the Markdown reply instead
+- Inline citation badges anchor on the model quoting the passage title verbatim (the system prompt asks it to); a paraphrased citation stays in the sources list without an inline badge (#243)
 - Ticket search matches case-sensitively across the app-bar search, ticket list, and palette; fix + match-semantics decision tracked as an ADR issue (#241)
 - Scoped stylesheet rules targeting MudBlazor component roots silently do nothing (Blazor CSS isolation); one case fixed (#215), an audit + guard test is tracked (#242)
 - Still no real auth, no outbox dispatching, no HTTP-level rate limiting; conversation resume UI still not built
