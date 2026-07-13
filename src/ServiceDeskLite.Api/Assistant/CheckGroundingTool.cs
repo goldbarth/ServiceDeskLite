@@ -9,8 +9,9 @@ namespace ServiceDeskLite.Api.Assistant;
 /// <summary>
 /// RAG self-evaluation exposed as a tool (issue #158): the model passes its drafted
 /// answer, and this scores it against the knowledge-base passages actually retrieved
-/// this turn (held in <see cref="IRagRetrievalContext"/>) using the deterministic
-/// <see cref="GroundingEvaluator"/>. A weak/ungrounded result comes back with the
+/// this turn (held in <see cref="IRagRetrievalContext"/>) through the
+/// <see cref="IGroundingEvaluator"/> port - semantic where embeddings are available,
+/// lexical as the fallback (ADR-0040). A weak/ungrounded result comes back with the
 /// unsupported sentences and an instruction to re-retrieve or hedge, so the model
 /// corrects itself before asserting. Checking the draft (not the streamed answer)
 /// keeps token streaming intact — the verified answer is still emitted only once.
@@ -20,10 +21,12 @@ public sealed partial class CheckGroundingTool
     public const string Name = "check_grounding";
 
     private readonly IRagRetrievalContext _retrieval;
+    private readonly IGroundingEvaluator _evaluator;
 
-    public CheckGroundingTool(IRagRetrievalContext retrieval)
+    public CheckGroundingTool(IRagRetrievalContext retrieval, IGroundingEvaluator evaluator)
     {
         _retrieval = retrieval ?? throw new ArgumentNullException(nameof(retrieval));
+        _evaluator = evaluator ?? throw new ArgumentNullException(nameof(evaluator));
     }
 
     public static Tool Definition => new()
@@ -99,26 +102,26 @@ public sealed partial class CheckGroundingTool
         return sb.ToString();
     }
 
-    public Task<ToolResult> ExecuteAsync(JsonElement input, CancellationToken ct)
+    public async Task<ToolResult> ExecuteAsync(JsonElement input, CancellationToken ct)
     {
         if (!TryParseInput(input, out var answer, out var parseError))
-            return Task.FromResult(new ToolResult($"Invalid tool input: {parseError}", true));
+            return new ToolResult($"Invalid tool input: {parseError}", true);
 
         var passages = _retrieval.Passages;
         if (passages.Count == 0)
         {
-            return Task.FromResult(new ToolResult(
+            return new ToolResult(
                 "No knowledge-base passages were retrieved this turn, so there is nothing to ground against. "
                 + "If you are making claims that need internal sources, call search_knowledge_base first; "
                 + "otherwise answer from general knowledge and say so.",
-                IsError: false));
+                IsError: false);
         }
 
-        var report = GroundingEvaluator.Evaluate(answer, passages.Select(p => p.Content).ToList());
+        var report = await _evaluator.EvaluateAsync(answer, passages.Select(p => p.Content).ToList(), ct);
 
-        return Task.FromResult(new ToolResult(
+        return new ToolResult(
             FormatReport(report, passages.Count),
             IsError: false,
-            Confidence: report.Score));
+            Confidence: report.Score);
     }
 }

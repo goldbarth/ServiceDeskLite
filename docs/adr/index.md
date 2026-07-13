@@ -42,3 +42,4 @@
 | 0037 | [ADR 0037: Autonomous Ticket Worker (one agent loop, two agents, one guardrail)](0037-autonomous-ticket-worker.md) |
 | 0038 | [ADR 0038: Assistant Model Selection (Sonnet 5, thinking disabled)](0038-assistant-model-selection.md) |
 | 0039 | [ADR 0039: Grounding-Check Enforcement (tool_choice, not a prompt request)](0039-grounding-check-enforcement.md) |
+| 0040 | [ADR 0040: Semantic Grounding Evaluation (embeddings, lexical fallback)](0040-semantic-grounding-evaluation.md) |

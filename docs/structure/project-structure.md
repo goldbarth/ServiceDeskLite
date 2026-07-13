@@ -55,6 +55,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── 0037-autonomous-ticket-worker.md
 │   │   ├── 0038-assistant-model-selection.md
 │   │   ├── 0039-grounding-check-enforcement.md
+│   │   ├── 0040-semantic-grounding-evaluation.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
@@ -176,6 +177,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── FindSimilarTicketsTool.cs
 │   │   │   ├── FindSimilarTicketsTool.prompt.cs
 │   │   │   ├── GroundingEvaluator.cs
+│   │   │   ├── IGroundingEvaluator.cs
 │   │   │   ├── RagRetrievalContext.cs
 │   │   │   ├── RecallMemoryTool.cs
 │   │   │   ├── RecallMemoryTool.prompt.cs
@@ -187,6 +189,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── SearchKnowledgeBaseTool.prompt.cs
 │   │   │   ├── SearchTicketsTool.cs
 │   │   │   ├── SearchTicketsTool.prompt.cs
+│   │   │   ├── SemanticGroundingEvaluator.cs
 │   │   │   ├── SummarySectionParser.cs
 │   │   │   ├── TicketSummaryService.cs
 │   │   │   ├── TicketSummaryService.prompt.cs
@@ -746,6 +749,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   │   ├── SearchKnowledgeBaseToolExecuteTests.cs
 │   │   │   ├── SearchKnowledgeBaseToolInputTests.cs
 │   │   │   ├── SearchTicketsToolInputTests.cs
+│   │   │   ├── SemanticGroundingEvaluatorTests.cs
 │   │   │   ├── SummarySectionParserTests.cs
 │   │   │   ├── ToolRetryPolicyTests.cs
 │   │   │   ├── TransientFaultTests.cs

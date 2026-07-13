@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted. The scoring decision below (a lexical evaluator) is superseded by ADR 0040, which grades by embedding similarity and keeps the lexical evaluator as the fallback. The tool, its streaming shape, and `IRagRetrievalContext` are unchanged.
 
 ## Context and Problem Statement
 

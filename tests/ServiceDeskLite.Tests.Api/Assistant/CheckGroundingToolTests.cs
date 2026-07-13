@@ -36,7 +36,7 @@ public sealed class CheckGroundingToolTests
     [Fact]
     public async Task NoPassagesRetrieved_ReportsNothingToGround()
     {
-        var tool = new CheckGroundingTool(new RagRetrievalContext());
+        var tool = new CheckGroundingTool(new RagRetrievalContext(), new LexicalGroundingEvaluator());
 
         var result = await tool.ExecuteAsync(Input("some answer"), CancellationToken.None);
 
@@ -48,7 +48,8 @@ public sealed class CheckGroundingToolTests
     public async Task GroundedDraft_ReportsHighScoreAndClearsToAnswer()
     {
         var tool = new CheckGroundingTool(ContextWith(
-            "Reset your password at the self-service portal after verifying your identity with the second factor."));
+            "Reset your password at the self-service portal after verifying your identity with the second factor."),
+            new LexicalGroundingEvaluator());
 
         var result = await tool.ExecuteAsync(
             Input("Reset your password at the self-service portal using your second factor."),
@@ -64,7 +65,8 @@ public sealed class CheckGroundingToolTests
     public async Task UngroundedDraft_ReportsLowScoreAndInstructsCorrection()
     {
         var tool = new CheckGroundingTool(ContextWith(
-            "Reset your password at the self-service portal after verifying your identity."));
+            "Reset your password at the self-service portal after verifying your identity."),
+            new LexicalGroundingEvaluator());
 
         var result = await tool.ExecuteAsync(
             Input("Call the executive hotline and recite your grandmother passphrase immediately."),
@@ -98,7 +100,7 @@ public sealed class CheckGroundingToolTests
 
         context.Passages.Should().ContainSingle();
 
-        var groundingTool = new CheckGroundingTool(context);
+        var groundingTool = new CheckGroundingTool(context, new LexicalGroundingEvaluator());
         var result = await groundingTool.ExecuteAsync(
             Input("Reset your password at the self-service portal using your second factor."),
             CancellationToken.None);

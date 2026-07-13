@@ -7,6 +7,7 @@ using ServiceDeskLite.Api.Assistant.Agent;
 using ServiceDeskLite.Api.Assistant.Sandbox;
 using ServiceDeskLite.Api.Worker;
 using ServiceDeskLite.Application.Abstractions.Assistant;
+using ServiceDeskLite.Infrastructure.Embeddings;
 
 namespace ServiceDeskLite.Api.Composition;
 
@@ -43,6 +44,15 @@ public static class AssistantComposition
 
         // Per-request: search_knowledge_base records retrieved passages here, check_grounding reads them.
         services.AddScoped<IRagRetrievalContext, RagRetrievalContext>();
+
+        // Grounding: semantic where Voyage is configured, lexical fallback otherwise (ADR-0040).
+        // IEmbeddingClient is Postgres-only, so it may be absent (InMemory) - resolved optionally.
+        services.AddSingleton<LexicalGroundingEvaluator>();
+        services.AddScoped<IGroundingEvaluator>(sp => new SemanticGroundingEvaluator(
+            sp.GetService<IEmbeddingClient>(),
+            sp.GetService<IOptions<VoyageOptions>>()?.Value,
+            sp.GetRequiredService<LexicalGroundingEvaluator>(),
+            sp.GetRequiredService<ILogger<SemanticGroundingEvaluator>>()));
 
         // Interactive in every request scope; only the worker's own scope switches it (ADR-0037).
         // Registered by its concrete type as well, because the worker has to reach the setter.
