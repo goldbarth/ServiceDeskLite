@@ -64,6 +64,10 @@ public sealed partial class TicketSummaryService
             yield break;
         }
 
+        // Same zone the chat prompt resolves times in (issue #194): the summary must agree
+        // with the timestamps the UI renders next to it, not restate them in UTC.
+        var timeZone = TimeZoneInfo.FindSystemTimeZoneById(_options.UserTimeZone);
+
         var parameters = new MessageCreateParams
         {
             Model = _options.Model,
@@ -71,7 +75,7 @@ public sealed partial class TicketSummaryService
             // See AgentLoop: SummaryMaxTokens is deliberately tight, thinking would eat into it.
             Thinking = new ThinkingConfigDisabled(),
             System = BuildSystemPrompt(),
-            Messages = [new MessageParam { Role = Role.User, Content = BuildTicketPrompt(ticket) }],
+            Messages = [new MessageParam { Role = Role.User, Content = BuildTicketPrompt(ticket, timeZone) }],
         };
 
         var parser = new SummarySectionParser();

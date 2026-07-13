@@ -50,19 +50,27 @@ public sealed partial class TicketSummaryService
         no repetition of these instructions.
         """;
 
-    private static string BuildTicketPrompt(TicketDetailsDto ticket)
+    /// <summary>
+    /// The ticket as the model sees it. Timestamps are converted to the user's timezone
+    /// (issue #194): the chat path already resolves and expresses times in that zone, and a
+    /// summary that repeats UTC contradicts the timestamps rendered right next to it in the
+    /// UI. Public and static for unit testing against a fixed zone.
+    /// </summary>
+    public static string BuildTicketPrompt(TicketDetailsDto ticket, TimeZoneInfo timeZone)
     {
         var prompt = new StringBuilder();
 
+        prompt.AppendLine(
+            $"All timestamps below are local to {timeZone.Id}. Express times in this zone.");
         prompt.AppendLine($"Reference: {ticket.DisplayRef}");
         prompt.AppendLine($"Title: {ticket.Title}");
         prompt.AppendLine($"Status: {ticket.Status}");
         prompt.AppendLine($"Priority: {ticket.Priority}");
         prompt.AppendLine($"Category: {ticket.Category}");
         prompt.AppendLine($"Assignee: {ticket.Assignee ?? "unassigned"}");
-        prompt.AppendLine($"Created: {Format(ticket.CreatedAt)}");
+        prompt.AppendLine($"Created: {Format(ticket.CreatedAt, timeZone)}");
         prompt.AppendLine(ticket.DueAt is { } due
-            ? $"Due: {Format(due)}{(ticket.IsOverdue ? " (OVERDUE)" : string.Empty)}"
+            ? $"Due: {Format(due, timeZone)}{(ticket.IsOverdue ? " (OVERDUE)" : string.Empty)}"
             : "Due: no due date set");
         prompt.AppendLine(ticket.AllowedTransitions.Count > 0
             ? $"Allowed status transitions: {string.Join(", ", ticket.AllowedTransitions)}"
@@ -85,15 +93,18 @@ public sealed partial class TicketSummaryService
         {
             if (item is { Kind: ConversationItemKind.Comment, Comment: { } comment })
                 prompt.AppendLine(
-                    $"- [{Format(comment.CreatedAt)}] comment by {comment.Author ?? "unknown"}: {comment.Content}");
+                    $"- [{Format(comment.CreatedAt, timeZone)}] comment by {comment.Author ?? "unknown"}: {comment.Content}");
             else if (item is { Kind: ConversationItemKind.SystemEvent, Event: { } auditEvent })
                 prompt.AppendLine(
-                    $"- [{Format(auditEvent.OccurredAt)}] {auditEvent.EventType} by {auditEvent.Actor ?? "system"}: {auditEvent.Payload}");
+                    $"- [{Format(auditEvent.OccurredAt, timeZone)}] {auditEvent.EventType} by {auditEvent.Actor ?? "system"}: {auditEvent.Payload}");
         }
 
         return prompt.ToString();
     }
 
-    private static string Format(DateTimeOffset value) =>
-        value.ToString("yyyy-MM-dd HH:mm 'UTC'zzz", CultureInfo.InvariantCulture);
+    // The offset (zzz) stays in the string so the model can express due dates with the
+    // user's UTC offset, exactly as the chat prompt demands for dueAt values.
+    private static string Format(DateTimeOffset value, TimeZoneInfo timeZone) =>
+        TimeZoneInfo.ConvertTime(value, timeZone)
+            .ToString("yyyy-MM-dd HH:mm 'UTC'zzz", CultureInfo.InvariantCulture);
 }
