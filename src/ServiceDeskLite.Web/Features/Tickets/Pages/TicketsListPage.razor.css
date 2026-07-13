@@ -284,7 +284,7 @@
 
 ::deep .tickets-table table {
     width: 100%;
-    min-width: 980px;
+    min-width: 900px;
     border-collapse: separate;
     border-spacing: 0;
     table-layout: fixed;
@@ -305,11 +305,15 @@
     border-top-right-radius: var(--sdl-radius-md);
 }
 
+/* A queue is scanned, not read: every row sits at the same fixed height, so the eye
+   can ride the column rhythm regardless of what a cell contains. */
 ::deep .tickets-table .mud-table-body td {
-    padding: var(--sdl-space-3) var(--sdl-space-3);
+    height: 40px;
+    padding: 0 var(--sdl-space-3);
     border-bottom: 1px solid var(--sdl-line-subtle);
     vertical-align: middle;
     background: transparent;
+    white-space: nowrap;
 }
 
 ::deep .tickets-table .mud-table-body tr:last-child td {
@@ -333,38 +337,34 @@
     text-transform: uppercase;
 }
 
+/* table-layout is fixed: exactly one column - the title - carries no width and takes
+   the leftover space. Every other column is pinned, so nothing bleeds into a
+   neighbour and the queue fits a 1280px viewport without a horizontal scrollbar. */
 ::deep .tickets-table__th--ref,
 ::deep .tickets-table__cell--ref {
-    width: 88px;
-}
-
-::deep .tickets-table__th--title,
-::deep .tickets-table__cell--title {
-    width: 42%;
+    width: 84px;
 }
 
 ::deep .tickets-table__th--status,
 ::deep .tickets-table__cell--status {
-    width: 150px;
+    width: 132px;
 }
 
 ::deep .tickets-table__th--priority,
 ::deep .tickets-table__cell--priority {
-    width: 140px;
+    width: 124px;
 }
 
-/* table-layout is fixed: a column without a width takes whatever is left over, which
-   at common widths is less than the header text needs and it bleeds into "Due". */
 ::deep .tickets-table__th--category,
 ::deep .tickets-table__cell--category {
-    width: 140px;
+    width: 116px;
 }
 
 ::deep .tickets-table__th--due,
 ::deep .tickets-table__cell--due,
 ::deep .tickets-table__th--created,
 ::deep .tickets-table__cell--created {
-    width: 150px;
+    width: 120px;
 }
 
 .tickets-sort {
@@ -401,28 +401,36 @@
     font-size: 0.79rem;
     font-weight: 700;
     letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
 }
 
 .tickets-title-cell {
-    display: grid;
-    gap: var(--sdl-space-1);
+    display: flex;
+    align-items: baseline;
+    gap: var(--sdl-space-2);
     min-width: 0;
 }
 
 .tickets-title-cell__title {
+    flex: 0 1 auto;
     overflow: hidden;
     color: var(--sdl-text);
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 700;
     line-height: 1.35;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
+/* The secondary line yields to the title but never vanishes: the high flex-shrink
+   makes it give way long before the title does, the min-width keeps a stub visible,
+   and the cell's title attribute carries the full text. */
 .tickets-title-cell__summary {
+    flex: 1 100 auto;
+    min-width: 3rem;
     overflow: hidden;
     color: var(--sdl-text-subtle);
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     line-height: 1.45;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -445,9 +453,31 @@
     border-color: var(--sdl-category-border);
 }
 
-.tickets-date {
+.tickets-skeleton {
     display: grid;
-    gap: var(--sdl-space-1);
+}
+
+/* Head and rows repeat the loaded table's vertical rhythm (header padding, 40px rows,
+   1px separators), so the swap from skeleton to data does not shift the layout. */
+.tickets-skeleton__head {
+    display: flex;
+    align-items: center;
+    height: 58px;
+    padding-inline: var(--sdl-space-3);
+    border-bottom: 1px solid var(--sdl-priority-low-border);
+}
+
+.tickets-skeleton__row {
+    display: flex;
+    align-items: center;
+    gap: var(--sdl-space-3);
+    height: 40px;
+    padding-inline: var(--sdl-space-3);
+    border-bottom: 1px solid var(--sdl-line-subtle);
+}
+
+.tickets-skeleton__row:last-child {
+    border-bottom: none;
 }
 
 .tickets-date__value {
@@ -463,12 +493,6 @@
 
 .tickets-date__value--alert {
     color: var(--sdl-priority-critical-fg);
-}
-
-.tickets-date__meta {
-    color: var(--sdl-text-subtle);
-    font-size: 0.76rem;
-    line-height: 1.35;
 }
 
 ::deep .tickets-empty-state {
@@ -543,11 +567,6 @@
 
     .tickets-filters__actions {
         justify-content: flex-start;
-    }
-
-    ::deep .tickets-table__th--title,
-    ::deep .tickets-table__cell--title {
-        width: 36%;
     }
 }
 
