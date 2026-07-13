@@ -35,7 +35,17 @@
                         break;
 
                     case ChatEntryKind.Assistant:
-                        <div class="assistant-chat__bubble assistant-chat__bubble--assistant">@entry.Text</div>
+                        @* The live bubble streams as plain text so a partial document never
+                           leaves a half-open element in the DOM; Markdown renders once the
+                           message is complete. *@
+                        if (_isStreaming && entry == _entries[^1])
+                        {
+                            <div class="assistant-chat__bubble assistant-chat__bubble--assistant">@entry.Text</div>
+                        }
+                        else
+                        {
+                            <div class="assistant-chat__bubble assistant-chat__bubble--assistant assistant-chat__bubble--markdown">@((MarkupString)entry.Html)</div>
+                        }
                         break;
 
                     case ChatEntryKind.ToolCall:
