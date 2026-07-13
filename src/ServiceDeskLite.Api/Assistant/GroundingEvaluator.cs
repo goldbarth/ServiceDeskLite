@@ -91,6 +91,17 @@ public static class GroundingEvaluator
         _ => GroundingVerdict.Ungrounded,
     };
 
+    /// <summary>
+    /// The answer's sentences that assert something checkable — those carrying at least one
+    /// content word. Greetings, bare questions and punctuation drop out. Shared with the
+    /// semantic evaluator so both grade the same units.
+    /// </summary>
+    public static IReadOnlyList<string> SubstantiveSentences(string answer) =>
+        SplitSentences(answer)
+            .Where(s => ContentWords(s).Count > 0)
+            .Select(s => s.Trim())
+            .ToList();
+
     private static HashSet<string> ContentWords(string text) =>
         WordPattern.Matches(text)
             .Select(m => m.Value.ToLowerInvariant())
