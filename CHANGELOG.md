@@ -1,5 +1,34 @@
 # Changelog
 
+## v1.8.0 - Assistant Hardening: Grounding as a Mechanism, Honest Writes
+
+### Summary
+
+v1.7.0 ended with a recorded manual test pass and six open defects; this release is what working through that list produced.
+Five of the six are fixed - the sixth (#196, markdown rendering) is a web concern and moves with the frontend redesign.
+The structural change is bigger than any single fix: the grounding check is now enforced by the loop instead of requested by the prompt, and it scores meaning instead of counting words.
+One policy now governs both write-failure directions the field pass caught: never claim a change without a successful tool result, and never re-ask for a change the user already ordered.
+All of it shipped as its own milestone (M10 - Assistant Hardening); the frontend redesign collects separately on the `m9-frontend-redesign` integration branch.
+
+### Highlights
+
+- The grounding check is a mechanism: once knowledge-base passages exist and no check has run, the loop forces `check_grounding` via `tool_choice`, so the verdict is computed before the first token streams (ADR 0039, #187)
+- Grounding scores meaning, not word overlap: per-sentence embedding similarity, so a correct paraphrase or a German answer against an English knowledge base no longer fails its own verification; the lexical evaluator remains as fallback (ADR 0040, #188)
+- Write honesty and confirmation policy in the system prompt: never state a change happened without a successful tool result, never re-ask for a change already ordered (#190, #195)
+- Every tool description states when to call it, locked by a build-time guard test (#186)
+- The agent roster is in the system prompt, from the same query `assign_ticket` validates against - no more discovery by failed call, no more invented agent names (#193)
+- A failed knowledge-base search reads as an error, distinct from honest "unavailable" degradation (#191)
+- Summary timestamps are rendered in the user timezone instead of UTC (#194)
+
+### Known limitations
+
+- Assistant markdown still renders raw in the web client (#196), and the grounding chip contradicts the prompt (#189) - both scheduled with M9
+- The semantic grounding path is not deterministic; exact reproducibility belongs to the lexical fallback and the fixture tests
+- The live tool-call-rate measurement #186 asked for remains unbuilt; the cheap mitigation shipped first so a future measurement runs against the improved baseline
+- Still no real auth, no outbox dispatching, no HTTP-level rate limiting
+
+_Full notes: [docs/releases/v1.8.0.md](docs/releases/v1.8.0.md)_
+
 ## v1.7.0 - Sonnet 5, Container Fixes & a Recorded Test Pass
 
 ### Summary
