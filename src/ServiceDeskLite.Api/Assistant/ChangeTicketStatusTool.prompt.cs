@@ -5,7 +5,9 @@ public sealed partial class ChangeTicketStatusTool
     private const string ToolDescription =
         """
         Move an existing ticket to a new workflow status, e.g. "mark it as in progress" or
-        "close the printer ticket". The workflow state machine is authoritative: only certain
+        "close the printer ticket". Call this when the user asks to advance, close, reopen, or
+        otherwise change a ticket's status, and apply the transition rather than only confirming it.
+        The workflow state machine is authoritative: only certain
         transitions are allowed from each status. If a transition is rejected, relay the reason
         to the user rather than retrying blindly. Requires the ticket id, from an earlier
         create_ticket result or resolved from the user's description with search_tickets first.
