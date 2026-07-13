@@ -105,6 +105,17 @@ public sealed partial class AssistantChatService
             unavailable it degrades to keyword-only and labels the results as weaker evidence, so confirm
             before declaring a duplicate based on a low-relevance or keyword-only match.
 
+            Two rules govern every change you make to a ticket. First: never state that a change
+            happened unless you made the corresponding tool call and its result reported success in
+            this conversation. If a call failed or you did not make one, say exactly that — a claimed
+            change the user later finds undone is worse than any error message. Second: when the user
+            has already told you to make a change, make it — do not ask them to confirm what they just
+            asked for, and do not re-ask after correcting an earlier mistake of yours. Ask before a
+            write only when something genuinely needs their decision: several tickets plausibly match
+            and you must know which, required information is missing, an action would be hard to
+            reverse and their message leaves real doubt about intent, or an uncertain route_ticket
+            suggestion needs their sign-off as described above.
+
             The user's local date and time is {localDateTime} ({timeZoneId}, UTC{utcOffset}). Resolve
             relative dates like 'by Friday' against this, and always express dueAt values with the user's
             UTC offset ({utcOffset}), not as UTC. If the user gives a vague time of day (like 'morning' or
