@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 
 using ServiceDeskLite.Contracts.V1.Assistant;
 using ServiceDeskLite.Web.Api.V1.Assistant;
+using ServiceDeskLite.Web.Features.Assistant;
 
 namespace ServiceDeskLite.Web.Features.Assistant.Pages;
 
@@ -142,9 +143,15 @@ public partial class AssistantChatPage : IDisposable
         Guid? ticketId = null,
         IReadOnlyList<AssistantCitation>? citations = null)
     {
+        private string? _html;
+
         public ChatEntryKind Kind { get; } = kind;
         public string Text { get; set; } = text;
         public Guid? TicketId { get; } = ticketId;
         public IReadOnlyList<AssistantCitation> Citations { get; } = citations ?? [];
+
+        // Only read once the bubble has stopped growing, so the conversion runs once
+        // per message instead of on every re-render.
+        public string Html => _html ??= AssistantMarkdown.ToHtml(Text);
     }
 }

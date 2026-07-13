@@ -71,6 +71,77 @@
     padding: var(--sdl-space-2) var(--sdl-space-3);
 }
 
+/* Rendered Markdown brings its own block layout; pre-wrap would double the spacing.
+   ::deep because MarkupString content carries no scope attribute. */
+.assistant-chat__bubble--markdown {
+    white-space: normal;
+}
+
+.assistant-chat__bubble--markdown ::deep p,
+.assistant-chat__bubble--markdown ::deep ul,
+.assistant-chat__bubble--markdown ::deep ol,
+.assistant-chat__bubble--markdown ::deep pre,
+.assistant-chat__bubble--markdown ::deep table,
+.assistant-chat__bubble--markdown ::deep blockquote {
+    margin: 0 0 var(--sdl-space-2);
+}
+
+.assistant-chat__bubble--markdown ::deep > :last-child {
+    margin-bottom: 0;
+}
+
+.assistant-chat__bubble--markdown ::deep h1,
+.assistant-chat__bubble--markdown ::deep h2,
+.assistant-chat__bubble--markdown ::deep h3,
+.assistant-chat__bubble--markdown ::deep h4,
+.assistant-chat__bubble--markdown ::deep h5,
+.assistant-chat__bubble--markdown ::deep h6 {
+    margin: var(--sdl-space-2) 0 var(--sdl-space-1);
+    font-size: 1rem;
+    line-height: 1.3;
+}
+
+.assistant-chat__bubble--markdown ::deep ul,
+.assistant-chat__bubble--markdown ::deep ol {
+    padding-left: var(--sdl-space-4);
+}
+
+.assistant-chat__bubble--markdown ::deep code {
+    font-family: var(--sdl-font-mono);
+    font-size: 0.85em;
+    padding: 0 var(--sdl-space-1);
+    border-radius: var(--sdl-radius-sm);
+    background: var(--sdl-surface-sunken);
+}
+
+.assistant-chat__bubble--markdown ::deep pre {
+    padding: var(--sdl-space-2);
+    border-radius: var(--sdl-radius-sm);
+    background: var(--sdl-surface-sunken);
+    overflow-x: auto;
+}
+
+.assistant-chat__bubble--markdown ::deep pre code {
+    padding: 0;
+    background: none;
+}
+
+.assistant-chat__bubble--markdown ::deep table {
+    border-collapse: collapse;
+}
+
+.assistant-chat__bubble--markdown ::deep th,
+.assistant-chat__bubble--markdown ::deep td {
+    border: 1px solid var(--sdl-line);
+    padding: var(--sdl-space-1) var(--sdl-space-2);
+}
+
+.assistant-chat__bubble--markdown ::deep blockquote {
+    padding-left: var(--sdl-space-2);
+    border-left: 2px solid var(--sdl-line);
+    color: var(--sdl-text-muted);
+}
+
 .assistant-chat__tool {
     align-self: flex-start;
 }
