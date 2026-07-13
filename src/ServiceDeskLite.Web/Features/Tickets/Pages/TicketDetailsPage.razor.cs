@@ -362,38 +362,6 @@ public partial class TicketDetailsPage : IDisposable
     private static string BuildHeaderSummary(string description)
         => Truncate(description.Trim(), 220);
 
-    private static string FormatStatus(TicketStatus status)
-        => status switch
-        {
-            TicketStatus.InProgress => "In Progress",
-            _ => status.ToString()
-        };
-
-    private static string FormatPriority(TicketPriority priority)
-        => priority.ToString();
-
-    private static string StatusBadgeClass(TicketStatus status)
-        => status switch
-        {
-            TicketStatus.New => "ticket-detail-badge--status-new",
-            TicketStatus.Triaged => "ticket-detail-badge--status-triaged",
-            TicketStatus.InProgress => "ticket-detail-badge--status-inprogress",
-            TicketStatus.Waiting => "ticket-detail-badge--status-waiting",
-            TicketStatus.Resolved => "ticket-detail-badge--status-resolved",
-            TicketStatus.Closed => "ticket-detail-badge--status-closed",
-            _ => string.Empty
-        };
-
-    private static string PriorityBadgeClass(TicketPriority priority)
-        => priority switch
-        {
-            TicketPriority.Low => "ticket-detail-badge--priority-low",
-            TicketPriority.Medium => "ticket-detail-badge--priority-medium",
-            TicketPriority.High => "ticket-detail-badge--priority-high",
-            TicketPriority.Critical => "ticket-detail-badge--priority-critical",
-            _ => string.Empty
-        };
-
     private static string FormatDateTime(DateTimeOffset value)
         => value.ToLocalTime().ToString("dd MMM yyyy, HH:mm");
 

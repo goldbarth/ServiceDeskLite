@@ -1,0 +1,34 @@
+@using MudBlazor
+
+@* The colour never carries the signal alone: the icon survives a colourblind reader,
+   the text survives everything else. *@
+@if (Status is { } status)
+{
+    <span class="@ChipClass(TicketSignals.Modifier(status))">
+        <MudIcon Icon="@TicketSignals.Icon(status)" Class="ticket-chip__icon" aria-hidden="true" />
+        <span>@TicketSignals.Label(status)</span>
+    </span>
+}
+else if (Priority is { } priority)
+{
+    <span class="@ChipClass(TicketSignals.Modifier(priority))">
+        <MudIcon Icon="@TicketSignals.Icon(priority)" Class="ticket-chip__icon" aria-hidden="true" />
+        <span>@TicketSignals.Label(priority)</span>
+    </span>
+}
+
+@code {
+    /// <summary>Renders a status chip. Exactly one of <see cref="Status"/> and <see cref="Priority"/> must be set.</summary>
+    [Parameter] public TicketStatus? Status { get; set; }
+
+    /// <summary>Renders a priority chip. Exactly one of <see cref="Status"/> and <see cref="Priority"/> must be set.</summary>
+    [Parameter] public TicketPriority? Priority { get; set; }
+
+    /// <summary>The larger variant the ticket-detail header and context panel use.</summary>
+    [Parameter] public bool Large { get; set; }
+
+    private string ChipClass(string modifier)
+        => Large
+            ? $"ticket-chip ticket-chip--lg ticket-chip--{modifier}"
+            : $"ticket-chip ticket-chip--{modifier}";
+}

@@ -47,7 +47,7 @@
                            Disabled="@(State is TicketsListState.Loading)">
                     @foreach (var status in Enum.GetValues<TicketStatus>())
                     {
-                        <MudSelectItem T="TicketStatus" Value="status">@FormatStatus(status)</MudSelectItem>
+                        <MudSelectItem T="TicketStatus" Value="status">@TicketSignals.Label(status)</MudSelectItem>
                     }
                 </MudSelect>
             </div>
@@ -68,7 +68,7 @@
                            Disabled="@(State is TicketsListState.Loading)">
                     @foreach (var priority in Enum.GetValues<TicketPriority>())
                     {
-                        <MudSelectItem T="TicketPriority" Value="priority">@FormatPriority(priority)</MudSelectItem>
+                        <MudSelectItem T="TicketPriority" Value="priority">@TicketSignals.Label(priority)</MudSelectItem>
                     }
                 </MudSelect>
             </div>
@@ -271,19 +271,11 @@
                         </MudTd>
 
                         <MudTd DataLabel="Status" Class="tickets-table__cell tickets-table__cell--status">
-                            <MudChip T="string"
-                                     Class="@($"tickets-chip tickets-chip--status {StatusChipClass(context.Status)}")"
-                                     Size="Size.Small">
-                                @FormatStatus(context.Status)
-                            </MudChip>
+                            <TicketChip Status="context.Status" />
                         </MudTd>
 
                         <MudTd DataLabel="Priority" Class="tickets-table__cell tickets-table__cell--priority">
-                            <MudChip T="string"
-                                     Class="@($"tickets-chip tickets-chip--priority {PriorityChipClass(context.Priority)}")"
-                                     Size="Size.Small">
-                                @FormatPriority(context.Priority)
-                            </MudChip>
+                            <TicketChip Priority="context.Priority" />
                         </MudTd>
 
                         <MudTd DataLabel="Category" Class="tickets-table__cell tickets-table__cell--category">
