@@ -9,7 +9,6 @@ using ServiceDeskLite.Contracts.V1.Assistant;
 using ServiceDeskLite.Contracts.V1.Tickets;
 using ServiceDeskLite.Web.Api.V1;
 using ServiceDeskLite.Web.Api.V1.Assistant;
-using ServiceDeskLite.Web.Features.Tickets.Components;
 using ServiceDeskLite.Web.Features.Tickets.State;
 
 namespace ServiceDeskLite.Web.Features.Tickets.Pages;
@@ -18,7 +17,6 @@ public partial class TicketDetailsPage : IDisposable
 {
     [Inject] private ITicketsApiClient TicketsApi { get; set; } = default!;
     [Inject] private ITicketSummaryApiClient SummaryApi { get; set; } = default!;
-    [Inject] private IDialogService DialogService { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
     [Inject] private TicketsListFeatureState TicketsListState { get; set; } = default!;
@@ -28,6 +26,9 @@ public partial class TicketDetailsPage : IDisposable
     private bool _isLoading;
     private ApiError? _error;
     private TicketResponse? _ticket;
+
+    private bool _isChangingStatus;
+    private bool _isAssigning;
 
     private string? _commentAuthor;
     private string? _commentContent;
@@ -181,46 +182,58 @@ public partial class TicketDetailsPage : IDisposable
     private string TabClass(TicketDetailsTab tab)
         => _activeTab == tab ? "ticket-tabs__tab is-active" : "ticket-tabs__tab";
 
-    private async Task OpenChangeStatusDialogAsync()
+    // Status and assignee change inline through popovers anchored to the header, so the
+    // ticket stays open and scrolled where it was. Both hit the same command handlers the
+    // deleted dialogs used; the errors surface as a snackbar instead of a modal panel.
+    private async Task ChangeStatusAsync(TicketStatus status)
     {
-        var parameters = new DialogParameters<ChangeStatusDialog>
+        if (_ticket is null || _isChangingStatus || status == _ticket.Status)
+            return;
+
+        _isChangingStatus = true;
+
+        var result = await TicketsApi.ChangeStatusAsync(
+            _ticket.Id, new ChangeTicketStatusRequest(status));
+
+        _isChangingStatus = false;
+
+        if (result.IsSuccess)
         {
-            { x => x.TicketId, _ticket!.Id },
-            { x => x.AllowedStatuses, _ticket.AllowedTransitions }
-        };
-
-        var dialog = await DialogService.ShowAsync<ChangeStatusDialog>(
-            "Change Ticket Status", parameters);
-
-        var result = await dialog.Result;
-
-        if (result is { Canceled: false, Data: TicketResponse updated })
-        {
-            _ticket = updated;
+            _ticket = result.Value;
             TicketsListState.Invalidate();
             Snackbar.Add("Status updated.", Severity.Success);
+            return;
         }
+
+        Snackbar.Add(result.Error?.Detail ?? "Could not update status.", Severity.Error);
     }
 
-    private async Task OpenAssignDialogAsync()
+    private async Task AssignAsync(Guid? agentId)
     {
-        var parameters = new DialogParameters<AssignTicketDialog>
+        if (_ticket is null || _isAssigning)
+            return;
+
+        // No-op if the picked agent is already the assignee (roster names are unique).
+        var currentId = _agents.FirstOrDefault(a => a.Name == _ticket.Assignee)?.Id;
+        if (agentId == currentId)
+            return;
+
+        _isAssigning = true;
+
+        var result = await TicketsApi.AssignAsync(
+            _ticket.Id, new AssignTicketRequest(agentId));
+
+        _isAssigning = false;
+
+        if (result.IsSuccess)
         {
-            { x => x.TicketId, _ticket!.Id },
-            { x => x.CurrentAssignee, _ticket.Assignee }
-        };
-
-        var dialog = await DialogService.ShowAsync<AssignTicketDialog>(
-            "Assign Ticket", parameters);
-
-        var result = await dialog.Result;
-
-        if (result is { Canceled: false, Data: TicketResponse updated })
-        {
-            _ticket = updated;
+            _ticket = result.Value;
             TicketsListState.Invalidate();
             Snackbar.Add("Assignee updated.", Severity.Success);
+            return;
         }
+
+        Snackbar.Add(result.Error?.Detail ?? "Could not update assignee.", Severity.Error);
     }
 
     private void BeginEdit()

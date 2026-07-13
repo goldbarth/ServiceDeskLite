@@ -96,6 +96,11 @@
     flex-wrap: wrap;
 }
 
+.ticket-detail-header__menu {
+    display: inline-flex;
+    align-items: center;
+}
+
 ::deep .ticket-detail-header__button.mud-button-root {
     min-height: 42px;
     padding-inline: var(--sdl-space-3);

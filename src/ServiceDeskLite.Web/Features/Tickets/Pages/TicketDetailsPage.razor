@@ -99,21 +99,56 @@ else
                     </div>
 
                     <div class="ticket-detail-header__buttons">
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Default"
-                                   Class="ticket-detail-header__button ticket-detail-header__button--primary"
-                                   OnClick="OpenChangeStatusDialogAsync"
-                                   Disabled="@(_ticket.AllowedTransitions.Count == 0)">
-                            Change Status
-                        </MudButton>
+                        <MudMenu Class="ticket-detail-header__menu"
+                                 Disabled="@(_ticket.AllowedTransitions.Count == 0 || _isChangingStatus)"
+                                 AnchorOrigin="Origin.BottomLeft"
+                                 TransformOrigin="Origin.TopLeft">
+                            <ActivatorContent>
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Default"
+                                           Class="ticket-detail-header__button ticket-detail-header__button--primary"
+                                           EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                                           Disabled="@(_ticket.AllowedTransitions.Count == 0 || _isChangingStatus)">
+                                    Change Status
+                                </MudButton>
+                            </ActivatorContent>
+                            <ChildContent>
+                                @foreach (var status in _ticket.AllowedTransitions)
+                                {
+                                    <MudMenuItem OnClick="() => ChangeStatusAsync(status)">
+                                        @FormatStatus(status)
+                                    </MudMenuItem>
+                                }
+                            </ChildContent>
+                        </MudMenu>
 
-                        <MudButton Variant="Variant.Outlined"
-                                   Color="Color.Default"
-                                   Class="ticket-detail-header__button"
-                                   OnClick="OpenAssignDialogAsync"
-                                   Disabled="@(_ticket.Status == TicketStatus.Closed)">
-                            @(_ticket.Assignee is null ? "Assign" : "Reassign")
-                        </MudButton>
+                        <MudMenu Class="ticket-detail-header__menu"
+                                 Disabled="@(_ticket.Status == TicketStatus.Closed || _isAssigning || _isLoadingAgents)"
+                                 AnchorOrigin="Origin.BottomLeft"
+                                 TransformOrigin="Origin.TopLeft">
+                            <ActivatorContent>
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Default"
+                                           Class="ticket-detail-header__button"
+                                           EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                                           Disabled="@(_ticket.Status == TicketStatus.Closed || _isAssigning || _isLoadingAgents)">
+                                    @(_ticket.Assignee is null ? "Assign" : "Reassign")
+                                </MudButton>
+                            </ActivatorContent>
+                            <ChildContent>
+                                <MudMenuItem Icon="@(_ticket.Assignee is null ? Icons.Material.Filled.Check : null)"
+                                             OnClick="() => AssignAsync(null)">
+                                    Unassigned
+                                </MudMenuItem>
+                                @foreach (var agent in _agents)
+                                {
+                                    <MudMenuItem Icon="@(agent.Name == _ticket.Assignee ? Icons.Material.Filled.Check : null)"
+                                                 OnClick="() => AssignAsync(agent.Id)">
+                                        @agent.Name
+                                    </MudMenuItem>
+                                }
+                            </ChildContent>
+                        </MudMenu>
 
                         <MudIconButton Icon="@Icons.Material.Outlined.Edit"
                                        Variant="Variant.Outlined"
