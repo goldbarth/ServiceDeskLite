@@ -71,6 +71,80 @@
     padding: var(--sdl-space-2) var(--sdl-space-3);
 }
 
+.assistant-chat__cite {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    height: 1.25rem;
+    margin: 0 0.15em;
+    padding: 0 0.35em;
+    vertical-align: baseline;
+    white-space: normal;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--mud-palette-primary);
+    background: color-mix(in srgb, var(--mud-palette-primary) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--mud-palette-primary) 35%, transparent);
+    border-radius: var(--sdl-radius-sm);
+    cursor: help;
+}
+
+.assistant-chat__cite:hover,
+.assistant-chat__cite:focus-visible {
+    background: color-mix(in srgb, var(--mud-palette-primary) 20%, transparent);
+    outline: none;
+}
+
+.assistant-chat__cite-tip {
+    position: absolute;
+    bottom: calc(100% + 0.4rem);
+    left: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sdl-space-1);
+    width: max-content;
+    max-width: 22rem;
+    padding: var(--sdl-space-2) var(--sdl-space-3);
+    white-space: normal;
+    font-weight: 400;
+    color: var(--mud-palette-text-primary);
+    background: var(--mud-palette-surface);
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: var(--sdl-radius-md);
+    box-shadow: var(--mud-elevation-8);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.12s ease;
+    pointer-events: none;
+}
+
+.assistant-chat__cite:hover .assistant-chat__cite-tip,
+.assistant-chat__cite:focus-visible .assistant-chat__cite-tip,
+.assistant-chat__cite:focus-within .assistant-chat__cite-tip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.assistant-chat__cite-tip-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.assistant-chat__cite-tip-meta {
+    font-size: 0.72rem;
+    opacity: 0.7;
+}
+
+.assistant-chat__cite-tip-snippet {
+    font-size: 0.82rem;
+    line-height: 1.4;
+    opacity: 0.85;
+}
+
 .assistant-chat__tool {
     align-self: flex-start;
 }
@@ -112,6 +186,12 @@
     align-items: center;
     flex-wrap: wrap;
     gap: var(--sdl-space-2);
+}
+
+.assistant-chat__source-number {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--mud-palette-primary);
 }
 
 .assistant-chat__source-title {
