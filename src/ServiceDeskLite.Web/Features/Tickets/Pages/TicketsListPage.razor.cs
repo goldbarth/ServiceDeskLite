@@ -157,9 +157,6 @@ public partial class TicketsListPage : IDisposable
     private static string FormatDate(DateTimeOffset value)
         => value.ToLocalTime().ToString("dd MMM yyyy");
 
-    private static string FormatTime(DateTimeOffset value)
-        => value.ToLocalTime().ToString("HH:mm");
-
     private static string FormatCompactDateTime(DateTimeOffset value)
         => value.ToLocalTime().ToString("dd MMM yyyy, HH:mm");
 
