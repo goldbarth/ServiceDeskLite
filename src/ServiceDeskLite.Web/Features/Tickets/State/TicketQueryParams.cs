@@ -15,7 +15,9 @@ public sealed record TicketQueryParams(
     string? Q = null,
     TicketStatus[]? Statuses = null,
     TicketPriority[]? Priorities = null,
-    string? Assignee = null)
+    string? Assignee = null,
+    bool Unassigned = false,
+    bool Overdue = false)
 {
     public static readonly TicketQueryParams Default = new(
         Page: 1,
@@ -35,9 +37,12 @@ public sealed record TicketQueryParams(
         !string.IsNullOrWhiteSpace(Q) ||
         Statuses is { Length: > 0 } ||
         Priorities is { Length: > 0 } ||
-        !string.IsNullOrWhiteSpace(Assignee);
+        !string.IsNullOrWhiteSpace(Assignee) ||
+        Unassigned ||
+        Overdue;
 
     public SearchTicketsRequest ToSearchRequest() =>
         new(Page: Page, PageSize: PageSize, SortField: SortField, SortDirection: SortDirection,
-            Q: Q, Statuses: Statuses, Priorities: Priorities, Assignee: Assignee);
+            Q: Q, Statuses: Statuses, Priorities: Priorities, Assignee: Assignee,
+            Unassigned: Unassigned ? true : null, Overdue: Overdue ? true : null);
 }

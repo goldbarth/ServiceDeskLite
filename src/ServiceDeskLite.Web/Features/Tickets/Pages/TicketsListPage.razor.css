@@ -141,6 +141,46 @@
     color: var(--sdl-text-muted);
 }
 
+.tickets-views {
+    display: inline-flex;
+    align-self: start;
+    padding: var(--sdl-space-1);
+    gap: var(--sdl-space-1);
+    border: 1px solid var(--sdl-line-strong);
+    border-radius: var(--sdl-radius-pill);
+    background: var(--sdl-surface-sunken);
+}
+
+.tickets-views__segment {
+    border: 1px solid transparent;
+    border-radius: var(--sdl-radius-pill);
+    padding: var(--sdl-space-1) var(--sdl-space-3);
+    background: transparent;
+    color: var(--sdl-text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 140ms ease, color 140ms ease;
+}
+
+.tickets-views__segment:hover {
+    color: var(--sdl-text-body);
+}
+
+.tickets-views__segment.is-active {
+    background: var(--sdl-surface);
+    border-color: var(--sdl-line-strong);
+    color: var(--sdl-text);
+    box-shadow: var(--sdl-elevation-raised);
+}
+
+.tickets-views__segment:focus-visible {
+    outline: 2px solid var(--sdl-focus-ring);
+    outline-offset: 1px;
+}
+
 .tickets-toolbar {
     display: flex;
     align-items: center;

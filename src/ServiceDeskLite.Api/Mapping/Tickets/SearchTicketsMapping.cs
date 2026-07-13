@@ -11,7 +11,9 @@ internal static class SearchTicketsMapping
             Text: request.Q,
             Statuses: request.Statuses?.Select(s => s.ToDomain()).ToArray(),
             Priorities: request.Priorities?.Select(p => p.ToDomain()).ToArray(),
-            AssigneeName: request.Assignee);
+            AssigneeName: request.Assignee,
+            Unassigned: request.Unassigned == true,
+            Overdue: request.Overdue == true);
 
     public static Paging ToPaging(this SearchTicketsRequest request)
         => new(request.Page, request.PageSize);

@@ -12,7 +12,12 @@ public sealed record TicketSearchCriteria(
     DateTimeOffset? CreatedFrom = null,
     DateTimeOffset? CreatedTo = null,
     DateTimeOffset? DueFrom = null,
-    DateTimeOffset? DueTo = null)
+    DateTimeOffset? DueTo = null,
+    // Only tickets without an assigned agent; ANDs with AssigneeName (both set matches nothing).
+    bool Unassigned = false,
+    // Only open tickets past their due date, judged against the repository's clock so the
+    // filter agrees with the IsOverdue flag it projects.
+    bool Overdue = false)
 {
     public static readonly TicketSearchCriteria Empty = new();
 }

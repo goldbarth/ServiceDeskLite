@@ -134,6 +134,19 @@
     {
         var data = loaded.Data;
 
+        <div class="tickets-views" role="group" aria-label="Saved views">
+            @foreach (var preset in TicketViewPresets.AllPresets)
+            {
+                var isActive = preset.Matches(Query);
+                <button type="button"
+                        class="@(isActive ? "tickets-views__segment is-active" : "tickets-views__segment")"
+                        aria-pressed="@(isActive ? "true" : "false")"
+                        @onclick="() => ApplyPresetAsync(preset)">
+                    @preset.Label
+                </button>
+            }
+        </div>
+
         <div class="tickets-toolbar">
             <div class="tickets-toolbar__meta">
                 <span class="tickets-toolbar__count">@data.TotalCount tickets</span>
