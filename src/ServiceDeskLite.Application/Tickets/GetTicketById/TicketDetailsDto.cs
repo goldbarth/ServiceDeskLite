@@ -18,4 +18,4 @@ public record TicketDetailsDto(
     bool IsOverdue,
     string DisplayRef,
     string StatusGuidance,
-    IReadOnlyList<string> SuggestedNextSteps);
+    IReadOnlyList<SuggestedStepDto> SuggestedNextSteps);

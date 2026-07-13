@@ -15,4 +15,4 @@ public sealed record TicketResponse(
     bool IsOverdue,
     string DisplayRef,
     string StatusGuidance,
-    IReadOnlyList<string> SuggestedNextSteps);
+    IReadOnlyList<SuggestedStep> SuggestedNextSteps);

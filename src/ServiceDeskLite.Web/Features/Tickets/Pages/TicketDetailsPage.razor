@@ -94,8 +94,73 @@ else
 
                 <div class="ticket-detail-header__actions">
                     <div class="ticket-detail-header__actions-copy">
-                        <span class="ticket-detail-header__actions-label">Workflow actions</span>
-                        <p class="ticket-detail-header__actions-note">@(_ticket.SuggestedNextSteps.FirstOrDefault() ?? string.Empty)</p>
+                        <span class="ticket-detail-header__actions-label">Recommended next step</span>
+
+                        @if (PrimaryStep is { } primary)
+                        {
+                            <div class="ticket-detail-header__suggestion">
+                                @if (!IsActionable(primary))
+                                {
+                                    <p class="ticket-detail-header__actions-note">@primary.Text</p>
+                                }
+                                else if (primary.Action == SuggestedActionKind.Assign)
+                                {
+                                    <MudMenu Class="ticket-detail-header__menu"
+                                             AnchorOrigin="Origin.BottomLeft"
+                                             TransformOrigin="Origin.TopLeft">
+                                        <ActivatorContent>
+                                            <MudButton Variant="Variant.Filled"
+                                                       Color="Color.Primary"
+                                                       Class="ticket-detail-header__suggestion-primary"
+                                                       StartIcon="@StepIcon(primary)"
+                                                       EndIcon="@Icons.Material.Filled.ArrowDropDown">
+                                                @StepLabel(primary)
+                                            </MudButton>
+                                        </ActivatorContent>
+                                        <ChildContent>
+                                            @foreach (var agent in _agents)
+                                            {
+                                                <MudMenuItem OnClick="() => AssignAsync(agent.Id)">@agent.Name</MudMenuItem>
+                                            }
+                                        </ChildContent>
+                                    </MudMenu>
+                                }
+                                else
+                                {
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               Class="ticket-detail-header__suggestion-primary"
+                                               StartIcon="@StepIcon(primary)"
+                                               Disabled="_isChangingStatus"
+                                               OnClick="() => ExecuteStepAsync(primary)">
+                                        @StepLabel(primary)
+                                    </MudButton>
+                                }
+
+                                @if (OverflowSteps.Count > 0)
+                                {
+                                    <MudMenu Icon="@Icons.Material.Filled.MoreVert"
+                                             Class="ticket-detail-header__suggestion-overflow"
+                                             AnchorOrigin="Origin.BottomLeft"
+                                             TransformOrigin="Origin.TopLeft"
+                                             aria-label="More suggested steps">
+                                        @foreach (var step in OverflowSteps)
+                                        {
+                                            @if (IsActionable(step) && step.Action != SuggestedActionKind.Assign)
+                                            {
+                                                <MudMenuItem Icon="@StepIcon(step)" OnClick="() => ExecuteStepAsync(step)">
+                                                    @StepLabel(step)
+                                                </MudMenuItem>
+                                            }
+                                            else
+                                            {
+                                                <MudMenuItem Disabled="true">@step.Text</MudMenuItem>
+                                            }
+                                        }
+                                    </MudMenu>
+                                }
+                            </div>
+                        }
                     </div>
 
                     <div class="ticket-detail-header__buttons">
@@ -541,7 +606,7 @@ else
                         <ul class="ticket-next-steps__list">
                             @foreach (var suggestion in _ticket.SuggestedNextSteps)
                             {
-                                <li>@suggestion</li>
+                                <li>@suggestion.Text</li>
                             }
                         </ul>
                     </div>
