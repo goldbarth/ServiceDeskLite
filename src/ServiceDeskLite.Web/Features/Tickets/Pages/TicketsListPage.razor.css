@@ -353,6 +353,13 @@
     width: 140px;
 }
 
+/* Category needs an explicit width like every other column: under table-layout: fixed a
+   column without one collapses, and its header ("Category") then overflows onto Due. */
+::deep .tickets-table__th--category,
+::deep .tickets-table__cell--category {
+    width: 140px;
+}
+
 ::deep .tickets-table__th--due,
 ::deep .tickets-table__cell--due,
 ::deep .tickets-table__th--created,
