@@ -151,10 +151,13 @@ public sealed partial class SearchKnowledgeBaseTool
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            // A broken search is an error, not honest degradation: it must read as a failure to
+            // the model, the dashboard and the retry policy, distinct from the "unavailable" path
+            // below. Same contract as FindSimilarTicketsTool.
             _logger.LogError(ex, "Knowledge-base search failed for assistant query");
             return new ToolResult(
                 "Knowledge-base search failed due to a technical error. Answer from general knowledge and say the knowledge base could not be reached.",
-                false);
+                IsError: true);
         }
 
         // Honest degradation: no embeddings here, so report unavailable and cite nothing
