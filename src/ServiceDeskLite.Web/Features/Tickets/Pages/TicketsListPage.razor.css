@@ -353,6 +353,13 @@
     width: 140px;
 }
 
+/* table-layout is fixed: a column without a width takes whatever is left over, which
+   at common widths is less than the header text needs and it bleeds into "Due". */
+::deep .tickets-table__th--category,
+::deep .tickets-table__cell--category {
+    width: 140px;
+}
+
 ::deep .tickets-table__th--due,
 ::deep .tickets-table__cell--due,
 ::deep .tickets-table__th--created,
