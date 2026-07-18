@@ -110,11 +110,6 @@
     flex-wrap: wrap;
 }
 
-.ticket-detail-header__menu {
-    display: inline-flex;
-    align-items: center;
-}
-
 ::deep .ticket-detail-header__button.mud-button-root {
     min-height: 42px;
     padding-inline: var(--sdl-space-3);
@@ -192,11 +187,6 @@
     color: var(--sdl-category-fg);
     font-size: 0.76rem;
     font-weight: 700;
-}
-
-.ticket-tabs__icon {
-    width: 1rem;
-    height: 1rem;
 }
 
 ::deep .ticket-panel {
@@ -848,11 +838,6 @@
     font-size: 1.35rem;
     font-weight: 700;
     color: var(--sdl-text);
-}
-
-.ticket-detail-edit-form {
-    display: grid;
-    gap: var(--sdl-space-3);
 }
 
 .ticket-detail-edit-form__meta {

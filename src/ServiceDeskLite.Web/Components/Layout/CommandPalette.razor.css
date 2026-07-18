@@ -36,11 +36,6 @@
     border-bottom: 1px solid var(--sdl-line);
 }
 
-.command-palette__search-icon {
-    color: var(--sdl-icon);
-    flex-shrink: 0;
-}
-
 .command-palette__input {
     flex: 1;
     border: none;
@@ -80,12 +75,6 @@
 
 .command-palette__result--active {
     background: var(--sdl-surface-muted);
-}
-
-.command-palette__result-icon {
-    color: var(--sdl-icon);
-    flex-shrink: 0;
-    font-size: 1.15rem;
 }
 
 .command-palette__result-label {

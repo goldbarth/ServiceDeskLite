@@ -2,56 +2,61 @@
 @using ServiceDeskLite.Contracts.V1.Dashboard
 @using ServiceDeskLite.Web.Features.AiInsights
 
-<MudPaper Class="tool-usage" Elevation="0">
-    <div class="tool-usage__header">
-        <h2 class="tool-usage__title">Tool calls</h2>
-        <p class="tool-usage__subtitle">Every tool the assistant invoked in the last @WindowDays days.</p>
-    </div>
-
-    @if (Tools.Count == 0)
-    {
-        <p class="tool-usage__empty">The assistant has not called a tool in this window.</p>
-    }
-    else
-    {
-        <div class="tool-usage__scroll">
-            <table class="tool-usage__table">
-                <thead>
-                    <tr>
-                        <th scope="col">Tool</th>
-                        <th scope="col" class="tool-usage__numeric">Calls</th>
-                        <th scope="col" class="tool-usage__numeric">Errors</th>
-                        <th scope="col" class="tool-usage__numeric">Error rate</th>
-                        <th scope="col" class="tool-usage__numeric">Avg. latency</th>
-                        <th scope="col" class="tool-usage__numeric">Avg. confidence</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var tool in Tools)
-                    {
-                        <tr>
-                            <td><code class="tool-usage__name">@tool.ToolName</code></td>
-                            <td class="tool-usage__numeric">@tool.Invocations</td>
-                            <td class="tool-usage__numeric">@tool.Errors</td>
-                            <td class="tool-usage__numeric">@Format.Percent(tool.ErrorRate)</td>
-                            <td class="tool-usage__numeric">@Format.Milliseconds(tool.AverageLatencyMs)</td>
-                            <td class="tool-usage__numeric">
-                                @if (tool.AverageConfidence is null)
-                                {
-                                    <span class="tool-usage__muted" title="This tool reports no confidence score.">n/a</span>
-                                }
-                                else
-                                {
-                                    @Format.Percent(tool.AverageConfidence)
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+@* The MudPaper is the component root, so CSS isolation never stamps the scope on it and a
+   plain `.tool-usage` rule matches nothing. A plain wrapper carries the scope, letting the
+   panel styles apply through `::deep` - the same shell pattern KpiCard uses. *@
+<div class="tool-usage-shell">
+    <MudPaper Class="tool-usage" Elevation="0">
+        <div class="tool-usage__header">
+            <h2 class="tool-usage__title">Tool calls</h2>
+            <p class="tool-usage__subtitle">Every tool the assistant invoked in the last @WindowDays days.</p>
         </div>
-    }
-</MudPaper>
+
+        @if (Tools.Count == 0)
+        {
+            <p class="tool-usage__empty">The assistant has not called a tool in this window.</p>
+        }
+        else
+        {
+            <div class="tool-usage__scroll">
+                <table class="tool-usage__table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Tool</th>
+                            <th scope="col" class="tool-usage__numeric">Calls</th>
+                            <th scope="col" class="tool-usage__numeric">Errors</th>
+                            <th scope="col" class="tool-usage__numeric">Error rate</th>
+                            <th scope="col" class="tool-usage__numeric">Avg. latency</th>
+                            <th scope="col" class="tool-usage__numeric">Avg. confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var tool in Tools)
+                        {
+                            <tr>
+                                <td><code class="tool-usage__name">@tool.ToolName</code></td>
+                                <td class="tool-usage__numeric">@tool.Invocations</td>
+                                <td class="tool-usage__numeric">@tool.Errors</td>
+                                <td class="tool-usage__numeric">@Format.Percent(tool.ErrorRate)</td>
+                                <td class="tool-usage__numeric">@Format.Milliseconds(tool.AverageLatencyMs)</td>
+                                <td class="tool-usage__numeric">
+                                    @if (tool.AverageConfidence is null)
+                                    {
+                                        <span class="tool-usage__muted" title="This tool reports no confidence score.">n/a</span>
+                                    }
+                                    else
+                                    {
+                                        @Format.Percent(tool.AverageConfidence)
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </MudPaper>
+</div>
 
 @code {
     [Parameter, EditorRequired] public IReadOnlyList<ToolUsageResponse> Tools { get; set; } = [];
