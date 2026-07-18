@@ -53,12 +53,6 @@
     gap: var(--sdl-space-2);
 }
 
-.ticket-summary__card-icon {
-    width: 1.05rem;
-    height: 1.05rem;
-    color: var(--sdl-text-subtle);
-}
-
 .ticket-summary__card-title {
     margin: 0;
     color: var(--sdl-text);
