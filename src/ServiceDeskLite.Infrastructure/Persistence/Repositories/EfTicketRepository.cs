@@ -35,8 +35,10 @@ public class EfTicketRepository : ITicketRepository
 
         if (!string.IsNullOrWhiteSpace(criteria.Text))
         {
-            var term = criteria.Text.Trim();
-            q = q.Where(t => t.Title.Contains(term) || t.Description.Contains(term));
+            // Case-insensitive substring match (ADR-0042). ILIKE folds case; the term is
+            // escaped for LIKE metacharacters so a literal % / _ matches itself.
+            var pattern = LikeContainsPattern(criteria.Text.Trim());
+            q = q.Where(t => EF.Functions.ILike(t.Title, pattern) || EF.Functions.ILike(t.Description, pattern));
         }
 
         if (criteria.Statuses is { Count: > 0 })
@@ -47,10 +49,11 @@ public class EfTicketRepository : ITicketRepository
 
         if (!string.IsNullOrWhiteSpace(criteria.AssigneeName))
         {
-            var name = criteria.AssigneeName.Trim();
-            // Filter by the assigned agent's name via the roster (FK, ADR-0025).
+            // Filter by the assigned agent's name via the roster (FK, ADR-0025). Same
+            // case-insensitive rule as free-text search (ADR-0042).
+            var namePattern = LikeContainsPattern(criteria.AssigneeName.Trim());
             q = q.Where(t => t.AssignedAgentId != null
-                && _dbContext.Agents.Any(a => a.Id == t.AssignedAgentId && a.Name.Contains(name)));
+                && _dbContext.Agents.Any(a => a.Id == t.AssignedAgentId && EF.Functions.ILike(a.Name, namePattern)));
         }
 
         if (criteria.Unassigned)
@@ -137,5 +140,16 @@ public class EfTicketRepository : ITicketRepository
             .ToList();
 
         return new PagedResult<TicketListItemDto>(items, total, paging);
+    }
+
+    // Escape LIKE metacharacters in a user term (default '\' escape char) and wrap it as a
+    // contains pattern, so `50%` searches for the literal text rather than a wildcard.
+    private static string LikeContainsPattern(string term)
+    {
+        var escaped = term
+            .Replace("\\", "\\\\")
+            .Replace("%", "\\%")
+            .Replace("_", "\\_");
+        return $"%{escaped}%";
     }
 }

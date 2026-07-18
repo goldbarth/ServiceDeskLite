@@ -49,12 +49,10 @@ public sealed class SearchTicketsFilterTests
         }
     }
 
-    // NOTE: Assignee filtering is intentionally NOT covered here. It surfaces a
-    // pre-existing EF translation bug in EfTicketRepository.SearchAsync (the
-    // value-converted Assignee column cannot translate `.Value.Name.Contains(...)`
-    // to SQL), which also affects the REST `?assignee=` filter on Postgres. Deferred
-    // to a separate infrastructure fix (issue #144); the tool's assignee-input mapping
-    // is covered in Tests.Api SearchTicketsToolInputTests.
+    // Assignee filtering now translates on Postgres: the filter joins the agent roster
+    // (ADR-0025) instead of the old value-converted Assignee column, so the #144 EF
+    // translation bug no longer applies. Case-insensitive coverage lives in
+    // Filter_by_assignee_is_case_insensitive below (ADR-0042).
 
     [Theory]
     [ProviderMatrix]
@@ -167,6 +165,77 @@ public sealed class SearchTicketsFilterTests
             result.IsSuccess.Should().BeTrue();
             result.Value!.Page.Items.Should().ContainSingle()
                 .Which.Title.Should().Be("VPN connection drops");
+        }
+    }
+
+    // ADR-0042: free-text search matches case-insensitively on both providers.
+    [Theory]
+    [ProviderMatrix]
+    public async Task Filter_by_free_text_is_case_insensitive(PersistenceProvider provider)
+    {
+        await using var host = await TestServiceProvider.CreateAsync(provider);
+
+        using (var scope = host.CreateScope())
+        {
+            var create = scope.ServiceProvider.GetRequiredService<CreateTicketHandler>();
+            await create.HandleAsync(TicketFactory.Command(title: "Remote access broken"));
+            await create.HandleAsync(TicketFactory.Command(title: "Printer offline", description: "user cannot print REMOTELY"));
+            await create.HandleAsync(TicketFactory.Command(title: "Keyboard sticky"));
+        }
+
+        using (var scope = host.CreateScope())
+        {
+            var search = scope.ServiceProvider.GetRequiredService<SearchTicketsHandler>();
+            var result = await search.HandleAsync(new SearchTicketsQuery(
+                new TicketSearchCriteria(Text: "remote"),
+                Paging.Default));
+
+            result.IsSuccess.Should().BeTrue();
+            // Lower-case query hits a title-cased title AND an upper-cased description.
+            result.Value!.Page.Items.Should().HaveCount(2);
+            result.Value.Page.Items.Should().Contain(t => t.Title == "Remote access broken");
+            result.Value.Page.Items.Should().Contain(t => t.Title == "Printer offline");
+        }
+    }
+
+    // ADR-0042: the assignee filter folds case the same way as free-text search.
+    [Theory]
+    [ProviderMatrix]
+    public async Task Filter_by_assignee_is_case_insensitive(PersistenceProvider provider)
+    {
+        await using var host = await TestServiceProvider.CreateAsync(provider);
+
+        var agent = new Agent(AgentId.New(), "Alex Kim", "alex.kim@servicedesk.example");
+
+        using (var scope = host.CreateScope())
+        {
+            var agents = scope.ServiceProvider.GetRequiredService<IAgentRepository>();
+            var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            await agents.AddAsync(agent);
+            await uow.SaveChangesAsync();
+        }
+
+        using (var scope = host.CreateScope())
+        {
+            var create = scope.ServiceProvider.GetRequiredService<CreateTicketHandler>();
+            var assignedId = (await create.HandleAsync(TicketFactory.Command(title: "Alex ticket"))).Value!.Id;
+            await create.HandleAsync(TicketFactory.Command(title: "Unassigned"));
+
+            var assign = scope.ServiceProvider.GetRequiredService<AssignTicketHandler>();
+            (await assign.HandleAsync(new AssignTicketCommand(assignedId, agent.Id, "test")))
+                .IsSuccess.Should().BeTrue();
+        }
+
+        using (var scope = host.CreateScope())
+        {
+            var search = scope.ServiceProvider.GetRequiredService<SearchTicketsHandler>();
+            var result = await search.HandleAsync(new SearchTicketsQuery(
+                new TicketSearchCriteria(AssigneeName: "alex"),
+                Paging.Default));
+
+            result.IsSuccess.Should().BeTrue();
+            result.Value!.Page.Items.Should().ContainSingle()
+                .Which.Title.Should().Be("Alex ticket");
         }
     }
 }

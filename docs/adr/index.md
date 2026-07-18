@@ -44,3 +44,4 @@
 | 0039 | [ADR 0039: Grounding-Check Enforcement (tool_choice, not a prompt request)](0039-grounding-check-enforcement.md) |
 | 0040 | [ADR 0040: Semantic Grounding Evaluation (embeddings, lexical fallback)](0040-semantic-grounding-evaluation.md) |
 | 0041 | [ADR 0041: Suggested Next Steps Carry Action Routing (server-tagged, client-executed)](0041-suggested-step-action-routing.md) |
+| 0042 | [ADR 0042: Ticket Search Match Semantics (case-insensitive substring, both providers)](0042-ticket-search-match-semantics.md) |
