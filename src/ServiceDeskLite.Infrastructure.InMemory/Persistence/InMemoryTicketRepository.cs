@@ -48,8 +48,10 @@ internal sealed class InMemoryTicketRepository : ITicketRepository
 
         if (!string.IsNullOrWhiteSpace(criteria.Text))
         {
+            // Case-insensitive substring match, mirroring the EF ILIKE path (ADR-0042).
             var term = criteria.Text.Trim();
-            q = q.Where(t => t.Title.Contains(term) || t.Description.Contains(term));
+            q = q.Where(t => t.Title.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || t.Description.Contains(term, StringComparison.OrdinalIgnoreCase));
         }
 
         if (criteria.Statuses is { Count: > 0 })

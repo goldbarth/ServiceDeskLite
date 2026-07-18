@@ -57,6 +57,7 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── 0039-grounding-check-enforcement.md
 │   │   ├── 0040-semantic-grounding-evaluation.md
 │   │   ├── 0041-suggested-step-action-routing.md
+│   │   ├── 0042-ticket-search-match-semantics.md
 │   │   ├── index.md
 │   │   └── toc.yml
 │   ├── api
@@ -125,7 +126,8 @@ The repository is organized into layered projects and mirrored test projects.
 │   │   ├── v1.5.0.md
 │   │   ├── v1.6.0.md
 │   │   ├── v1.7.0.md
-│   │   └── v1.8.0.md
+│   │   ├── v1.8.0.md
+│   │   └── v1.9.0.md
 │   ├── structure
 │   │   ├── project-structure.md
 │   │   ├── solution-map.md
@@ -629,11 +631,11 @@ The repository is organized into layered projects and mirrored test projects.
 │       │   │   │   └── AiInsightsPage.razor.css
 │       │   │   └── Format.cs
 │       │   ├── Assistant
-│       │   │   └── Pages
-│       │   │       ├── AnswerCitationLayout.cs
-│       │   │       ├── AssistantChatPage.razor
-│       │   │       ├── AssistantChatPage.razor.cs
-│       │   │       └── AssistantChatPage.razor.css
+│       │   │   ├── Pages
+│       │   │   │   ├── AssistantChatPage.razor
+│       │   │   │   ├── AssistantChatPage.razor.cs
+│       │   │   │   └── AssistantChatPage.razor.css
+│       │   │   └── AssistantMarkdown.cs
 │       │   ├── Dashboard
 │       │   │   ├── Components
 │       │   │   │   ├── DashboardHero.razor
@@ -648,6 +650,8 @@ The repository is organized into layered projects and mirrored test projects.
 │       │   │       └── DashboardPage.razor.css
 │       │   ├── Tickets
 │       │   │   ├── Components
+│       │   │   │   ├── TicketChip.razor
+│       │   │   │   ├── TicketChip.razor.css
 │       │   │   │   ├── TicketSummaryPanel.razor
 │       │   │   │   └── TicketSummaryPanel.razor.css
 │       │   │   ├── Pages
@@ -667,8 +671,10 @@ The repository is organized into layered projects and mirrored test projects.
 │       │   │   │   ├── TicketBoardState.cs
 │       │   │   │   ├── TicketQueryParams.cs
 │       │   │   │   ├── TicketsListFeatureState.cs
-│       │   │   │   └── TicketsListState.cs
-│       │   │   └── TicketsFeatureComposition.cs
+│       │   │   │   ├── TicketsListState.cs
+│       │   │   │   └── TicketViewPresets.cs
+│       │   │   ├── TicketsFeatureComposition.cs
+│       │   │   └── TicketSignals.cs
 │       │   └── _Imports.razor
 │       ├── Properties
 │       │   └── launchSettings.json
@@ -726,7 +732,8 @@ The repository is organized into layered projects and mirrored test projects.
 │       │   │               ├── bootstrap.min.js
 │       │   │               └── bootstrap.min.js.map
 │       │   ├── app.css
-│       │   └── favicon.png
+│       │   ├── favicon.png
+│       │   └── theme.js
 │       ├── appsettings.Development.json
 │       ├── appsettings.json
 │       ├── packages.lock.json
@@ -897,14 +904,16 @@ The repository is organized into layered projects and mirrored test projects.
 │       │   └── TicketSummaryApiClientTests.cs
 │       ├── Features
 │       │   ├── Assistant
-│       │   │   └── AnswerCitationLayoutTests.cs
+│       │   │   └── AssistantMarkdownTests.cs
 │       │   ├── Layout
 │       │   │   └── CommandPaletteEntriesTests.cs
 │       │   └── Tickets
-│       │       └── State
-│       │           ├── TicketBoardFeatureStateTests.cs
-│       │           ├── TicketQueryParamsTests.cs
-│       │           └── TicketsListFeatureStateTests.cs
+│       │       ├── State
+│       │       │   ├── TicketBoardFeatureStateTests.cs
+│       │       │   ├── TicketQueryParamsTests.cs
+│       │       │   ├── TicketsListFeatureStateTests.cs
+│       │       │   └── TicketViewPresetsTests.cs
+│       │       └── TicketSignalsTests.cs
 │       ├── Theme
 │       │   └── DesignTokenTests.cs
 │       ├── packages.lock.json
