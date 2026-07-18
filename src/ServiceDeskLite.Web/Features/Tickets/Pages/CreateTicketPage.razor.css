@@ -52,11 +52,6 @@
     box-shadow: var(--sdl-elevation-overlay);
 }
 
-.create-ticket-form {
-    display: grid;
-    gap: var(--sdl-space-4);
-}
-
 ::deep .create-ticket-field {
     margin: 0;
 }

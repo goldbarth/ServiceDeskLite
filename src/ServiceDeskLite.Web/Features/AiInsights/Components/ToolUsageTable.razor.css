@@ -1,4 +1,6 @@
-.tool-usage {
+/* ::deep because .tool-usage is a MudPaper (a child component); the plain wrapper
+   .tool-usage-shell carries the isolation scope this rule anchors to. */
+::deep .tool-usage {
     display: grid;
     gap: var(--sdl-space-3);
     padding: var(--sdl-space-4);

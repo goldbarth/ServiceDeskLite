@@ -28,11 +28,12 @@
     margin: 0 auto;
 }
 
-.shell-appbar__menu-button {
-    display: none;
-}
-
+/* ::deep because the button is a MudIconButton (a child component): the CSS-isolation
+   scope is never stamped on it, so a plain `.shell-appbar__menu-button` rule matches
+   nothing and the display toggle below silently fails, leaving the drawer toggle visible
+   on desktop where the drawer is permanent. */
 ::deep .shell-appbar__menu-button.mud-icon-button {
+    display: none;
     width: 2.5rem;
     height: 2.5rem;
     color: var(--sdl-text);
@@ -87,14 +88,6 @@
 .shell-appbar__search {
     flex: 0 1 20.5rem;
     max-width: 20.5rem;
-}
-
-.shell-appbar__avatar {
-    color: var(--sdl-text);
-    background: linear-gradient(180deg, var(--sdl-backdrop-raised-from) 0%, var(--sdl-backdrop-raised-to) 100%);
-    border: 1px solid var(--sdl-line);
-    font-size: 0.8rem;
-    font-weight: 700;
 }
 
 ::deep .shell-drawer {
@@ -154,7 +147,7 @@
 }
 
 @media (max-width: 959.98px) {
-    .shell-appbar__menu-button {
+    ::deep .shell-appbar__menu-button.mud-icon-button {
         display: inline-flex;
     }
 
