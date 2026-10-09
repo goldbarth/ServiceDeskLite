@@ -26,7 +26,9 @@ The repository has two parts, and they don't have the same standing:
 - **The AI assistant** came later, as an experiment in LLM integration and in working with coding agents.
 
 <p align="center">
-  <img src="docs/assets/board.png" alt="The ticket board: one lane per status, each lane naming the statuses a ticket may move to next" width="880">
+  <img src="docs/assets/board.png" alt="The ticket board: one lane per status, each lane naming the statuses a ticket may move to next" width="720">
+  <br>
+  <sub>The ticket board. Each lane names the statuses a ticket may move to next, straight from the domain's workflow rules.</sub>
 </p>
 
 ## Why this exists
@@ -91,7 +93,9 @@ The whole integration sits at the edge, in the API project.
 Each tool ends in the same command handler the REST API uses, so validation and the audit trail apply to the assistant as they do to everyone else.
 
 <p align="center">
-  <img src="docs/assets/assistant-chat.png" alt="The assistant takes a report in free text, checks for duplicates, asks about a vague deadline, then files and routes the ticket" width="640">
+  <img src="docs/assets/assistant-chat.png" alt="The assistant takes a report in free text, checks for duplicates, asks about a vague deadline, then files and routes the ticket" width="600">
+  <br>
+  <sub>A report in free text: a duplicate check, a question about the vague deadline, then the ticket is filed and routed, one visible tool call at a time.</sub>
 </p>
 
 What I tried out along the way:
