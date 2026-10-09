@@ -13,6 +13,12 @@
 - name: API
   href: api.md
 
+- name: AI Assistant
+  href: assistant.md
+
+- name: Infrastructure (PostgreSQL/EF Core)
+  href: infrastructure-postgres.md
+
 - name: Infrastructure (SQLite)
   href: infrastructure-sqlite.md
 
